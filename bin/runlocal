@@ -1,0 +1,3 @@
+#!/bin/bash
+
+source ./venv/root/bin/activate && python code run --no_artifacts_upload -p $1 && deactivate

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+mkdir -p venv
+
+# root
+python3 -m venv ./venv/root
+/bin/bash -c "source ./venv/root/bin/activate && pip install wheel && deactivate"
+/bin/bash -c "source ./venv/root/bin/activate && pip install -r requirements.txt && deactivate"
+
+# proc_01
+python3 -m venv ./venv/proc_01
+/bin/bash -c "source ./venv/proc_01/bin/activate && pip install wheel && deactivate"
+# /bin/bash -c "source ./venv/proc_01/bin/activate && pip install --no-cache-dir -e <program_1>  && deactivate"
+
+# proc_02
+python3 -m venv ./venv/proc_02
+/bin/bash -c "source ./venv/proc_02/bin/activate && pip install wheel && deactivate"
+# /bin/bash -c "source ./venv/proc_02/bin/activate && pip install --no-cache-dir -e <program_2>  && deactivate"

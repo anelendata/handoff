@@ -1,0 +1,5 @@
+commands:
+  - command: cat
+    args: "./requirements.txt"
+  - command: wc
+    args: "-l"

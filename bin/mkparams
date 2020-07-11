@@ -1,0 +1,3 @@
+#!/bin/bash
+
+source ./venv/root/bin/activate && python code generate_parameters && deactivate

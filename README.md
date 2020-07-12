@@ -2,7 +2,7 @@
 
 Construct and deploy a configurable unix pipeline process serverlessly*.
 
-What is it?
+## What is it?
 
 This is a template repository to build handoff.cloud process:
 A framework for executing tasks unix-pipeline process serverlessly.
@@ -24,6 +24,8 @@ This repository also contains AWS Cloudformation templates and deployment
 scripts to support the workflow from local development to the production
 deployment.
 
-[Quick Start](https://dev.handoff.cloud/en/latest/quick_start.html)
+Check out [the super quick example](https://dev.handoff.cloud/en/latest/quick_example.html)
+
+----
 
 Copyright 2020- Anelen Co., LLC

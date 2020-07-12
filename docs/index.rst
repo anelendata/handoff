@@ -3,14 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to handoff.cloud's documentation!
+handoff.cloud
 =========================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-Construct and deploy a configurable unix pipeline process serverlessly*.
+Construct and deploy a configurable unix pipeline process serverlessly.
 
 What is it?
 ===========
@@ -40,12 +36,21 @@ deployment.
 Clone this repository and follow the easy steps to learn how to use
 handoff.cloud in the next few sections.
 
-Next: :doc:`./quick_start`
+Check out the super quick example: :doc:`./quick_example`
 
-Indices and tables
-==================
+----
 
-* :doc:`./quick_start`
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   quick_example
+   venv_config
+   outputs
+   remote_config
+   docker
+   fargate
+
+----
+
+Copyright 2020- Anelen Co., LLC

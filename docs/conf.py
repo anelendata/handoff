@@ -15,7 +15,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import recommonmark
+from recommonmark.transform import AutoStructify
 
 # -- Project information -----------------------------------------------------
 
@@ -39,7 +40,8 @@ release = ''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-]
+    'recommonmark',
+    'sphinx_markdown_tables',]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -47,8 +49,7 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -171,3 +172,11 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+def setup(app):
+    app.add_config_value('recommonmark_config',
+                         {'url_resolver': lambda url: github_doc_root + url,
+                          'auto_toc_tree_section': 'Contents',
+                          'enable_auto_toc_tree': True,
+                          }, True)
+    app.add_transform(AutoStructify)

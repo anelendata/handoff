@@ -24,6 +24,6 @@ This repository also contains AWS Cloudformation templates and deployment
 scripts to support the workflow from local development to the production
 deployment.
 
-[Quick Start](https://dev.handoff.cloud/quick_start.html)
+[Quick Start](https://dev.handoff.cloud/en/latest/quick_start.html)
 
 Copyright 2020- Anelen Co., LLC

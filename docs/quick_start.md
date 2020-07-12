@@ -8,8 +8,9 @@ Prerequisites:
 - [AWS CLI](https://docs.aws.amazon.com/cli/index.html)
 - [Docker](https://docs.docker.com)
 
-Initialize the submodules:
+Clone [repo](https://github.com/anelendata/handoff) & initialize the submodules:
 ```
+git clone https://github.com/anelendata/handoff.git
 git submodule init
 git submodule update
 ```

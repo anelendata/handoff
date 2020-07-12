@@ -15,11 +15,13 @@ Construct and deploy a configurable unix pipeline process serverlessly*.
 What is it?
 ===========
 
-This is a template repository to build handoff.cloud process:
+`handoff.cloud <https://github.com/anelendata/handoff>`_
+is a template repository to build handoff.cloud process:
 A framework for executing tasks unix-pipeline process serverlessly.
 
 handoff is originally designed to deploy a single-line ETL process like
-[singer.io](https://singer.io) on AWS Fargate, and it was redesigned to
+`singer.io <https://singer.io>`_
+on AWS Fargate, and it was redesigned to
 run any commands and program.
 
 In handoff.cloud framework, the configurations are stored and retrieved

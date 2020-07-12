@@ -41,7 +41,7 @@ In SSM, the parameters are stored in <STACK_NAME>__params format with the follow
 command:
 
 ```
-source ./venv/root/bin/activate && python main.py put_ssm_parameters -p parameters.json && deactivate
+source ./venv/root/bin/activate && python code put_ssm_parameters -p parameters.json && deactivate
 ```
 
 If you omit `-p <filename>.json`, it tries to generate the parameters from `.local` file.
@@ -50,7 +50,7 @@ If you omit `-p <filename>.json`, it tries to generate the parameters from `.loc
 You can check the currently stored values by dump command:
 
 ```
-source ./venv/root/bin/activate && python main.py dump_ssm_parameters && deactivate
+source ./venv/root/bin/activate && python code dump_ssm_parameters && deactivate
 ```
 
 ## S3
@@ -76,7 +76,7 @@ rm -fr .env/*
 To test with the remote configuration.
 
 ```
-source ./venv/root/bin/activate && python main.py run && deactivate
+source ./venv/root/bin/activate && python code run && deactivate
 ```
 
 After the run, you find the output from the exchange rate tap example from
@@ -107,7 +107,7 @@ Note: You can create subdirectories under `.env`.
 in the same manner.
 
 ```
-source ./venv/root/bin/activate && python main.py show_commands && deactivate
+source ./venv/root/bin/activate && python code show_commands && deactivate
 ```
 
 This shows the commands in the pipeline.

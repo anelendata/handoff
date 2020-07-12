@@ -17,6 +17,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import recommonmark
 from recommonmark.transform import AutoStructify
+from m2r import MdInclude
 
 # -- Project information -----------------------------------------------------
 
@@ -40,8 +41,8 @@ release = ''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'recommonmark',
-    # 'sphinx_markdown_tables',
+    'sphinx_markdown_tables',
+    'recommonmark'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -181,3 +182,11 @@ def setup(app):
                           'enable_auto_toc_tree': True,
                           }, True)
     app.add_transform(AutoStructify)
+
+    # https://github.com/readthedocs/recommonmark/issues/191#issuecomment-622369992
+    # from m2r to make `mdinclude` work
+    app.add_config_value('no_underscore_emphasis', False, 'env')
+    app.add_config_value('m2r_parse_relative_links', False, 'env')
+    app.add_config_value('m2r_anonymous_references', False, 'env')
+    app.add_config_value('m2r_disable_inline_math', False, 'env')
+    app.add_directive('mdinclude', MdInclude)

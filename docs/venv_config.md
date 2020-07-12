@@ -14,8 +14,8 @@ commands:
 
 Try runing:
 ```
-./bin/mkparams > ./params.json
-./bin/runlocal ./params.json
+./bin/mkparams > ./.env/params.json
+./bin/runlocal ./.env/params.json
 ```
 
 This time, you will get `.artifacts/collector_stats.json` that looks like:
@@ -24,7 +24,7 @@ This time, you will get `.artifacts/collector_stats.json` that looks like:
 {"rows_read": 15}
 ```
 
-## Running Code with Configuration Files
+## How to use config files: Fetching exchange rates with singer.io
 
 The configuration files that may contain sensitive information go to
 `.local` directory.
@@ -44,7 +44,7 @@ source ./venv/proc_02/bin/activate && pip install target-csv && deactivate
 
 2. Create a copy of config file for tap-exchangeratesapi:
 ```
-echo '{ "base": "JPY", "start_date": "'`date --iso-8601`'" }' > .local/tap-config.json
+echo '{ "base": "JPY", "start_date": "'`date +'%Y-%m-%d'`'" }' > .local/tap-config.json
 ```
 
 Note: The config file of this example does not contain a sensitive information.
@@ -58,7 +58,7 @@ commands:
   - command: "tap-exchangeratesapi"
     args: "--config ./.env/config/tap-config.json"
     venv: "./venv/proc_01"
-  - command: "./impl/collector_stats.py"
+  - command: "./scripts/python/collector_stats.py"
     venv: "./venv/root"
   - command: "target-csv"
     venv: "./venv/proc_02"
@@ -79,7 +79,27 @@ Now let's run:
 ./bin/runlocal ./params.json
 ```
 
-This should produce a file `exchange_rate-{timestamp}.csv` in the current directory.
+This should output something like:
+```
+INFO - 2020-07-12 08:52:13,240 - impl.runner: Running run data:{}
+INFO - 2020-07-12 08:52:13,240 - impl.runner: Running run
+INFO - 2020-07-12 08:52:13,241 - impl.runner: Reading parameters from file: .env/params.json
+INFO - 2020-07-12 08:52:13,241 - impl.runner: Job started at 2020-07-12 15:52:13.241577
+INFO Replicating exchange rate data from 2020-07-10 using base JPY
+INFO Sending version information to singer.io. To disable sending anonymous usage data, set the config parameter "disable_collection" to true
+INFO Replicating exchange rate data from 2020-07-11 using base JPY
+INFO Replicating exchange rate data from 2020-07-12 using base JPY
+INFO Tap exiting normally
+INFO - 2020-07-12 08:52:13,950 - impl.runner: Job ended at 2020-07-12 15:52:13.950879
+INFO - 2020-07-12 08:52:13,951 - impl.runner: Processed in 0:00:00.709302
+```
+
+and produce a file `exchange_rate-{timestamp}.csv` in the current directory that looks like:
+```
+CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN,date
+0.0127290837,0.0725398406,1.3197211155,0.4630976096,0.0618218792,2.9357569721,0.2215388446,0.007434429,0.0401958831,0.0863047809,135.1005146082,0.7041915671,0.050374336,0.6657569721,0.0625373506,1.0,0.29312749,0.0088188911,0.0083001328,0.0399311089,0.0162333997,0.0642571381,0.0655312085,0.0889467131,0.0142670983,0.158440405,0.0093592297,0.2132744024,0.0130336985,0.0134852258,0.032375498,11.244189907,0.0371372842,2020-07-10T00:00:00Z
+```
+
 It also leaves `.artifacts/state` and `.artifacts/collector_stats.json`.
 
 Next: [Outputs](outputs)

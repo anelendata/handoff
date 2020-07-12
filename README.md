@@ -4,8 +4,19 @@ Construct and deploy a configurable unix pipeline process serverlessly*.
 
 ## What is it?
 
-This is a template repository to build handoff.cloud process:
-A framework for executing tasks unix-pipeline process serverlessly.
+handoff is a framework for executing unix-pipeline processes serverlessly.
+It separates the code and run-time configurations, making the deployment
+faster, more flexible, and more secure.
+
+handoff helps the teams who want to:
+- Automate the ETL/ELT process ([earthquake data ELT example](https://articles.anelen.co/elt-google-cloud-storage-bigquery/))
+- Massively web-crawl and collect data ([market & education data example](https://articles.anelen.co/kinoko_webcrawler/))
+- Relieve the pain of managing Apache Airflow Worker nodes.
+...and more!
+
+handoff is an open-source (APLv2) project sponsored by ANELEN.
+
+## How it works
 
 handoff is originally designed to deploy a single-line ETL process like
 [singer.io](https://singer.io) on AWS Fargate, and it was redesigned to
@@ -24,8 +35,6 @@ This repository also contains AWS Cloudformation templates and deployment
 scripts to support the workflow from local development to the production
 deployment.
 
+## Get started easily
+
 Check out [the super quick example](https://dev.handoff.cloud/en/latest/quick_example.html)
-
-----
-
-Copyright 2020- Anelen Co., LLC

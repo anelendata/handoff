@@ -53,11 +53,14 @@ INFO - 2020-07-10 17:49:48,718 - impl.runner: Job ended at 2020-07-10 17:49:48.7
 INFO - 2020-07-10 17:49:48,719 - impl.runner: Processed in 0:00:00.005308
 ```
 
-It creates `.artifacts/state` whose content is the equivalent to:
-
+It creates `.artifacts/state` whose content:
+```
+15
+```
+is the equivalent to:
 ```
 cat ./requirements.txt | wc -l
 ```
 
-Next: [Using virtual environments](venv_config)
+Next: [Try fetching currency exchange rates](venv_config)
 

@@ -41,7 +41,8 @@ release = ''
 # ones.
 extensions = [
     'recommonmark',
-    'sphinx_markdown_tables',]
+    # 'sphinx_markdown_tables',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

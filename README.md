@@ -1,6 +1,6 @@
 # handoff.cloud
 
-Construct and deploy a configurable unix pipeline process serverlessly*.
+Deploy configurable unix pipeline jobs serverlessly.
 
 ## What is it?
 

@@ -4,7 +4,8 @@ Deploy configurable unix pipeline jobs serverlessly.
 
 ## What is it?
 
-handoff is a framework for executing unix-pipeline processes serverlessly.
+handoff ([repository](https://github.com/anelendata/handoff))
+is a framework for executing unix-pipeline processes serverlessly.
 It separates the code and run-time configurations, making the deployment
 faster, more flexible, and more secure.
 

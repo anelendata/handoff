@@ -35,6 +35,12 @@ Prerequisites:
 - [AWS CLI](https://docs.aws.amazon.com/cli/index.html)
 - [Docker](https://docs.docker.com)
 
+Initialize the submodules:
+```
+git submodule init
+git submodule update
+```
+
 Create Python virtual environment and install the modules.
 From the root directory of this repository, do:
 

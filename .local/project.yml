@@ -1,5 +1,12 @@
 commands:
-  - command: cat
-    args: "./requirements.txt"
-  - command: wc
-    args: "-l"
+  - command: "tap-exchangeratesapi"
+    args: "--config ./.env/config/tap-config.json"
+    venv: "./venv/proc_01"
+    installs:
+      - "pip install tap-exchangeratesapi"
+  - command: "./scripts/python/collector_stats.py"
+    venv: "./venv/root"
+  - command: "target-csv"
+    venv: "./venv/proc_02"
+    installs:
+      - "pip install target-csv"

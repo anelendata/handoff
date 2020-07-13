@@ -14,6 +14,7 @@ commands:
 
 Try runing:
 ```
+./bin/mkvenvs
 ./bin/mkparams > ./.env/params.json
 ./bin/runlocal ./.env/params.json
 ```
@@ -36,21 +37,7 @@ Note: Currently, only JSON files are supported for remote config store.
 
 Example:
 
-1. Install singer.io tap & target in separate virtual environments:
-```
-source ./venv/proc_01/bin/activate && pip install tap-exchangeratesapi && deactivate
-source ./venv/proc_02/bin/activate && pip install target-csv && deactivate
-```
-
-2. Create a copy of config file for tap-exchangeratesapi:
-```
-echo '{ "base": "JPY", "start_date": "'`date +'%Y-%m-%d'`'" }' > .local/tap-config.json
-```
-
-Note: The config file of this example does not contain a sensitive information.
-
-
-3. Update the project file.
+1. Update the project file.
 
 .local/project.yml:
 ```
@@ -58,11 +45,41 @@ commands:
   - command: "tap-exchangeratesapi"
     args: "--config ./.env/config/tap-config.json"
     venv: "./venv/proc_01"
+    installs:
+      - "pip install tap-exchangeratesapi"
   - command: "./scripts/python/collector_stats.py"
     venv: "./venv/root"
   - command: "target-csv"
     venv: "./venv/proc_02"
+    installs:
+      - "pip install target-csv"
 ```
+
+2. Make environments defined in the project and install commands
+
+```
+./bin/mkvenvs
+```
+
+3. Create a copy of config file for tap-exchangeratesapi:
+
+In Debian/Ubuntu:
+```
+echo '{ "base": "JPY", "start_date": "'`date -d "$date -1 days" +'%Y-%m-%d'`'" }' \
+  > .local/tap-config.json
+```
+
+In MacOS:
+```
+echo '{ "base": "JPY", "start_date": "'`date -v -7d  +'%Y-%m-%d'`'" }' \
+  > .local/tap-config.json
+```
+
+`.local/tap-config.json` should looks something like:
+```
+{ "base": "JPY", "start_date": "2020-07-06" }
+```
+
 
 4. Generate parameter file and run:
 ```

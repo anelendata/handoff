@@ -1,23 +1,40 @@
 #!/bin/bash
 
 mkdir -p venv
+PROJECT_YML=${1:-".local/project.yml"} 
+ROOT_ENV="./venv/root"
 
 # root
-python3 -m venv ./venv/root
-/bin/bash -c "source ./venv/root/bin/activate && pip install wheel && deactivate"
-/bin/bash -c "source ./venv/root/bin/activate && pip install -r requirements.txt && deactivate"
+if [ -d "$ROOT_ENV" ]; then
+  echo "Directory $ROOT_ENV already exists. Not creating venv there."
+else
+  python3 -m venv $ROOT_ENV
+  /bin/bash -c "source $ROOT_ENV/bin/activate && pip install wheel && deactivate"
+  /bin/bash -c "source $ROOT_ENV/bin/activate && pip install -r reqs/requirements.txt && deactivate"
+fi
 
-# proc_01
-python3 -m venv ./venv/proc_01
-/bin/bash -c "source ./venv/proc_01/bin/activate && pip install wheel && deactivate"
-# /bin/bash -c "source ./venv/proc_01/bin/activate && pip install --no-cache-dir -e <program_1>  && deactivate"
+OLD_IFS=$IFS
+IFS=","
+/bin/bash -c "source $ROOT_ENV/bin/activate && python scripts/python/list_installs.py $PROJECT_YML && deactivate" \
+| while read venv install_cmd; do
+  if [ -z "$venv" ]; then
+    echo "virtual env is not defined!"
+    echo "line: "$i
+    exit 1
+  fi
 
-# proc_02
-python3 -m venv ./venv/proc_02
-/bin/bash -c "source ./venv/proc_02/bin/activate && pip install wheel && deactivate"
-# /bin/bash -c "source ./venv/proc_02/bin/activate && pip install --no-cache-dir -e <program_2>  && deactivate"
+  echo "venv: "$venv
+  echo "install cmd:" $install_cmd
 
-# dev
-python3 -m venv ./venv/dev
-/bin/bash -c "source ./venv/dev/bin/activate && pip install wheel && deactivate"
-/bin/bash -c "source ./venv/dev/bin/activate && pip install -r requirements.txt && pip install -r requirements_dev.txt && deactivate"
+  if [ -d "$venv" ]; then
+    echo "Directory $venv already exists. Not creating venv there."
+  else
+    python3 -m venv $venv
+    /bin/bash -c "source $venv/bin/activate && pip install wheel && deactivate"
+  fi
+  if [ ! -z "$install_cmd" ]; then
+    /bin/bash -c "source $venv/bin/activate && $install_cmd && deactivate"
+  fi
+
+done
+IFS=$OLD_IFS

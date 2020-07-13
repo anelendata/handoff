@@ -78,20 +78,20 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 # Or do this?
 # RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-COPY . /app
+COPY bin /app/bin
+COPY code /app/code
+COPY reqs /app/reqs
+COPY scripts /app/scripts
 
-# Just in case, make sure to delete the sensitive information from the image.
-RUN rm -fr /app/.env
-RUN rm -fr /app/.artifacts
-RUN rm -fr /app/.local
-RUN rm -fr /app/venv
+RUN mkdir -p /app/.local
+COPY .local/project.yml /app/.local/project.yml
 
 RUN chmod 777 -R /app
 
 WORKDIR /app
 
 RUN pip3 install wheel
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r /app/reqs/requirements.txt
 
 # It is recommended to make virtual envs for each process
 RUN bin/mkvenvs

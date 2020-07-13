@@ -41,7 +41,8 @@ In SSM, the parameters are stored in <STACK_NAME>__params format with the follow
 command:
 
 ```
-source ./venv/root/bin/activate && python code put_ssm_parameters -p parameters.json && deactivate
+source ./venv/root/bin/activate && \
+  python code put_ssm_parameters -p parameters.json && deactivate
 ```
 
 If you omit `-p <filename>.json`, it tries to generate the parameters from `.local` file.
@@ -50,7 +51,8 @@ If you omit `-p <filename>.json`, it tries to generate the parameters from `.loc
 You can check the currently stored values by dump command:
 
 ```
-source ./venv/root/bin/activate && python code dump_ssm_parameters && deactivate
+source ./venv/root/bin/activate && \
+  python code dump_ssm_parameters && deactivate
 ```
 
 ## S3

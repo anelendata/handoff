@@ -7,7 +7,7 @@ In `project.yml`, you can also define virtual environment for Python program:
 ```
 commands:
   - command: cat
-    args: "./requirements.txt"
+    args: "./README.md"
   - command: "./scripts/python/collector_stats.py"
     venv: "./venv/root"
 ```
@@ -22,7 +22,7 @@ Try runing:
 This time, you will get `.artifacts/collector_stats.json` that looks like:
 
 ```
-{"rows_read": 15}
+{"rows_read": 42}
 ```
 
 ## How to use config files: Fetching exchange rates with singer.io
@@ -65,7 +65,7 @@ commands:
 
 In Debian/Ubuntu:
 ```
-echo '{ "base": "JPY", "start_date": "'`date -d "$date -1 days" +'%Y-%m-%d'`'" }' \
+echo '{ "base": "JPY", "start_date": "'`date -d "$date -7 days" +'%Y-%m-%d'`'" }' \
   > .local/tap-config.json
 ```
 
@@ -83,17 +83,17 @@ echo '{ "base": "JPY", "start_date": "'`date -v -7d  +'%Y-%m-%d'`'" }' \
 
 4. Generate parameter file and run:
 ```
-./bin/mkparams > ./params.json
+./bin/mkparams > .env/params.json
 ```
 
 You will see the content of `tap-config.json` included in `params.json`:
 ```
-cat params.json
+cat .env/params.json
 ```
 
 Now let's run:
 ```
-./bin/runlocal ./params.json
+./bin/runlocal .env/params.json
 ```
 
 This should output something like:

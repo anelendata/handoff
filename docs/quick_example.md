@@ -28,13 +28,13 @@ for example:
 ```
 commands:
   - command: cat
-    args: "./requirements.txt"
+    args: "./README.md"
   - command: wc
     args: "-l"
 ```
 
 This project file defines a shell-script equivalent of
-`cat ./requirements.txt | wc -l`.
+`cat ./README.md | wc -l`.
 
 Try runing:
 ```
@@ -55,12 +55,11 @@ INFO - 2020-07-10 17:49:48,719 - impl.runner: Processed in 0:00:00.005308
 
 It creates `.artifacts/state` whose content:
 ```
-15
+42
 ```
 is the equivalent to:
 ```
-cat ./requirements.txt | wc -l
+cat ./README.md | wc -l
 ```
 
 Next: [Try fetching currency exchange rates](venv_config)
-

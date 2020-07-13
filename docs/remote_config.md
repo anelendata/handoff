@@ -94,10 +94,11 @@ For a local testing, manually copy files under `.env` and refer it from `project
 Example:
 ```
 commands:
-  - command: "tap-salesforce"
-  - venv: ./venv/proc_01
-  - args: "--config .env/config/tap-config.json --properties .env/files/properties.json"
-  ...
+  command: "tap-salesforce"
+  venv: ./venv/proc_01
+  installs:
+    - "pip install tap-salesforce"
+  args: "--config .env/config/tap-config.json --properties .env/files/properties.json"
 ```
 
 Note: You can create subdirectories under `.env`.

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+source ./venv/root/bin/activate && python code put_ssm_parameters --no_artifacts_upload && deactivate

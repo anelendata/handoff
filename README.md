@@ -20,8 +20,8 @@ handoff is an open-source (APLv2) project sponsored by [ANELEN](https://anelen.c
 
 ## How it works
 
-handoff is originally designed to deploy a single-line ETL process like
-[singer.io](https://singer.io) on AWS Fargate, and it was redesigned to
+handoff was originally designed to deploy a single-line ETL process like
+[singer.io](https://singer.io) on AWS Fargate, and it was extended to
 run any commands and program.
 
 In handoff.cloud framework, the configurations are stored and retrieved

@@ -16,7 +16,7 @@ handoff helps the teams who want to:
 
 ...and more!
 
-handoff is an open-source (APLv2) project sponsored by ANELEN.
+handoff is an open-source (APLv2) project sponsored by [ANELEN](https://anelen.co).
 
 ## How it works
 

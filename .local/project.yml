@@ -1,12 +1,6 @@
 commands:
-  - command: "tap-exchangeratesapi"
-    args: "--config ./.env/config/tap-config.json"
-    venv: "./venv/proc_01"
-    installs:
-      - "pip install tap-exchangeratesapi"
+  - command: cat
+    args: "./README.md"
   - command: "./scripts/python/collector_stats.py"
     venv: "./venv/root"
-  - command: "target-csv"
-    venv: "./venv/proc_02"
-    installs:
-      - "pip install target-csv"
+  - command: "wc"

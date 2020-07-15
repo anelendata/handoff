@@ -12,6 +12,30 @@ commands:
     venv: "./venv/root"
 ```
 
+`collector_stats.py` is a simple Python program that pass on from stdin to
+stdout while counting the number of rows:
+
+```
+def collector_stats(outfile):
+    """
+    Read from stdin and count the lines. Output to a file after done.
+    """
+    lines = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
+    output = {"rows_read": 0}
+    for line in lines:
+        try:
+            o = json.loads(line)
+            print(json.dumps(o))
+            if o["type"].lower() == "record":
+                output["rows_read"] += 1
+        except json.decoder.JSONDecodeError:
+            print(line)
+            output["rows_read"] += 1
+    with open(outfile, "w") as f:
+        json.dump(output, f)
+        f.write("\n")
+```
+
 Try runing:
 ```
 ./bin/mkvenvs
@@ -20,10 +44,18 @@ Try runing:
 ```
 
 This time, you will get `.artifacts/collector_stats.json` that looks like:
-
 ```
 {"rows_read": 42}
 ```
+
+Also notice that we chained 3 commands instead 2. This time, we got
+`.artifacts/state` that contains the output of `wc` command:
+```
+     84     213    1715
+```
+
+Note: The example above is useful for the singer.io users who wants to insert
+a transform process between tap and target.
 
 ## How to use config files: Fetching exchange rates with singer.io
 

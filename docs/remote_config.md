@@ -11,16 +11,47 @@ as explained inthe previous section.
 
 ## AWS configuration
 
-Create a programmatic access user with an appropriate role with AWS IAM.
-The user should have a sufficient permissions to run the process. At minimum,
-AmazonSSMReadOnlyAccess. Obtain the access keys and define AWS credentials and 
-region as environment variables:
+### AWS keys
 
+If you are not an admin user of your AWS account, make sure you have sufficient
+permission to read/write Parameter Store and S3 and deploy a Fargate task.
+[Here](https://github.com/anelendata/fgops/blob/master/policy/fargate_deploy.yml)
+is an example of
+[AWS Policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html).
+
+Obtain your access keys and define AWS credentials and region as environment variables:
 ```
 export AWS_ACCESS_KEY_ID=<key>
 export AWS_SECRET_ACCESS_KEY=<secret>
 export AWS_REGION=<region_name>
 ```
+
+### Alternative method: Role assumption
+
+Alternatively, if you have a AWS profile entry that assumes an
+[AWS Role](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-sharing-logs-create-role.html)
+, for example:
+```
+[<your-profile-name-1>]
+source_profile = <your-profile-name-2-with-aws-keys>
+role_arn = arn:aws:iam::<aws-account-number>:role/<role-name>
+external_id=<your-external-id>  # You may/maynot need this
+region = us-east-1
+```
+in `.aws/credentials`, you can assume role and export the temporary keys
+(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN)
+with the following command:
+```
+./bin/iam_assume_role <fg_env>
+```
+
+Here, <fg_env> is a file that contians:
+```
+export AWS_PROFILE=<your-profile-name-1>
+```
+(More about fg_env file later.)
+
+### Other environment variables
 
 Define `S3_BUCKET_NAME`:
 

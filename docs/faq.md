@@ -1,6 +1,6 @@
 # FAQs
 
-## Q. How do I configure project.yml so it installs an Python command from git?
+## Q. How do I configure project.yml so it installs a Python command from a Github repository?
 
 You can put `https://github.com/<account>/<repository>/archive/<commit-hash>.tar.gz#egg=<command-name>`
 format like this project of executing a pair of singer.io processes,

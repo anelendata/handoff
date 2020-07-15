@@ -13,8 +13,8 @@ commands:
 ```
 
 `collector_stats.py` is a simple Python program that pass on from stdin to
-stdout while counting the number of rows:
-
+stdout while counting the number of rows. It is already in handoff repo, you
+don't need to make the file. The function looks like this:
 ```
 def collector_stats(outfile):
     """

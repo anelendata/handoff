@@ -10,6 +10,7 @@ commands:
     args: "./README.md"
   - command: "./scripts/python/collector_stats.py"
     venv: "./venv/root"
+  - command: "wc"
 ```
 
 `collector_stats.py` is a simple Python program that pass on from stdin to

@@ -29,7 +29,7 @@ export AWS_REGION=<region_name>
 ### Alternative method: Role assumption
 
 Alternatively, if you have a AWS profile entry that assumes an
-[AWS Role](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-sharing-logs-create-role.html)
+[AWS Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
 , for example:
 ```
 [<your-profile-name-1>]

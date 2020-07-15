@@ -45,11 +45,11 @@ with the following command:
 ./bin/iam_assume_role <fg_env>
 ```
 
-Here, <fg_env> is a file that contians:
+Here, `<fg_env>` is a file that contians:
 ```
 export AWS_PROFILE=<your-profile-name-1>
 ```
-(More about fg_env file later.)
+(More about `fg_env` file in [the next section](./docker.md).)
 
 ### Other environment variables
 

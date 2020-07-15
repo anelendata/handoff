@@ -5,8 +5,9 @@ at `deploy/fargate`.
 fgops are a set of Docker and CloudFormation commands to build and push the docker images to
 ECR, create the ECS task definition, and schedule the events to be executed via Fargate.
 
-fgops requires an environment file. See [fg_env_example](./deploy/fargate/fg_env_example) as an example.
-This file will be referred as <fg_env_file> from here.
+fgops requires an environment file. See
+[fg_env_example](https://github.com/anelendata/fgops/blob/master/fg_env_example)
+as an example. This file will be referred as <fg_env_file> from here.
 
 fgops are symlinked from `./bin` for convenience.
 
@@ -51,6 +52,6 @@ DATA={"start_at":"1990-01-01T00:00:00","end_at":"2030-01-01T00:00:00"}
 CMD python3 code/__main__.py ${COMMAND:-default} -d ${DATA:-{}}
 ```
 
-See [Dockerfile](./Dockerfile) for details.
+See [Dockerfile](https://github.com/anelendata/handoff/blob/master/Dockerfile) for details.
 
 Next: [Fargate Deployment](fargate.md)

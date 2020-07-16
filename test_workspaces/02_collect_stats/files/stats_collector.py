@@ -24,4 +24,4 @@ def collector_stats(outfile):
 
 
 if __name__ == "__main__":
-    collector_stats(".artifacts/collect_stats.json")
+    collector_stats("artifacts/collect_stats.json")

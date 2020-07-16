@@ -1,5 +1,5 @@
 commands:
   - command: cat
-    args: "../README.md"
+    args: "../../README.md"
   - command: wc
     args: "-l"

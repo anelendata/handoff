@@ -13,32 +13,6 @@ FILES_DIR = "files"
 ARTIFACTS_DIR = "artifacts"
 
 
-def load_parameters(parameter_file=None):
-    """
-    Not used
-
-    Set parameters to environment variables and config files
-    Returns the params dict
-    """
-    params = read_parameters(parameter_file)
-
-    if not os.path.isdir(CONFIG_DIR):
-        os.mkdir(CONFIG_DIR)
-    config_dir = os.path.join(CONFIG_DIR, "config")
-    if not os.path.isdir(config_dir):
-        os.mkdir(config_dir)
-
-    for r in params.get("envs", []):
-        os.environ[r["key"]] = r["value"]
-
-    for r in params.get("files", []):
-        with open(os.path.join(config_dir, r["name"]), "w") as f:
-            f.write(r["value"])
-
-    return params
-
-
-
 def _check_env_vars():
     if not os.environ.get("S3_BUCKET_NAME"):
         raise Exception("Set S3_BUCKET_NAME env")
@@ -61,7 +35,7 @@ def _read_project(project_file, workspace_dir):
     return project
 
 
-def _install(venv_path, install):
+def _make_venv(venv_path):
     if os.path.exists(venv_path):
         LOGGER.warn("%s already exists. Skipping python -m venv..." % venv_path)
     else:
@@ -73,6 +47,8 @@ def _install(venv_path, install):
         builder = ExtendedEnvBuilder()
         builder.create(venv_path)
 
+
+def _install(venv_path, install):
     command = '/bin/bash -c "source {venv}/bin/activate && pip install wheel && {install}"'.format(
         **{"venv": venv_path, "install": install})
     LOGGER.info("Running %s" % command)
@@ -137,10 +113,10 @@ def compile_config(project_dir, workspace_dir, data):
     config.update(project)
 
     config["files"] = list()
-    json_files = [fn for fn in os.listdir(project_dir) if os.path.isfile(os.path.join(project_dir, fn)) and fn[-5:] == ".json"]
+    json_files = [fn for fn in os.listdir(os.path.join(project_dir, CONFIG_DIR)) if os.path.isfile(os.path.join(project_dir, CONFIG_DIR, fn)) and fn[-5:] == ".json"]
 
     for json_file in json_files:
-        with open(os.path.join(project_dir, json_file)) as f:
+        with open(os.path.join(project_dir, CONFIG_DIR, json_file)) as f:
             config_str = f.read().replace('"', "\"")
             config["files"].append({"name": json_file, "value": config_str})
     return config
@@ -193,6 +169,8 @@ def install(project_dir, workspace_dir, data):
     project = _read_project(os.path.join(project_dir, PROJECT_FILE), workspace_dir)
     os.chdir(workspace_dir)
     for command in project["commands"]:
+        if command.get("venv"):
+            _make_venv(command["venv"])
         for install in command.get("installs", []):
             _install(os.path.join(command["venv"]), install)
 

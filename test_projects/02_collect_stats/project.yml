@@ -1,0 +1,6 @@
+commands:
+  - command: cat
+    args: "../../README.md"
+  - command: "files/stats_collector.py"
+    venv: "proc_01"
+  - command: "wc"

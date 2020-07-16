@@ -62,7 +62,6 @@ def do(command,
 
     if command == "run_local":
         config = admin.compile_config(project_dir, workspace_dir, data)
-        print(config)
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
     os.chdir(workspace_dir)

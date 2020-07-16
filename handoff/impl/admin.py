@@ -99,7 +99,7 @@ def _read_precompiled_config(precompiled_config_file=None):
     return config
 
 
-def _compile_config(project_dir, workspace_dir):
+def compile_config(project_dir, workspace_dir, data):
     """ Compile configuration JSON file from the project.yml
 
     The output JSON file describes the commands and arguments for each process.
@@ -132,18 +132,18 @@ def _compile_config(project_dir, workspace_dir):
         value: "config/google_client_secret.json"
     ```
     """
-    params = dict()
+    config = dict()
     project = _read_project(os.path.join(project_dir, "project.yml"), workspace_dir)
-    params.update(project)
+    config.update(project)
 
-    params["files"] = list()
+    config["files"] = list()
     json_files = [fn for fn in os.listdir(project_dir) if os.path.isfile(os.path.join(project_dir, fn)) and fn[-5:] == ".json"]
 
     for json_file in json_files:
         with open(os.path.join(project_dir, json_file)) as f:
             config_str = f.read().replace('"', "\"")
-            params["files"].append({"name": json_file, "value": config_str})
-    return json.dumps(params)
+            config["files"].append({"name": json_file, "value": config_str})
+    return config
 
 
 def push_artifacts(project_dir, workspace_dir, data):
@@ -171,7 +171,7 @@ def push_config(project_dir, workspace_dir, data, allow_advanced_tier=False):
         config = json.dumps(_read_precompiled_config(parameter_file=parameter_file))
     else:
         LOGGER.info("Compiling config from %s" % project_dir)
-        config = _compile_config(project_dir, workspace_dir)
+        config = json.dumps(compile_config(project_dir, workspace_dir, data))
 
     LOGGER.info("Uploading config to %s." % os.environ.get("STACK_NAME"))
 

@@ -109,6 +109,10 @@ def run(config, data):
     return state
 
 
+def run_local(config, data):
+    return run(config, data)
+
+
 def show_commands(config, data):
     """
     """

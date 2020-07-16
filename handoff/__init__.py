@@ -59,7 +59,12 @@ def do(command,
         return
 
     admin.init_workspace(project_dir, workspace_dir, data)
-    config = admin.get_config(project_dir, workspace_dir, data)
+
+    if command == "run_local":
+        config = admin.compile_config(project_dir, workspace_dir, data)
+        print(config)
+    else:
+        config = admin.get_config(project_dir, workspace_dir, data)
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
@@ -77,6 +82,7 @@ def do(command,
     if state:
         with open(os.path.join(ARTIFACTS_DIR, "state"), "w") as f:
             f.write(state)
+
     if push_artifacts:
         if not os.environ.get("S3_BUCKET_NAME"):
             raise Exception("Cannot push artifacts. S3_BUCKET_NAME is not set")

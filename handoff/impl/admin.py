@@ -58,22 +58,6 @@ def _read_project(project_file, workspace_dir):
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
-    print(project)
-    return project
-
-    ######
-    if not workspace_dir:
-        return project
-
-    for i in range(0, len(project["commands"])):
-        if not project["commands"][i].get("venv"):
-            continue
-        project["commands"][i]["venv"] = os.path.join(workspace_dir, project["commands"][i]["venv"])
-        if not project["commands"][i].get("file"):
-            continue
-        project["commands"][i]["venv"] = os.path.join(workspace_dir, project["commands"][i]["venv"])
-
-
     return project
 
 

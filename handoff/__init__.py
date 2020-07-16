@@ -1,9 +1,8 @@
 import argparse, json
+from .impl import runner
 
-from impl import runner
 
-
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Run ETL.")
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("-d", "--data", type=str, default="{}", help="Data required for the command as a JSON string")
@@ -21,3 +20,6 @@ if __name__ == "__main__":
 
     upload_artifacts = args.no_artifacts_upload is False
     runner.run(command, data, args.parameter_file, upload_artifacts=upload_artifacts)
+
+if __name__ == "__main__":
+    main()

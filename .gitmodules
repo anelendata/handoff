@@ -1,9 +1,3 @@
 [submodule "deploy/fargate"]
 	path = deploy/fargate
     url = https://github.com/anelendata/fgops.git
-[submodule "code/aws_utils"]
-	path = code/aws_utils
-    url = https://github.com/anelendata/aws_utils.git
-[submodule "code/impl"]
-	path = code/impl
-    url = https://github.com/anelendata/handoff_core_impl.git

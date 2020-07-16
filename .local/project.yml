@@ -1,6 +1,0 @@
-commands:
-  - command: cat
-    args: "./README.md"
-  - command: "./scripts/python/collector_stats.py"
-    venv: "./venv/root"
-  - command: "wc"

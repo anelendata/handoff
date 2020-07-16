@@ -1,5 +1,7 @@
-workspace
+test_workspaces
+test_projects
 project
+workspace
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -67,6 +67,7 @@ def do(command,
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
         admin.get_files(project_dir, workspace_dir, data)
+    prev_wd = os.getcwd()
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
@@ -85,6 +86,7 @@ def do(command,
         with open(os.path.join(ARTIFACTS_DIR, "state"), "w") as f:
             f.write(state)
 
+    os.chdir(prev_wd)
     if push_artifacts:
         if not os.environ.get("S3_BUCKET_NAME"):
             raise Exception("Cannot push artifacts. S3_BUCKET_NAME is not set")

@@ -13,6 +13,12 @@ fgops are symlinked from `./bin` for convenience.
 
 ## Build the image
 
+Dockerfile will try to install the project from `./project` directory. So copy
+what you want to build:
+```
+cp -r test_projects/03_exchange_rates project
+```
+
 ```
 ./bin/docker_task build <fg_env_file> 0.1
 ```

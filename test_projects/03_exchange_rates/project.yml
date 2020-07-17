@@ -7,6 +7,7 @@ commands:
   - command: "python files/stats_collector.py"
     venv: "proc_01"
   - command: "target-csv"
+    args: "--config config/target-config.json"
     venv: "proc_02"
     installs:
       - "pip install target-csv"

@@ -132,15 +132,27 @@ handoff install -w test_workspaces/03_exchange_rates
 
 Then run:
 ```
-handoff run -w test_workspaces/03_exchange_rates
+handoff run -w test_workspaces/03_exchange_rates -a
 ```
 
 Notice that we dropped `-p` option in the last two commands. The project
 configurations are fetched from remote this time.
 
 After the run, you find the output from the exchange rate tap example from
-the previous example. You will also find `.env/files/hello.txt` downloaded
-from the S3 bucket.
+the previous example.
+
+In the aboe run command, we added `-a` option. This is short for `--push-artifacts`.
+With this option, the files under `<workspace_dir>/artifacts` will be push to
+the remote storage after the run. You can download the artifacts from the
+remote storage by runing:
+```
+handoff get_artifacts -w <workspace_dir>
+```
+
+You can also push the contents of `<workspace_dir>/artifacts` manually:
+```
+handoff push_artifacts -w <workspace_dir>
+```
 
 ### Other useful commands
 

@@ -75,6 +75,14 @@ def _read_precompiled_config(precompiled_config_file=None):
     return config
 
 
+def _write_config_files(workspace_config_dir, precompiled_config):
+    if not os.path.exists(workspace_config_dir):
+        os.mkdir(workspace_config_dir)
+    for r in precompiled_config.get("files", []):
+        with open(os.path.join(workspace_config_dir, r["name"]), "w") as f:
+            f.write(r["value"])
+
+
 def compile_config(project_dir, workspace_dir, data, **kwargs):
     """ Compile configuration JSON file from the project.yml
 
@@ -121,6 +129,10 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
             with open(os.path.join(project_dir, CONFIG_DIR, json_file)) as f:
                 config_str = f.read().replace('"', "\"")
                 config["files"].append({"name": json_file, "value": config_str})
+
+    if workspace_dir:
+        config_dir = os.path.join(workspace_dir, CONFIG_DIR)
+        _write_config_files(config_dir, config)
     return config
 
 
@@ -184,14 +196,11 @@ def install(project_dir, workspace_dir, data, **kwargs):
             _install(os.path.join(command["venv"]), install)
 
 
-
 def get_config(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     config_dir, _, _ = _get_workspace_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
-    for r in precompiled_config.get("files", []):
-        with open(os.path.join(config_dir, r["name"]), "w") as f:
-            f.write(r["value"])
+    _write_config_files(config_dir, precompiled_config)
 
     return precompiled_config
 
@@ -202,6 +211,7 @@ def print_config(project_dir, workspace_dir, data, **kwargs):
 
 def get_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
+    LOGGER.info("Downloading artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
     s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), ARTIFACTS_DIR + "/"),
                     artifacts_dir,
@@ -209,6 +219,7 @@ def get_artifacts(project_dir, workspace_dir, data, **kwargs):
 
 def get_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
+    LOGGER.info("Downloading config files from S3 " + os.environ.get("S3_BUCKET_NAME"))
     _, _, files_dir = _get_workspace_dirs(workspace_dir)
     s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), FILES_DIR + "/"),
                     files_dir,

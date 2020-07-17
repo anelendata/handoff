@@ -92,4 +92,4 @@ RUN handoff install -p project -w workspace
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -p project -w workspace -d ${DATA:-{}} -a
+CMD handoff ${COMMAND:-run} -p project -w workspace -a -d ${DATA:-{}} -a

@@ -76,9 +76,7 @@ Note: Currently, only JSON files are supported for remote config store.
 
 Example:
 
-1. Update the project file.
-
-.local/project.yml:
+The project file `test_projects/03_exchange_rates/project.yml` looks like this:
 ```
 commands:
   - command: "tap-exchangeratesapi"
@@ -94,12 +92,12 @@ commands:
       - "pip install target-csv"
 ```
 
-2. Make environments defined in the project and install commands
+1. Make environments defined in the project and install commands
 ```
 handoff install -p test_projects/03_exchange_rates -w test_workspaces/03_exchange_rates
 ```
 
-3. Create a copy of config file for tap-exchangeratesapi:
+2. Create a copy of config file for tap-exchangeratesapi:
 
 In Debian/Ubuntu:
 ```
@@ -118,8 +116,7 @@ echo '{ "base": "JPY", "start_date": "'`date -v -7d  +'%Y-%m-%d'`'" }' \
 { "base": "JPY", "start_date": "2020-07-06" }
 ```
 
-
-4. Run
+3. Run
 ```
 handoff run_local -p test_projects/03_exchange_rates -w test_workspaces/03_exchange_rates
 ```
@@ -145,6 +142,6 @@ CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,
 0.0127290837,0.0725398406,1.3197211155,0.4630976096,0.0618218792,2.9357569721,0.2215388446,0.007434429,0.0401958831,0.0863047809,135.1005146082,0.7041915671,0.050374336,0.6657569721,0.0625373506,1.0,0.29312749,0.0088188911,0.0083001328,0.0399311089,0.0162333997,0.0642571381,0.0655312085,0.0889467131,0.0142670983,0.158440405,0.0093592297,0.2132744024,0.0130336985,0.0134852258,0.032375498,11.244189907,0.0371372842,2020-07-10T00:00:00Z
 ```
 
-It also leaves `.artifacts/state` and `.artifacts/collector_stats.json`.
+It also leaves `<workspace_dir>/artifacts/state` and `<workspace_dir>/artifacts/collector_stats.json`.
 
 Next: [Outputs](outputs)

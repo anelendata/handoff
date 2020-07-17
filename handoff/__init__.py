@@ -63,6 +63,7 @@ def do(command,
 
     if command == "run_local":
         config = admin.compile_config(project_dir, workspace_dir, data)
+        admin.copy_files_from_local_project(project_dir, workspace_dir, data)
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
         admin.get_files(project_dir, workspace_dir, data)

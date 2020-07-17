@@ -38,7 +38,8 @@ This project file defines a shell-script equivalent of
 
 Try runing:
 ```
-handoff run_local -p test_projects/01_word_count -w test_projects/01_word_count
+mkdir -p test_workspaces
+handoff run_local -p test_projects/01_word_count -w test_workspaces/01_word_count
 ```
 
 You get console outputs like this:

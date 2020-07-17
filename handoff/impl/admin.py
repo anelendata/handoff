@@ -1,4 +1,4 @@
-import datetime, json, logging, os, sys, subprocess, venv
+import datetime, json, logging, os, shutil, sys, subprocess, venv
 import yaml
 
 from handoff.aws_utils import s3, ssm
@@ -113,12 +113,14 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     config.update(project)
 
     config["files"] = list()
-    json_files = [fn for fn in os.listdir(os.path.join(project_dir, CONFIG_DIR)) if os.path.isfile(os.path.join(project_dir, CONFIG_DIR, fn)) and fn[-5:] == ".json"]
+    project_config_dir = os.path.join(project_dir, CONFIG_DIR)
+    if os.path.exists(project_config_dir):
+        json_files = [fn for fn in os.listdir(project_config_dir) if os.path.isfile(os.path.join(project_dir, CONFIG_DIR, fn)) and fn[-5:] == ".json"]
 
-    for json_file in json_files:
-        with open(os.path.join(project_dir, CONFIG_DIR, json_file)) as f:
-            config_str = f.read().replace('"', "\"")
-            config["files"].append({"name": json_file, "value": config_str})
+        for json_file in json_files:
+            with open(os.path.join(project_dir, CONFIG_DIR, json_file)) as f:
+                config_str = f.read().replace('"', "\"")
+                config["files"].append({"name": json_file, "value": config_str})
     return config
 
 
@@ -242,17 +244,25 @@ def delete_files(project_dir, workspace_dir, data, **kwargs):
                       os.path.join(os.environ.get("STACK_NAME"),
                                    FILES_DIR))
 
-def delete_(project_dir, workspace_dir, data, **kwargs):
+def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
                       os.path.join(os.environ.get("STACK_NAME")))
 
 
+def copy_files_from_local_project(project_dir, workspace_dir, data):
+    project_files_dir = os.path.join(project_dir, FILES_DIR)
+    if not os.path.exists(project_files_dir):
+        return
+    _, _, files_dir = _get_workspace_dirs(workspace_dir)
+    if os.path.exists(files_dir):
+        shutil.rmtree(files_dir)
+    shutil.copytree(project_files_dir, files_dir)
+
+
 def init_workspace(project_dir, workspace_dir, data, **kwargs):
-    config_dir = os.path.join(workspace_dir, CONFIG_DIR)
-    artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
-    files_dir = os.path.join(workspace_dir, FILES_DIR)
+    config_dir, artifacts_dir, files_dir = _get_workspace_dirs(workspace_dir)
     if not os.path.isdir(workspace_dir):
         os.mkdir(workspace_dir)
     if not os.path.isdir(config_dir):

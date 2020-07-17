@@ -17,6 +17,13 @@ Install:
 ```
 python3 -m venv ./venv
 source venv/bin/activate
+pip install handoff
+```
+
+Or from the repository directory,
+```
+python3 -m venv ./venv
+source venv/bin/activate
 python setup.py install
 ```
 

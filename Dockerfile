@@ -78,25 +78,18 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 # Or do this?
 # RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-COPY bin /app/bin
-COPY code /app/code
-COPY reqs /app/reqs
-COPY scripts /app/scripts
-
-RUN mkdir -p /app/.local
-COPY .local/project.yml /app/.local/project.yml
-
+COPY . /app/
 RUN chmod 777 -R /app
 
 WORKDIR /app
 
 RUN pip3 install wheel
-RUN pip3 install -r /app/reqs/requirements.txt
+RUN python3 /app/setup.py install
 
 # It is recommended to make virtual envs for each process
-RUN bin/mkvenvs
+RUN handoff install -p project -w workspace
 
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD python3 code/__main__.py ${COMMAND:-default} -d ${DATA:-{}}
+CMD handoff ${COMMAND:-run} -p project -w workspace -a -d ${DATA:-{}} -a

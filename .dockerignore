@@ -1,7 +1,7 @@
-test_workspaces
-test_projects
-project
+*.md
 workspace
+venv
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

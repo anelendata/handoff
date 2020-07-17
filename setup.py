@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 from setuptools import setup
 
+VERSION="0.1.0-alpha"
+
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+
 setup(
     name="handoff",
-    version="0.1.0",
+    version=VERSION,
     description="Deploy configurable unix pipeline jobs serverlessly.",
     author="Daigo Tanaka, Anelen Co., LLC",
     url="http://dev.handoff.cloud",
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: Apache Software License",
 
-        "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS :: MacOS X",
         "Operating System :: POSIX :: Linux",
 

@@ -75,7 +75,7 @@ def _read_precompiled_config(precompiled_config_file=None):
     return config
 
 
-def compile_config(project_dir, workspace_dir, data):
+def compile_config(project_dir, workspace_dir, data, **kwargs):
     """ Compile configuration JSON file from the project.yml
 
     The output JSON file describes the commands and arguments for each process.
@@ -122,7 +122,7 @@ def compile_config(project_dir, workspace_dir, data):
     return config
 
 
-def push_artifacts(project_dir, workspace_dir, data):
+def push_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
     d = datetime.datetime.utcnow()
@@ -130,17 +130,18 @@ def push_artifacts(project_dir, workspace_dir, data):
     s3.upload_dir(artifacts_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
 
 
-def push_files(project_dir, workspace_dir, data):
+def push_files(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of workspace_dir/FILES_DIR to remote storage"""
     _check_env_vars()
-    _, _, files_dir = _get_workspace_dirs(workspace_dir)
+    files_dir = os.path.join(project_dir, FILES_DIR)
     d = datetime.datetime.utcnow()
     prefix = os.path.join(os.environ.get("STACK_NAME"), FILES_DIR)
     s3.upload_dir(files_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
 
 
-def push_config(project_dir, workspace_dir, data, allow_advanced_tier=False):
+def push_config(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
+    allow_advanced_tier = kwargs.get("allow_advanced_tier", False)
     precompiled_file = data.get("config")
     if precompiled_file:
         LOGGER.info("Reading config from the precompiled JSON file %s." % parameter_file)
@@ -151,6 +152,8 @@ def push_config(project_dir, workspace_dir, data, allow_advanced_tier=False):
 
     LOGGER.info("Uploading config to %s." % os.environ.get("STACK_NAME"))
 
+    if allow_advanced_tier:
+        LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
     tier = "Standard"
     if len(config) > 8192:
         raise Exception("Parameter string must be less than 8192kb!")
@@ -159,14 +162,18 @@ def push_config(project_dir, workspace_dir, data, allow_advanced_tier=False):
             tier = "Advanced"
         else:
             raise Exception("Parameter string is %s > 4096 byte and allow_advanced_tier=False" % len(config))
+    LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" % tier)
     ssm.put_parameter(os.environ.get("STACK_NAME"), "config", config, tier=tier)
 
 
-def install(project_dir, workspace_dir, data):
+def install(project_dir, workspace_dir, data, **kwargs):
     """
     Install dependencies in the local virtual environment
     """
-    project = _read_project(os.path.join(project_dir, PROJECT_FILE), workspace_dir)
+    if not project_dir:
+        project = get_config(project_dir, workspace_dir, data, **kwargs)
+    else:
+        project = _read_project(os.path.join(project_dir, PROJECT_FILE), workspace_dir)
     os.chdir(workspace_dir)
     for command in project["commands"]:
         if command.get("venv"):
@@ -176,7 +183,7 @@ def install(project_dir, workspace_dir, data):
 
 
 
-def get_config(project_dir, workspace_dir, data):
+def get_config(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     config_dir, _, _ = _get_workspace_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
@@ -187,18 +194,18 @@ def get_config(project_dir, workspace_dir, data):
     return precompiled_config
 
 
-def print_config(project_dir, workspace_dir, data):
+def print_config(project_dir, workspace_dir, data, **kwargs):
     print(json.dumps(get_config(project_dir, workspace_dir, data)))
 
 
-def get_artifacts(project_dir, workspace_dir, data):
+def get_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
     s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), ARTIFACTS_DIR + "/"),
                     artifacts_dir,
                     os.environ.get("S3_BUCKET_NAME"))
 
-def get_files(project_dir, workspace_dir, data):
+def get_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     _, _, files_dir = _get_workspace_dirs(workspace_dir)
     s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), FILES_DIR + "/"),
@@ -206,13 +213,13 @@ def get_files(project_dir, workspace_dir, data):
                     os.environ.get("S3_BUCKET_NAME"))
 
 
-def get_workspace(project_dir, workspace_dir, data):
+def get_workspace(project_dir, workspace_dir, data, **kwargs):
     get_config(project_dir, workspace_dir, data)
     get_artifacts(project_dir, workspace_dir, data)
     get_files(project_dir, workspace_dir, data)
 
 
-def delete_config(project_dir, workspace_dir, data):
+def delete_config(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting config files from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
@@ -220,7 +227,7 @@ def delete_config(project_dir, workspace_dir, data):
                                    CONFIG_DIR))
 
 
-def delete_artifacts(project_dir, workspace_dir, data):
+def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
@@ -228,21 +235,21 @@ def delete_artifacts(project_dir, workspace_dir, data):
                                    ARTIFACTS_DIR))
 
 
-def delete_files(project_dir, workspace_dir, data):
+def delete_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting files from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
                       os.path.join(os.environ.get("STACK_NAME"),
                                    FILES_DIR))
 
-def delete_(project_dir, workspace_dir, data):
+def delete_(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
                       os.path.join(os.environ.get("STACK_NAME")))
 
 
-def init_workspace(project_dir, workspace_dir, data):
+def init_workspace(project_dir, workspace_dir, data, **kwargs):
     config_dir = os.path.join(workspace_dir, CONFIG_DIR)
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     files_dir = os.path.join(workspace_dir, FILES_DIR)

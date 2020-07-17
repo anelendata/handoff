@@ -10,7 +10,7 @@ Here is the contents of `test_projects/02_collect_stats/project.yml`:
 commands:
   - command: cat
     args: "../../README.md"
-  - command: "files/stats_collector.py"
+  - command: "python files/stats_collector.py"
     venv: "proc_01"
   - command: "wc"
 ```
@@ -86,7 +86,7 @@ commands:
     venv: "proc_01"
     installs:
       - "pip install tap-exchangeratesapi"
-  - command: "files/stats_collector.py"
+  - command: "python files/stats_collector.py"
     venv: "proc_01"
   - command: "target-csv"
     venv: "proc_02"

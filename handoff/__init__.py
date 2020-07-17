@@ -26,20 +26,21 @@ def do(command,
        data,
        project_dir,
        workspace_dir,
-       push_artifacts=True):
+       push_artifacts=True,
+       **kwargs):
     """
     """
     # Try running admin commands
     admin_commands = _list_commands(admin)
 
-    if (command in admin_commands.keys()
-            and (not project_dir or not os.path.isdir(project_dir))):
+    if False and (command in admin_commands.keys()
+                  and (not project_dir or not os.path.isdir(project_dir))):
         raise Exception("Please give a project directory")
 
         if not project_dir or not os.path.isfile(os.path.join(project_dir, PROJECT_FILE)):
             raise Exception("Cannot find the project file at %s" % project_dir)
 
-    if not workspace_dir:
+    if False and not workspace_dir:
         raise Exception("Please set a workspace directory")
 
     # if command != "init_workspace" and not os.path.isdir(workspace_dir):
@@ -48,7 +49,7 @@ def do(command,
     if command in admin_commands:
         # Run the admin command
         admin.init_workspace(project_dir, workspace_dir, data)
-        admin_commands[command](project_dir, workspace_dir, data)
+        admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         return
 
     commands = _list_commands(runner)
@@ -64,6 +65,7 @@ def do(command,
         config = admin.compile_config(project_dir, workspace_dir, data)
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
+        admin.get_files(project_dir, workspace_dir, data)
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
@@ -71,7 +73,7 @@ def do(command,
     LOGGER.info("Job started at " + str(start))
 
     # Run the command
-    state = commands[command](config, data)
+    state = commands[command](config, data, **kwargs)
 
     end = datetime.datetime.utcnow()
     LOGGER.info("Job ended at " + str(end))
@@ -95,6 +97,7 @@ def main():
     parser.add_argument("-p", "--project-dir", type=str, default=None, help="Specify the location of project directory")
     parser.add_argument("-w", "--workspace-dir", type=str, default=DEFAULT_WORKSPACE_DIR, help="Location of workspace directory")
     parser.add_argument("-a", "--push-artifacts", action="store_true", help="Push artifacts to remote at the end of the run")
+    parser.add_argument("-t", "--allow-advanced-tier", action="store_true", help="Allow AWS SSM Parameter Store Advanced tier")
 
     args = parser.parse_args()
     command = args.command
@@ -105,7 +108,8 @@ def main():
     except json.JSONDecodeError as e:
         data = json.loads(data_json[0:-1])
 
-    do(command, data, args.project_dir, args.workspace_dir, args.push_artifacts)
+    do(command, data, args.project_dir, args.workspace_dir, args.push_artifacts,
+       **{"allow_advanced_tier": args.allow_advanced_tier})
 
 if __name__ == "__main__":
     main()

@@ -38,7 +38,8 @@ role_arn = arn:aws:iam::<aws-account-number>:role/<role-name>
 external_id=<your-external-id>  # You may/maynot need this
 region = us-east-1
 ```
-in `.aws/credentials`, you can assume role and export the temporary keys
+in `.aws/credentials`. The repository contains convenience shell scripts
+at `bin`. You can assume role and export the temporary keys
 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN)
 with the following command:
 ```
@@ -68,71 +69,78 @@ export STACK_NAME=<some-stack-name>
 
 ## SSM Parameter Store
 
-In SSM, the parameters are stored in <STACK_NAME>__params format with the following
-command:
+We store project configurations at Parameter Store as  <STACK_NAME>_config.
 
 ```
-source ./venv/root/bin/activate && \
-  python code put_ssm_parameters -p parameters.json && deactivate
+handoff push_config -p test_projects/03_exchange_rates
 ```
 
-If you omit `-p <filename>.json`, it tries to generate the parameters from `.local` file.
-
-
-You can check the currently stored values by dump command:
+You can check the currently stored values by print command:
 
 ```
-source ./venv/root/bin/activate && \
-  python code dump_ssm_parameters && deactivate
+handoff print_config -p test_projects/03_exchange_rates
+```
+
+It should return a string like this:
+```
+{"commands": [{"command": "tap-exchangeratesapi", "args": "--config config/tap-config.json", "venv": "proc_01", "installs": ["pip install tap-exchangeratesapi"]}, {"command": "files/stats_collector.py", "venv": "proc_01"}, {"command": "target-csv", "venv": "proc_02", "installs": ["pip install target-csv"]}], "files": [{"name": "tap-config.json", "value": "{ \"base\": \"JPY\", \"start_date\": \"2020-07-09\" }\n"}]}
+```
+
+The string is "compiled" from profile.yml and the JSON configuration files under
+`<profile_dir>/config` directory.
+
+Note: The maximum size of a value in Parameter Store is 4KB with Standard
+tier. You can bump it up to 8KB with Advanced tier with `--allow-advanced-tier` option:
+
+```
+handoff print_config -p test_projects/03_exchange_rates --allow-advanced-tier
 ```
 
 ## S3
 
-When environment variables `S3_BUCKET_NAME` and `STACK_NAME` are defined,
-the program tries to download the contens of `.env` directory from
-`s3://${S3_BUCKET_NAME}/${STACK_NAME}/.env`.
-
-To demonstrate the copy, do the following:
+In the project directory may contain `files` subdirectory and store the
+files needed at run-time. The files should be first pushed to the remote
+store (AWS S3) by running:
 
 ```
-mkdir -p ./files
-echo hello > ./files/hello.txt
-aws s3 cp --recursive files s3://${S3_BUCKET_NAME}/${STACK_NAME}/.env/files
-rm -fr files
+handoff push_files -p test_projects/03_exchange_rates
 ```
+
+The files are uploaded to:
+`s3://${S3_BUCKET_NAME}/${STACK_NAME}/files`
+
+You see handoff fetching the files into `workspace/files` by runnig:
+```
+handoff get_files -p test_projects/03_exchange_rates
+```
+
+You do not need to run the above command explicitly as handoff automatically
+downlods them into the workspace as described in the next section.
 
 ## Run
 
+Let's clean up the local workspace before running with the remotely stored
+configs:
 ```
-rm -fr .env/*
+rm -fr test_workspaces/03_exchange_rates/*
 ```
-To test with the remote configuration.
 
+First we need to create the virtual environments and install the commands:
 ```
-source ./venv/root/bin/activate && python code run && deactivate
+handoff install -w test_workspaces/03_exchange_rates
 ```
+
+Then run:
+```
+handoff run -w test_workspaces/03_exchange_rates
+```
+
+Notice that we dropped `-p` option in the last two commands. The project
+configurations are fetched from remote this time.
 
 After the run, you find the output from the exchange rate tap example from
 the previous example. You will also find `.env/files/hello.txt` downloaded
 from the S3 bucket.
-
-Instead of the dummy `hello.txt`, you can store any files that are less-sensitive
-such as the property file as in singer.io
-[tap-salesforce](https://github.com/singer-io/tap-salesforce#run-discovery).
-
-For a local testing, manually copy files under `.env` and refer it from `project.yml`.
-
-Example:
-```
-commands:
-  command: "tap-salesforce"
-  venv: ./venv/proc_01
-  installs:
-    - "pip install tap-salesforce"
-  args: "--config .env/config/tap-config.json --properties .env/files/properties.json"
-```
-
-Note: You can create subdirectories under `.env`.
 
 ### Other useful commands
 

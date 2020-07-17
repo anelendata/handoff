@@ -36,7 +36,9 @@ S3_BUCKET
 
 in <env_var_file> file to pass on to Docker contianer.
 
-By default, Dockerfile is configured to execute `python code/__main__.py default`.
+By default, Dockerfile is configured to execute
+`handoff run -p ./project -w ./workspace` assuming that the remote
+configurations are set.
 
 Or you can specify the function to run together with the data via additional
 environment variables in <env_var_file>:
@@ -49,7 +51,7 @@ DATA={"start_at":"1990-01-01T00:00:00","end_at":"2030-01-01T00:00:00"}
 ...that would be picked up by Docker just as
 
 ```
-CMD python3 code/__main__.py ${COMMAND:-default} -d ${DATA:-{}}
+CMD handoff ${COMMAND:-run} -p project -w workspace -d ${DATA:-{}} -a
 ```
 
 See [Dockerfile](https://github.com/anelendata/handoff/blob/master/Dockerfile) for details.

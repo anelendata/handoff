@@ -11,6 +11,8 @@ setup(
     name="handoff",
     version=VERSION,
     description="Deploy configurable unix pipeline jobs serverlessly.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Daigo Tanaka, Anelen Co., LLC",
     url="http://dev.handoff.cloud",
     classifiers=[

@@ -83,6 +83,14 @@ def _write_config_files(workspace_config_dir, precompiled_config):
             f.write(r["value"])
 
 
+def _set_env(config):
+    LOGGER.info("Setting environment variables from config.")
+    if not config.get("envs"):
+        return
+    for v in config["envs"]:
+        os.environ[v["key"]] = v["value"]
+
+
 def compile_config(project_dir, workspace_dir, data, **kwargs):
     """ Compile configuration JSON file from the project.yml
 
@@ -119,6 +127,8 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     config = dict()
     project = _read_project(os.path.join(project_dir, "project.yml"), workspace_dir)
     config.update(project)
+
+    _set_env(config)
 
     config["files"] = list()
     project_config_dir = os.path.join(project_dir, CONFIG_DIR)
@@ -200,6 +210,7 @@ def get_config(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     config_dir, _, _ = _get_workspace_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
+    _set_env(precompiled_config)
     _write_config_files(config_dir, precompiled_config)
 
     return precompiled_config

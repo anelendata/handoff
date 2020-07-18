@@ -84,12 +84,19 @@ RUN chmod 777 -R /app
 WORKDIR /app
 
 RUN pip3 install wheel
-RUN python3 /app/setup.py install
+RUN pip3 install handoff
+# RUN python3 /app/setup.py install
 
 # It is recommended to make virtual envs for each process
 RUN handoff install -p project -w workspace
 
+# Make sure to delete these directories in case sensitive information was accidentally copied.
+RUN rm -fr project
+RUN rm -fr workspace/config
+RUN rm -fr workspace/files
+RUN rm -fr workspace/artifacts
+
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -p project -w workspace -a -d ${DATA:-{}} -a
+CMD handoff ${COMMAND:-run} -w workspace -a -d ${DATA:-{}} -a

@@ -40,7 +40,8 @@ Additional AWS Policy may be attached to the TaskRole depends on the ECS Task.
 ```
 
 You can pass extra environmental variables via <remote_env_var_file>.
-You need to and SHOULD NOT include AWS keys and secrets in <remote_env_var_file>.
+You don't need to and SHOULD NEVER include AWS keys and secrets in
+<remote_env_var_file>.
 
 ## Scheduling via Fargate
 

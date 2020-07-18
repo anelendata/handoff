@@ -144,4 +144,4 @@ CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,
 
 It also leaves `<workspace_dir>/artifacts/state` and `<workspace_dir>/artifacts/collector_stats.json`.
 
-Next: [Outputs](outputs)
+Next: [Environment variables and outputs](envvar_outputs)

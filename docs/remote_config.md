@@ -1,5 +1,11 @@
 # Remote configurations and files
 
+(We continue to use
+[the currency exchange rate example](venv_config)
+from the previous
+sections, so if you have not done so, please do it before trying the following
+example.)
+
 The first step to run the process remotely is to store and fetch the
 configurations. The parameter file derived from `project.yml` and other files
 under `.local` is stoed as a `SecureString` at
@@ -26,7 +32,7 @@ export AWS_SECRET_ACCESS_KEY=<secret>
 export AWS_REGION=<region_name>
 ```
 
-### Alternative method: Role assumption
+### Recommended approach: Role assumption
 
 Alternatively, if you have a AWS profile entry that assumes an
 [AWS Role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
@@ -41,16 +47,10 @@ region = us-east-1
 in `.aws/credentials`. The repository contains convenience shell scripts
 at `bin`. You can assume role and export the temporary keys
 (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN)
-with the following command:
+and `AWS_REGION` with the following command:
 ```
-./bin/iam_assume_role <fg_env>
+source ./bin/iam_assume_role <aws-profile-name>
 ```
-
-Here, `<fg_env>` is a file that contians:
-```
-export AWS_PROFILE=<your-profile-name-1>
-```
-(More about `fg_env` file in [the next section](./docker.md).)
 
 ### Other environment variables
 

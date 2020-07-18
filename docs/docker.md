@@ -57,7 +57,7 @@ DATA={"start_at":"1990-01-01T00:00:00","end_at":"2030-01-01T00:00:00"}
 ...that would be picked up by Docker just as
 
 ```
-CMD handoff ${COMMAND:-run} -p project -w workspace -d ${DATA:-{}} -a
+CMD handoff ${COMMAND:-run} -w workspace -d ${DATA:-{}} -a
 ```
 
 See [Dockerfile](https://github.com/anelendata/handoff/blob/master/Dockerfile) for details.

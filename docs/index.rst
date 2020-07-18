@@ -21,6 +21,8 @@ Contents
    docker
    fargate
    faq
+   contributing
+   code_of_conduct
 
 ----
 

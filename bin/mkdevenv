@@ -1,8 +1,6 @@
 #!/bin/bash
 
-mkdir -p venv
-
-# dev
-python3 -m venv ./venv/dev
-/bin/bash -c "source ./venv/dev/bin/activate && pip install wheel && deactivate"
-/bin/bash -c "source ./venv/dev/bin/activate && pip install -r reqs/requirements.txt && pip install -r reqs/requirements_dev.txt && deactivate"
+python3 -m venv ./venv
+/bin/bash -c "source ./venv/bin/activate && pip install wheel && deactivate"
+/bin/bash -c "source ./venv/bin/activate && pip install -r requirements.txt && pip install -r requirements_dev.txt && deactivate"
+/bin/bash -c "source ./venv/bin/activate && pip install -r docs/requirements.txt && deactivate"

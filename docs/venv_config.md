@@ -4,7 +4,8 @@
 
 You can specify a virtual environments in case the command is a Python program.
 In `project.yml`, you can also define virtual environment for Python program.
-Here is the contents of `test_projects/02_collect_stats/project.yml`:
+Here is the content of
+[test_projects/02_collect_stats/project.yml](https://github.com/anelendata/handoff/blob/master/test_projects/02_collect_stats/project.yml):
 
 ```
 commands:
@@ -15,12 +16,18 @@ commands:
   - command: "wc"
 ```
 
-`test_workspaces/02_collect_stats/files/collector_stats.py` is a simple Python
-program that pass on from stdin to stdout while counting the number of rows.
+[test_workspaces/02_collect_stats/files/stats_collector.py](https://github.com/anelendata/handoff/blob/master/test_workspaces/02_collect_stats/files/stats_collector.py)
+is a simple Python program that pass on from stdin to stdout while counting the
+number of rows.
 
-The function looks like this:
+The file looks like this:
 ```
-def collector_stats(outfile):
+#!/usr/bin/python
+import io, json, logging, sys, os
+
+LOGGER = logging.getLogger()
+
+def collect_stats(outfile):
     """
     Read from stdin and count the lines. Output to a file after done.
     """
@@ -38,6 +45,10 @@ def collector_stats(outfile):
     with open(outfile, "w") as f:
         json.dump(output, f)
         f.write("\n")
+
+
+if __name__ == "__main__":
+    collect_stats("artifacts/collect_stats.json")
 ```
 
 To run this project, make the virtual environment first:
@@ -98,6 +109,9 @@ handoff install -p test_projects/03_exchange_rates -w test_workspaces/03_exchang
 ```
 
 2. Create a copy of config file for tap-exchangeratesapi:
+
+Let's limit the days of the data collection to the last 7 days. So use these
+shell scripts to generate `tap-config.json`.
 
 In Debian/Ubuntu:
 ```

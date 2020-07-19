@@ -8,7 +8,7 @@ example.)
 
 The first step to run the process remotely is to store and fetch the
 configurations. The parameter file derived from `project.yml` and other files
-under `.local` is stoed as a `SecureString` at
+under `config` is stoed as a `SecureString` at
 [AWS Systems Manager Parameter Store](https://console.aws.amazon.com/systems-manager/parameters)
 (SSM).
 

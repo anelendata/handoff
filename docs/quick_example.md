@@ -34,7 +34,7 @@ Note: Instead of installing from Python Package Index with `pip` command, you ca
 also install handoff from the repository. This is good for the people who
 wants to try the unreleased version or wants to improve the project:
 ```
-python3 -m venv ./venv
+python -m venv ./venv
 source venv/bin/activate
 python setup.py install
 ```
@@ -72,7 +72,7 @@ It creates `test_workspaces/01_word_count/artifacts/state` whose content:
 ```
 42
 ```
-is the equivalent of running:
+...which is the equivalent of running:
 ```
 cat ./README.md | wc -l
 ```

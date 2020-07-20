@@ -1,0 +1,1 @@
+../deploy/fargate/bin/cf_delete_parent

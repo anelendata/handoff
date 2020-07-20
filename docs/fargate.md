@@ -7,7 +7,7 @@ This command creates VPN (named from `PARENT_STACK_NAME`) and S3 bucket
 (named from `S3_BUCKET`) shared across multiple stacks:
 
 ```
-./bin/cf_create_vpn <fg_env_file>
+./bin/cf_create_parent <fg_env_file> deploy/fargaate/cfn/parent_stack.yml
 ```
 
 ## Pushing the image and create the ECS task
@@ -23,7 +23,7 @@ Push the image to the ECR:
 Create the cluster and the task via Cloudformation:
 
 ```
-./bin/cf_create_stack <fg_env_file> 0.1
+./bin/cf_create_stack <fg_env_file> 0.1 deploy/fargate/cfn/stack.yml
 ```
 
 Check the creation on [Cloudformation](https://console.aws.amazon.com/cloudformation/home)
@@ -68,7 +68,7 @@ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
 5. Update stack:
 
 ```
-./bin/cf_update_stack <fg_env_file> 0.1
+./bin/cf_update_stack <fg_env_file> 0.1 deploy/cfn/stack.yml
 ```
 
 6. Unschedule the Fargate task:
@@ -81,4 +81,17 @@ https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#logs:
 
 ```
 ./bin/events_schedule_create <fg_env_file> <target_id> '0 0 * * ? *'
+```
+
+## How to delete the stack
+
+```
+./bin/cf_delete_stack <fg_env_file>
+```
+
+If you also want to remove the parent stack, make sure it is not used by
+other stack and run:
+
+```
+./bin/cf_delete_parent <fg_env_file>
 ```

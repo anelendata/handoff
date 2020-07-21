@@ -17,6 +17,7 @@ Contents
    quick_example
    venv_config
    envvar_outputs
+   role
    remote_config
    docker
    fargate

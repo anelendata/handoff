@@ -36,3 +36,5 @@ environment variables in <env_var_file>:
 See Dockerfile_ for details.
 
 .. _Dockerfile: https://github.com/anelendata/handoff/blob/master/Dockerfile
+
+Next: :doc:`fargate`

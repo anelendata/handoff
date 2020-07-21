@@ -29,3 +29,5 @@ Change directory to :code:`./deploy/fargate` to follow these instructions.
 .. mdinclude:: ../deploy/fargate/configuration.md
 
 .. mdinclude:: ../deploy/fargate/role.md
+
+Next: :doc:`remote_config`

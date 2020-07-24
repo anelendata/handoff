@@ -1,5 +1,28 @@
+Remote configurations
+=====================
+
+Why use cloud storages?
+~~~~~~~~~~~~~~~~~~~~~~~
+
+handoff not only lets you run the task locally with `hanoff run_local` command,
+but also let you deploy the task in cloud platform (currently supports AWS
+Fargate). In production, you do not want to store sensitive information in
+Docker images. You may also want to avoid building new image just because
+the password or other configurations slightly changes.
+
+So, we store sensitive information in AWS SSM Parameter Store with SecureString
+format. And also store other data files that may change frequently to S3. In
+the future, we want to support non-AWS storages and deployment options.
+
+We can first store the configurations and files in cloud, and still test
+the task locally with the remotely stored configs and files. Then we can
+deploy the task to Fargate.
+
+But first, we need to set up the AWS permissions (Policy and Role). This
+section explain how best this is achieved.
+
 fgops
-=====
+-----
 
 Remote configurations and deployment are supported by
 `fgops <https://github.com/anelendata/fgops>`_.

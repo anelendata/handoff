@@ -1,11 +1,7 @@
 import argparse, datetime, json, logging, os
 from .impl import admin, runner
+from .config import ARTIFACTS_DIR, PROJECT_FILE
 
-
-PROJECT_DIR = "project"
-PROJECT_FILE = "project.yml"
-DEFAULT_WORKSPACE_DIR = "workspace"
-ARTIFACTS_DIR = "artifacts"
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,11 +90,11 @@ def do(command,
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run parameterized Unix pipeline command")
-    parser.add_argument("command", type=str, help="command")
+    parser = argparse.ArgumentParser(description="Run parameterized Unix pipeline command https://dev/handoff.cloud")
+    parser.add_argument("command", type=str, help="command " + str(list(_list_commands(admin).keys()) + list(_list_commands(runner).keys())))
     parser.add_argument("-d", "--data", type=str, default="{}", help="Data required for the command as a JSON string")
     parser.add_argument("-p", "--project-dir", type=str, default=None, help="Specify the location of project directory")
-    parser.add_argument("-w", "--workspace-dir", type=str, default=DEFAULT_WORKSPACE_DIR, help="Location of workspace directory")
+    parser.add_argument("-w", "--workspace-dir", type=str, default=None, help="Location of workspace directory")
     parser.add_argument("-a", "--push-artifacts", action="store_true", help="Push artifacts to remote at the end of the run")
     parser.add_argument("-t", "--allow-advanced-tier", action="store_true", help="Allow AWS SSM Parameter Store Advanced tier")
 

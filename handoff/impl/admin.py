@@ -3,14 +3,10 @@ import yaml
 
 from handoff.aws_utils import s3, ssm
 from handoff.impl  import runner, utils
-from handoff.impl.pyvenvx import ExtendedEnvBuilder
+from handoff.impl import pyvenvx
+from handoff.config import ARTIFACTS_DIR, CONFIG_DIR, FILES_DIR, PROJECT_FILE
 
 LOGGER = utils.get_logger(__name__)
-
-PROJECT_FILE = "project.yml"
-CONFIG_DIR = "config"
-FILES_DIR = "files"
-ARTIFACTS_DIR = "artifacts"
 
 
 def _check_env_vars():
@@ -44,7 +40,7 @@ def _make_venv(venv_path):
             path = "/".join(paths[0:i])
             if not os.path.exists(path):
                 os.mkdir(path)
-        builder = ExtendedEnvBuilder()
+        builder = pyvenvx.ExtendedEnvBuilder()
         builder.create(venv_path)
 
 
@@ -284,9 +280,12 @@ def copy_files_from_local_project(project_dir, workspace_dir, data):
 
 
 def init_workspace(project_dir, workspace_dir, data, **kwargs):
-    config_dir, artifacts_dir, files_dir = _get_workspace_dirs(workspace_dir)
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
     if not os.path.isdir(workspace_dir):
         os.mkdir(workspace_dir)
+
+    config_dir, artifacts_dir, files_dir = _get_workspace_dirs(workspace_dir)
     if not os.path.isdir(config_dir):
         os.mkdir(config_dir)
     if not os.path.isdir(artifacts_dir):

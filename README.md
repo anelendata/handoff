@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/anelendata/handoff.svg?branch=travis)](https://travis-ci.com/anelendata/handoff)
+[![Documentation Status](https://readthedocs.org/projects/handoffcloud/badge/?version=latest)](https://dev.handoff.cloud/en/latest/?badge=latest)
+
 # handoff.cloud
 
 Deploy configurable unix pipeline jobs serverlessly.

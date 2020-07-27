@@ -1,0 +1,24 @@
+sudo: false
+dist: trusty
+
+language: python
+
+python:
+  - "3.6"
+
+before_install:
+  - ls /opt/python/
+  - /opt/python/3.6/bin/python --version
+
+install:
+  - /opt/python/3.6/bin/python -m venv ./venv
+  - source ./venv/bin/activate
+  - which python
+  - pip install --no-cache -e .
+  - pip install -r requirements_dev.txt
+
+script:
+  - which python
+  - pytest -s tests/local_run_no_install
+  - pytest -s tests/local_run_install
+

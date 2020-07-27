@@ -33,7 +33,7 @@ def _read_project(project_file, workspace_dir):
 
 def _make_venv(venv_path):
     if os.path.exists(venv_path):
-        LOGGER.warn("%s already exists. Skipping python -m venv..." % venv_path)
+        LOGGER.warning("%s already exists. Skipping python -m venv..." % venv_path)
     else:
         paths = venv_path.split("/")
         for i in range(1, len(paths)):

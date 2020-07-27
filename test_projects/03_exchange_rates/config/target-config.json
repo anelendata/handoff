@@ -1,5 +1,5 @@
 {
-    "delimiter": "\t",
+    "delimiter": ",",
     "quotechar": "'",
     "destination_path": "artifacts"
 }

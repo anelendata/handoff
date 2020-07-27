@@ -5,8 +5,8 @@ python:
   - "3.8"
 
 install:
-  - pip install -r requirements_dev.txt
   - python setup.py install
+  - pip install -r requirements_dev.txt
 
 script:
   - pytest tests/local_run

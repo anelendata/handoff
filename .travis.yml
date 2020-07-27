@@ -13,7 +13,8 @@ before_install:
 install:
   - /opt/python/3.6/bin/python -m venv ./venv
   - source ./venv/bin/activate
-  - python setup.py install
+  - which python
+  - pip install --no-cache -e .
   - pip install -r requirements_dev.txt
 
 script:

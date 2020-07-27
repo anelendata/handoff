@@ -53,7 +53,7 @@ def download_dir(prefix, local, bucket):
 
         next_token = results.get('NextContinuationToken')
         if not contents:
-            logger.warn("Nothing found in the location")
+            logger.warning("Nothing found in the location")
             continue
 
         for i in contents:
@@ -157,7 +157,7 @@ def delete_recurse(bucket, prefix):
         contents = results.get('Contents')
 
         if not contents:
-            logger.warn("Nothing found in the location")
+            logger.warning("Nothing found in the location")
             continue
 
         for i in contents:

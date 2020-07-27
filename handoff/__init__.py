@@ -26,6 +26,7 @@ def do(command,
        **kwargs):
     """
     """
+    prev_wd = os.getcwd()
     # Try running admin commands
     admin_commands = _list_commands(admin)
 
@@ -46,6 +47,7 @@ def do(command,
         # Run the admin command
         admin.init_workspace(project_dir, workspace_dir, data)
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
+        os.chdir(prev_wd)
         return
 
     commands = _list_commands(runner)
@@ -63,7 +65,6 @@ def do(command,
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
         admin.get_files(project_dir, workspace_dir, data)
-    prev_wd = os.getcwd()
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))

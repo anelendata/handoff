@@ -8,10 +8,20 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
+    envs = ["S3_BUCKET_NAME",
+            "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
+    not_set = list()
+    for env in envs:
+        if os.environ.get(env) is None:
+            not_set.append(env)
+    assert len(not_set) == 0, "Please set environment variables: %s" % str(not_set)
+
     cur_dir = os.getcwd()
     project_name = "03_exchange_rates"
+
+    os.environ["STACK_NAME"] = "test_" + project_name
+
     orig_project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)
-    text_file = "README.md"
     data = dict()
     with tempfile.TemporaryDirectory() as root_dir:
         project_dir = os.path.join(root_dir, "project")
@@ -21,14 +31,32 @@ def test_03_exchange_rates():
                       "start_date": (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()[:10]}
             json.dump(config, f)
 
-        workspaces_dir = os.path.join(root_dir, "workspaces")
-        os.mkdir(workspaces_dir)
-        shutil.copyfile(text_file, os.path.join(root_dir, text_file))
-        workspace_dir = os.path.join(workspaces_dir, project_name)
-        handoff.do("install", data, project_dir, workspace_dir, push_artifacts=False)
+        workspace_dir = os.path.join(root_dir, "workspace")
+
+        allow_advanced_tier = False
+        handoff.do("push_config", data, project_dir, workspace_dir, push_artifacts=False,
+                   **{"allow_advanced_tier": allow_advanced_tier})
+
         os.chdir(cur_dir)
-        handoff.do("run_local", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("push_files", data, project_dir, workspace_dir, push_artifacts=False)
         os.chdir(cur_dir)
+
+        handoff.do("install", data, None, workspace_dir, push_artifacts=False)
+        os.chdir(cur_dir)
+        handoff.do("run", data, None, workspace_dir, push_artifacts=True)
+        os.chdir(cur_dir)
+
+        handoff.do("delete_config", data, project_dir, workspace_dir, push_artifacts=False,
+                   **{"allow_advanced_tier": allow_advanced_tier})
+        os.chdir(cur_dir)
+        handoff.do("delete_files", data, project_dir, workspace_dir, push_artifacts=False,
+                   **{"allow_advanced_tier": allow_advanced_tier})
+        os.chdir(cur_dir)
+        handoff.do("delete_artifacts", data, project_dir, workspace_dir, push_artifacts=False,
+                   **{"allow_advanced_tier": allow_advanced_tier})
+        os.chdir(cur_dir)
+
+
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

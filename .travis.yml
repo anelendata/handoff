@@ -1,13 +1,21 @@
 language: python
+dist: xenial
+
 python:
   - "3.6"
-  - "3.7"
-  - "3.8"
+
+before_install:
+  # show a little bit more information about environment
+  - sudo apt-get install -y tree
+  - env
+  - tree
 
 install:
-  - python setup.py install
-  - pip install -r requirements_dev.txt
+  - /opt/python/3.6/bin/python -m venv ./venv
+  - source ./venv/bin/activate && python setup.py install
+  - source ./venv/bin/activate && pip install -r requirements_dev.txt
 
 script:
-  - pytest -s tests/local_run_no_install
-  - pytest -s tests/local_run_install
+  - source ./venv/bin/activate && pytest -s tests/local_run_no_install
+  - source ./venv/bin/activate && pytest -s tests/local_run_install
+

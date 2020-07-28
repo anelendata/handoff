@@ -16,7 +16,6 @@ def test_03_exchange_rates():
             not_set.append(env)
     assert len(not_set) == 0, "Please set environment variables: %s" % str(not_set)
 
-    cur_dir = os.getcwd()
     project_name = "03_exchange_rates"
 
     os.environ["STACK_NAME"] = "test_" + project_name
@@ -37,26 +36,14 @@ def test_03_exchange_rates():
         handoff.do("push_config", data, project_dir, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
 
-        os.chdir(cur_dir)
         handoff.do("push_files", data, project_dir, workspace_dir, push_artifacts=False)
-        os.chdir(cur_dir)
-
         handoff.do("install", data, None, workspace_dir, push_artifacts=False)
-        os.chdir(cur_dir)
         handoff.do("run", data, None, workspace_dir, push_artifacts=True)
-        os.chdir(cur_dir)
 
-        handoff.do("delete_config", data, project_dir, workspace_dir, push_artifacts=False,
-                   **{"allow_advanced_tier": allow_advanced_tier})
-        os.chdir(cur_dir)
         handoff.do("delete_files", data, project_dir, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
-        os.chdir(cur_dir)
         handoff.do("delete_artifacts", data, project_dir, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
-        os.chdir(cur_dir)
-
-
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

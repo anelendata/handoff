@@ -26,6 +26,48 @@ def get_client():
     return S3_CLIENT
 
 
+def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix):
+    logger.info("Copying recursively from s3://%s/* to s3://%s/*" %
+                (os.path.join(src_bucket, src_prefix), os.path.join(dest_bucket, dest_prefix)))
+    client = get_client()
+    keys = []
+    dirs = []
+    next_token = ""
+    base_kwargs = {
+        "Bucket": src_bucket,
+        "Prefix": src_prefix,
+    }
+    while next_token is not None:
+        kwargs = base_kwargs.copy()
+        if next_token != "":
+            kwargs.update({"ContinuationToken": next_token})
+        results = client.list_objects_v2(**kwargs)
+        contents = results.get("Contents")
+
+        next_token = results.get("NextContinuationToken")
+        if not contents:
+            logger.warning("Nothing found in the location")
+            continue
+
+        for i in contents:
+            k = i.get("Key")
+            if k[-1] == "/":
+                continue
+
+            # why doesn't os.path.join work with these?
+            dest_path = dest_prefix + k[len(src_prefix):]
+
+            keys.append(k)
+            copy_source = {
+                "Bucket": src_bucket,
+                "Key": k
+            }
+            client.copy(copy_source, dest_bucket, dest_path)
+
+            logger.info("Copied s3://%s to s3://%s" %
+                        (os.path.join(src_bucket, k), os.path.join(dest_bucket, dest_path)))
+
+
 def download_dir(prefix, local, bucket):
     """
     params:
@@ -39,26 +81,26 @@ def download_dir(prefix, local, bucket):
     logger.info("GET s3://" + bucket + "/" + prefix)
     keys = []
     dirs = []
-    next_token = ''
+    next_token = ""
     base_kwargs = {
-        'Bucket':bucket,
-        'Prefix':prefix,
+        "Bucket":bucket,
+        "Prefix":prefix,
     }
     while next_token is not None:
         kwargs = base_kwargs.copy()
-        if next_token != '':
-            kwargs.update({'ContinuationToken': next_token})
+        if next_token != "":
+            kwargs.update({"ContinuationToken": next_token})
         results = client.list_objects_v2(**kwargs)
-        contents = results.get('Contents')
+        contents = results.get("Contents")
 
-        next_token = results.get('NextContinuationToken')
+        next_token = results.get("NextContinuationToken")
         if not contents:
             logger.warning("Nothing found in the location")
             continue
 
         for i in contents:
-            k = i.get('Key')
-            if k[-1] != '/':
+            k = i.get("Key")
+            if k[-1] != "/":
                 keys.append(k)
             else:
                 dirs.append(k)

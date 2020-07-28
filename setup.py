@@ -40,7 +40,7 @@ setup(
     [console_scripts]
     handoff=handoff:main
     """,
-    packages=["handoff", "handoff.aws_utils", "handoff.impl"],
+    packages=["handoff", "handoff.provider", "handoff.impl"],
     package_data = {
         # Use MANIFEST.ini
     },

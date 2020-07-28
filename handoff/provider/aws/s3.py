@@ -114,6 +114,8 @@ def download_dir(prefix, local, bucket):
 
     for k in keys:
         dest_pathname = k[len(prefix):]
+        if dest_pathname[0] == "/":
+            dest_pathname = dest_pathname[1:]
         dest_pathname = os.path.join(local, dest_pathname)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
@@ -173,7 +175,7 @@ def delete_object(bucket_name, key):
 
 
 
-def delete_recurse(bucket, prefix):
+def delete_recurse(prefix, bucket):
     """
     params:
     - prefix: pattern to match in s3

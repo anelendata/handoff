@@ -88,6 +88,7 @@ def do(command,
         if not os.environ.get("S3_BUCKET_NAME"):
             raise Exception("Cannot push artifacts. S3_BUCKET_NAME is not set")
         admin.push_artifacts(project_dir, workspace_dir, data)
+        admin.archive_current(project_dir, workspace_dir, data)
 
 
 def main():

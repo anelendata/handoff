@@ -92,6 +92,10 @@ You can also push the contents of `<workspace_dir>/artifacts` manually:
 handoff push_artifacts -w <workspace_dir>
 ```
 
+In the remote storage, the copy of artifacts from the last run is found at
+`<bucket_name>/<stack_name>/last`. The historical files are archived in
+`<bucket_name>/<stack_name>/runs`.
+
 ### Other useful commands
 
 `default` is a function defined in `impl.py`. Any function defined in `impl.py` can be invoked

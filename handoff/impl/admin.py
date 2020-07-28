@@ -4,7 +4,8 @@ import yaml
 from handoff.aws_utils import s3, ssm
 from handoff.impl  import runner, utils
 from handoff.impl import pyvenvx
-from handoff.config import ARTIFACTS_DIR, CONFIG_DIR, FILES_DIR, PROJECT_FILE
+from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, FILES_DIR, PROJECT_FILE,
+                            BUCKET_CURRENT_PREFIX, BUCKET_ARCHIVE_PREFIX)
 
 LOGGER = utils.get_logger(__name__)
 
@@ -142,11 +143,22 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     return config
 
 
+def archive_current(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
+    src_prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX)
+    dest_prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_ARCHIVE_PREFIX,
+                               datetime.datetime.utcnow().isoformat())
+    LOGGER.info(dest_prefix)
+    s3.copy_dir_to_another_bucket(os.environ.get("S3_BUCKET_NAME"), src_prefix,
+                                  os.environ.get("S3_BUCKET_NAME"), dest_prefix)
+
+
 def push_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
     d = datetime.datetime.utcnow()
-    prefix = os.path.join(os.environ.get("STACK_NAME"), ARTIFACTS_DIR)
+    prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
     s3.upload_dir(artifacts_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
 
 
@@ -155,7 +167,7 @@ def push_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     files_dir = os.path.join(project_dir, FILES_DIR)
     d = datetime.datetime.utcnow()
-    prefix = os.path.join(os.environ.get("STACK_NAME"), FILES_DIR)
+    prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, FILES_DIR)
     s3.upload_dir(files_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
 
 
@@ -220,7 +232,7 @@ def get_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Downloading artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), ARTIFACTS_DIR + "/"),
+    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR + "/"),
                     artifacts_dir,
                     os.environ.get("S3_BUCKET_NAME"))
 
@@ -228,7 +240,7 @@ def get_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Downloading config files from S3 " + os.environ.get("S3_BUCKET_NAME"))
     _, _, files_dir = _get_workspace_dirs(workspace_dir)
-    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), FILES_DIR + "/"),
+    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, FILES_DIR + "/"),
                     files_dir,
                     os.environ.get("S3_BUCKET_NAME"))
 
@@ -239,20 +251,12 @@ def get_workspace(project_dir, workspace_dir, data, **kwargs):
     get_files(project_dir, workspace_dir, data)
 
 
-def delete_config(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Deleting config files from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
-                      os.path.join(os.environ.get("STACK_NAME"),
-                                   CONFIG_DIR))
-
-
 def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
                       os.path.join(os.environ.get("STACK_NAME"),
-                                   ARTIFACTS_DIR))
+                                   BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR))
 
 
 def delete_files(project_dir, workspace_dir, data, **kwargs):
@@ -260,13 +264,7 @@ def delete_files(project_dir, workspace_dir, data, **kwargs):
     LOGGER.info("Deleting files from S3 " + os.environ.get("S3_BUCKET_NAME"))
     s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
                       os.path.join(os.environ.get("STACK_NAME"),
-                                   FILES_DIR))
-
-def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
-                      os.path.join(os.environ.get("STACK_NAME")))
+                                   BUCKET_CURRENT_PREFIX, FILES_DIR))
 
 
 def copy_files_from_local_project(project_dir, workspace_dir, data):

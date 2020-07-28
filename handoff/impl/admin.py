@@ -34,7 +34,8 @@ def _read_project(project_file, workspace_dir):
 
 def _make_venv(venv_path):
     if os.path.exists(venv_path):
-        LOGGER.warning("%s already exists. Skipping python -m venv..." % venv_path)
+        LOGGER.warning("%s already exists. Skipping python -m venv..." %
+                       venv_path)
     else:
         paths = venv_path.split("/")
         for i in range(1, len(paths)):
@@ -122,24 +123,27 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     ```
     """
     config = dict()
-    project = _read_project(os.path.join(project_dir, "project.yml"), workspace_dir)
+    project = _read_project(os.path.join(project_dir, "project.yml"),
+                            workspace_dir)
     config.update(project)
 
     _set_env(config)
 
     config["files"] = list()
-    project_config_dir = os.path.join(project_dir, CONFIG_DIR)
-    if os.path.exists(project_config_dir):
-        json_files = [fn for fn in os.listdir(project_config_dir) if os.path.isfile(os.path.join(project_dir, CONFIG_DIR, fn)) and fn[-5:] == ".json"]
-
-        for json_file in json_files:
-            with open(os.path.join(project_dir, CONFIG_DIR, json_file)) as f:
+    proj_config_dir = os.path.join(project_dir, CONFIG_DIR)
+    if os.path.exists(proj_config_dir):
+        for fn in os.listdir(proj_config_dir):
+            full_path = os.path.join(proj_config_dir, fn)
+            if (fn[-5:] != ".json" or
+                    not os.path.isfile(full_path)):
+                continue
+            with open(full_path, "r") as f:
                 config_str = f.read().replace('"', "\"")
-                config["files"].append({"name": json_file, "value": config_str})
+                config["files"].append({"name": fn, "value": config_str})
 
     if workspace_dir:
-        config_dir = os.path.join(workspace_dir, CONFIG_DIR)
-        _write_config_files(config_dir, config)
+        ws_config_dir = os.path.join(workspace_dir, CONFIG_DIR)
+        _write_config_files(ws_config_dir, config)
     return config
 
 

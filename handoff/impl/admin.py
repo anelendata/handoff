@@ -1,18 +1,20 @@
-import datetime, json, logging, os, shutil, sys, subprocess, venv
+import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
-from handoff.aws_utils import s3, ssm
-from handoff.impl  import runner, utils
-from handoff.impl import pyvenvx
+from handoff import provider
+from handoff.impl import pyvenvx, utils
 from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, FILES_DIR, PROJECT_FILE,
                             BUCKET_CURRENT_PREFIX, BUCKET_ARCHIVE_PREFIX)
 
 LOGGER = utils.get_logger(__name__)
 
+# TODO: Decide where the user provide the provider name (arg?)
+platform = provider.get_platform("aws")
+
 
 def _check_env_vars():
-    if not os.environ.get("S3_BUCKET_NAME"):
-        raise Exception("Set S3_BUCKET_NAME env")
+    if not os.environ.get("BUCKET_NAME"):
+        raise Exception("Set BUCKET_NAME env")
     if not os.environ.get("STACK_NAME"):
         raise Exception("Set STACK_NAME env")
 
@@ -59,17 +61,18 @@ def _install(venv_path, install):
 def _read_precompiled_config(precompiled_config_file=None):
     """
     Read parameters from a file if a file name is given.
-    Read them from AWS SSM otherwise.
+    Read them from remote parameters store (e.g. AWS SSM) otherwise.
     """
     if precompiled_config_file:
         if not os.path.isfile(precompiled_config_file):
             raise ValueError(precompiled_config_file + " not found.")
-        LOGGER.info("Reading precompiled config from: " + precompiled_config_file)
+        LOGGER.info("Reading precompiled config from: " +
+                    precompiled_config_file)
         with open(precompiled_config_file, "r") as f:
             config = json.load(f)
     else:
         LOGGER.info("Reading precompiled config from remote.")
-        config = json.loads(ssm.get_parameter(os.environ.get("STACK_NAME"), "config"))
+        config = json.loads(platform.get_parameter("config"))
     return config
 
 
@@ -100,8 +103,8 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     The parameters file may contain secrets and it should kept private. (i.e.
     don't commit to a repository and etc.)
 
-    This parameters file is encrypted and stored in AWS SSM via
-    put_ssm_parameters command and downloaded at the run-time.
+    This parameters file is encrypted and stored in a remote parameter store
+    (e.g. AWS SSM) via push_config command and downloaded at the run-time.
 
     - project_dir: The project directory that contains:
       - project.yml
@@ -149,35 +152,60 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
 
 def archive_current(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
+    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX, datetime.datetime.utcnow().isoformat())
+    platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
+
+
+def get_artifacts(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    LOGGER.info("Downloading artifacts from the remote storage " + os.environ.get("BUCKET_NAME"))
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    src_prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX)
-    dest_prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_ARCHIVE_PREFIX,
-                               datetime.datetime.utcnow().isoformat())
-    LOGGER.info(dest_prefix)
-    s3.copy_dir_to_another_bucket(os.environ.get("S3_BUCKET_NAME"), src_prefix,
-                                  os.environ.get("S3_BUCKET_NAME"), dest_prefix)
+    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.download_dir(remote_dir, artifacts_dir)
 
 
 def push_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    d = datetime.datetime.utcnow()
-    prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
-    s3.upload_dir(artifacts_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.upload_dir(artifacts_dir, prefix)
+
+
+def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    LOGGER.info("Deleting artifacts from the remote storage " + os.environ.get("BUCKET_NAME"))
+    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.delete_dir(dir_name)
+
+
+def get_files(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    LOGGER.info("Downloading config files from the remote storage " + os.environ.get("BUCKET_NAME"))
+    _, _, files_dir = _get_workspace_dirs(workspace_dir)
+    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.download_dir(remote_dir, files_dir)
 
 
 def push_files(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of workspace_dir/FILES_DIR to remote storage"""
     _check_env_vars()
     files_dir = os.path.join(project_dir, FILES_DIR)
-    d = datetime.datetime.utcnow()
-    prefix = os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, FILES_DIR)
-    s3.upload_dir(files_dir, prefix, os.environ.get("S3_BUCKET_NAME"))
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.upload_dir(files_dir, prefix)
+
+
+def get_config(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    config_dir, _, _ = _get_workspace_dirs(workspace_dir)
+    precompiled_config = _read_precompiled_config()
+    _set_env(precompiled_config)
+    _write_config_files(config_dir, precompiled_config)
+
+    return precompiled_config
 
 
 def push_config(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
-    allow_advanced_tier = kwargs.get("allow_advanced_tier", False)
     precompiled_file = data.get("config")
     if precompiled_file:
         LOGGER.info("Reading config from the precompiled JSON file %s." % parameter_file)
@@ -187,19 +215,7 @@ def push_config(project_dir, workspace_dir, data, **kwargs):
         config = json.dumps(compile_config(project_dir, workspace_dir, data))
 
     LOGGER.info("Uploading config to %s." % os.environ.get("STACK_NAME"))
-
-    if allow_advanced_tier:
-        LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
-    tier = "Standard"
-    if len(config) > 8192:
-        raise Exception("Parameter string must be less than 8192kb!")
-    if len(config) > 4096:
-        if allow_advanced_tier:
-            tier = "Advanced"
-        else:
-            raise Exception("Parameter string is %s > 4096 byte and allow_advanced_tier=False" % len(config))
-    LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" % tier)
-    ssm.put_parameter(os.environ.get("STACK_NAME"), "config", config, tier=tier)
+    platform.push_parameter("config", config, **kwargs)
 
 
 def install(project_dir, workspace_dir, data, **kwargs):
@@ -218,35 +234,9 @@ def install(project_dir, workspace_dir, data, **kwargs):
             _install(os.path.join(command["venv"]), install)
 
 
-def get_config(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    config_dir, _, _ = _get_workspace_dirs(workspace_dir)
-    precompiled_config = _read_precompiled_config()
-    _set_env(precompiled_config)
-    _write_config_files(config_dir, precompiled_config)
-
-    return precompiled_config
-
-
 def print_config(project_dir, workspace_dir, data, **kwargs):
     print(json.dumps(get_config(project_dir, workspace_dir, data)))
 
-
-def get_artifacts(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Downloading artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR + "/"),
-                    artifacts_dir,
-                    os.environ.get("S3_BUCKET_NAME"))
-
-def get_files(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Downloading config files from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    _, _, files_dir = _get_workspace_dirs(workspace_dir)
-    s3.download_dir(os.path.join(os.environ.get("STACK_NAME"), BUCKET_CURRENT_PREFIX, FILES_DIR + "/"),
-                    files_dir,
-                    os.environ.get("S3_BUCKET_NAME"))
 
 
 def get_workspace(project_dir, workspace_dir, data, **kwargs):
@@ -255,20 +245,12 @@ def get_workspace(project_dir, workspace_dir, data, **kwargs):
     get_files(project_dir, workspace_dir, data)
 
 
-def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Deleting artifacts from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
-                      os.path.join(os.environ.get("STACK_NAME"),
-                                   BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR))
-
 
 def delete_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
-    LOGGER.info("Deleting files from S3 " + os.environ.get("S3_BUCKET_NAME"))
-    s3.delete_recurse(os.environ.get("S3_BUCKET_NAME"),
-                      os.path.join(os.environ.get("STACK_NAME"),
-                                   BUCKET_CURRENT_PREFIX, FILES_DIR))
+    LOGGER.info("Deleting files from the remote storage " + os.environ.get("BUCKET_NAME"))
+    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.delete_dir(dir_name)
 
 
 def copy_files_from_local_project(project_dir, workspace_dir, data):

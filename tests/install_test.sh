@@ -22,7 +22,7 @@ python setup.py install;
 SITE_PKG_DIR="./install_test/lib/python3.6/site-packages"
 PKG_DIR=`ls $SITE_PKG_DIR | grep handoff`
 
-tree $SITE_PKG_DIR/$PKG_DIR/handoff
+# tree $SITE_PKG_DIR/$PKG_DIR/handoff
 DIFF=`diff --exclude=__pycache__ -r $SITE_PKG_DIR/$PKG_DIR/handoff ./handoff`
 if [ -z "$DIFF" ]
 then 

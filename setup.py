@@ -40,9 +40,9 @@ setup(
     [console_scripts]
     handoff=handoff:main
     """,
-    packages=["handoff", "handoff.provider", "handoff.impl"],
+    packages=["handoff"],
     package_data = {
         # Use MANIFEST.ini
     },
-    include_package_data=False
+    include_package_data=True
 )

@@ -22,4 +22,4 @@ script:
   - which python
   - pytest -s tests/local_run_no_install
   - pytest -s tests/local_run_install
-
+  - tests/install_test.sh

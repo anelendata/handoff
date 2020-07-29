@@ -35,7 +35,8 @@ fi
 
 # Note: Don't insert spaces in the next line
 handoff&>install_test/msg
-if [ -z `cat install_test/msg | grep "usage: handoff"` ]; then
+CMD_OUT=`cat install_test/msg | grep "usage: handoff"`
+if [ -z "$CMD_OUT"  ]; then
     cat install_test/msg
     echo "handoff is not properly installed"
     exit 1;

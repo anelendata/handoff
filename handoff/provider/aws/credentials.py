@@ -17,15 +17,13 @@ def get_credentials():
         cred = json.loads(response.content)
         logger.debug("Role ARN: " + cred["RoleArn"])
         return cred["AccessKeyId"], cred["SecretAccessKey"], cred["Token"], aws_region
+
     logger.info("Reading keys from environment variables.")
     aws_access_key_id = os.environ.get("AWS_ACCESS_KEY_ID", None)
     aws_secret_access_key = os.environ.get("AWS_SECRET_ACCESS_KEY", None)
     aws_session_token = os.environ.get("AWS_SESSION_TOKEN", None)
+
     return (aws_access_key_id,
             aws_secret_access_key,
             aws_session_token,
             aws_region)
-
-
-if __name__ == '__main__':
-    print(get_credentials())

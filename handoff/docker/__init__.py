@@ -1,4 +1,6 @@
 import json, os, shutil, sys, tempfile
+from collections import defaultdict
+
 import docker
 from docker import APIClient as docker_api_client
 from handoff.impl import utils
@@ -15,14 +17,8 @@ def _get_latest_version(image_name, ignore=["latest"]):
 
     tags = list()
     for image in images:
-        current_image_name = image.tags[0].split(":")[0]
-        if current_image_name == image_name:
-            tags = image.tags
-            tags.sort(reverse=True)
-            break
-    if not tags:
-        return None
-
+        tags = tags + image.tags
+    tags.sort(reverse=True)
     version = "".join(tags[0].split(":")[1:])
     return version
 
@@ -82,7 +78,7 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
                 logger.info(msg["stream"])
 
 
-def run(project_dir, version=None, extra_env=dict()):
+def run(version=None, extra_env=dict()):
     env = {"STACK_NAME": os.environ.get("STACK_NAME"),
            "IMAGE_NAME": os.environ.get("IMAGE_NAME"),
            "BUCKET_NAME": os.environ.get("BUCKET_NAME"),
@@ -107,3 +103,49 @@ def run(project_dir, version=None, extra_env=dict()):
                                       environment=env,
                                       stream=True, detach=False):
         logger.info(line.decode("utf-8"))
+
+
+def push(username, password, registry, version=None):
+    image_name = os.environ["IMAGE_NAME"]
+    if not version:
+        version = _get_latest_version(image_name)
+
+    if not version:
+        raise Exception("Image %s not found" % image_name)
+
+    sys.stdout.write("Push %s:%s to %s (y/N)? " %
+                     (image_name, version, registry))
+    response = input()
+    if response.lower() not in ["y", "yes"]:
+        return
+
+    client = docker.from_env()
+
+    image = client.images.list(name=image_name + ":" + version)[0]
+    image.tag(registry + "/" + image_name, version)
+
+    client.login(username, password, registry=registry, reauth=True)
+
+    status = defaultdict(lambda: "")
+    progress = defaultdict(lambda: 1)
+    for line in client.images.push(registry + "/" + image_name,
+                                   version, stream=True):
+        try:
+            msg = json.loads(line.decode("utf-8"))
+        except Exception:
+            continue
+        total = 0
+        current = 0
+        block = msg.get("id")
+        if block and status[block] != msg.get("status"):
+            status[block] = msg.get("status")
+            logger.info("id: %s status: %s" % (block, status[block]))
+        if msg.get("progressDetail"):
+            total = msg["progressDetail"].get("total")
+            current= msg["progressDetail"].get("current")
+            progress_bar = msg.get("progress")
+            if total and current and progress_bar:
+                current_progress = int(100 * current / total)
+                if current_progress - progress[block] > 5:
+                    progress[block] = current_progress
+                    logger.info("id: %s %s" % (block, progress_bar))

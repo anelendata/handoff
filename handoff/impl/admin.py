@@ -305,8 +305,25 @@ def docker_build(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
     docker.build(project_dir)
 
+
 def docker_run(project_dir, workspace_dir, data, **kwargs):
-    if not project_dir:
-        raise Exception("Project directory is not set")
     _check_env_vars()
-    docker.run(project_dir)
+    docker.run()
+
+
+def docker_push(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    username, password, registry = platform.get_docker_registry_credentials()
+    image_name = os.environ.get("IMAGE_NAME")
+    try:
+        platform.get_repository_images(image_name)
+    except Exception:
+        sys.stdout.write("Repository %s does not exist. Create? (y/N)" %
+                         image_name)
+        response = input()
+        if response.lower() not in ["y", "yes"]:
+            return
+        LOGGER.info("Creating repository " + image_name)
+        platform.create_repository()
+
+    docker.push(username, password, registry)

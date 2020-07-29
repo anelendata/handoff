@@ -30,19 +30,20 @@ setup(
         "attr==0.3.1",
         "boto3==1.10.0",
         "botocore==1.13.0",
+        # "docker==4.2.2",
         "python-dateutil==2.8.0",
         "pyyaml==5.3.1",
         "requests==2.23.0",
         "s3transfer==0.2.1",
-        "setuptools>=40.3.0",
+        # "setuptools>=40.3.0",
     ],
     entry_points="""
     [console_scripts]
     handoff=handoff:main
     """,
-    packages=["handoff", "handoff.provider", "handoff.impl"],
+    packages=["handoff"],
     package_data = {
         # Use MANIFEST.ini
     },
-    include_package_data=False
+    include_package_data=True
 )

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e ./handoff ]; then
+    pip3 install --no-cache -e ./handoff
+else
+    pip3 install handoff
+fi

@@ -7,8 +7,41 @@ logger = utils.get_logger(__name__)
 DOCKERFILE = "Dockerfile"
 
 
-def build(project_dir, tag=None, docker_file=None, nocache=False):
+def _get_latest_version(image_name, ignore=["latest"]):
     client = docker.from_env()
+    images = client.images.list(name=image_name)
+    if not images:
+        return None
+
+    tags = list()
+    for image in images:
+        current_image_name = image.tags[0].split(":")[0]
+        if current_image_name == image_name:
+            tags = image.tags
+            tags.sort(reverse=True)
+            break
+    if not tags:
+        return None
+
+    version = "".join(tags[0].split(":")[1:])
+    return version
+
+
+def _increment_version(version, delimiter="."):
+    digits = version.split(delimiter)
+    for i in range(len(digits) - 1, 0, -1):
+        try:
+            digit = int(digits[i])
+        except ValueError:
+            continue
+        digits[i] = str(digit + 1)
+        break
+
+    new_version = ".".join(digits)
+    return new_version
+
+
+def build(project_dir, new_version=None, docker_file=None, nocache=False):
     cli = docker_api_client()
     image_name = os.environ["IMAGE_NAME"]
     if not image_name:
@@ -18,38 +51,15 @@ def build(project_dir, tag=None, docker_file=None, nocache=False):
         docker_file_dir, _ = os.path.split(__file__)
         docker_file = os.path.join(docker_file_dir, DOCKERFILE)
 
-    images = client.images.list(name=image_name)
-    if not images:
-        tag = "0.1"
+    if not new_version:
+        latest_version = _get_latest_version(image_name)
+        new_version = _increment_version(latest_version)
 
-    if not tag:
-        tags = images[0].tags
-        current_tag = None
-        latest_version = None
-        max_digit = 0
-        for t in tags:
-            current_tag = t.split(":")[-1]
-            if current_tag == "latest":
-                continue
-            version = current_tag.split(".")
-            try:
-                digit = int(version[-1])
-            except ValueError:
-                digit = 0
-            if digit > max_digit:
-                max_digit = digit
-                latest_version = version
-        if latest_version is None:
-            tag = "0.1"
-        else:
-            latest_version[-1] = str(max_digit + 1)
-            tag = ".".join(latest_version)
-
-    sys.stdout.write("Build %s:%s (y/N)? " % (image_name, tag))
+    sys.stdout.write("Build %s:%s (y/N)? " % (image_name, new_version))
     response = input()
     if response.lower() not in ["y", "yes"]:
         return
-    logger.info("Building %s:%s" % (image_name, tag))
+    logger.info("Building %s:%s" % (image_name, new_version))
 
     with tempfile.TemporaryDirectory() as build_dir:
         cwd = os.getcwd()
@@ -62,7 +72,7 @@ def build(project_dir, tag=None, docker_file=None, nocache=False):
         shutil.copytree(os.path.join(docker_file_dir, "script"), os.path.join(build_dir, "script"))
         shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
 
-        for line in cli.build(path=build_dir, tag=image_name + ":" + tag, nocache=nocache):
+        for line in cli.build(path=build_dir, tag=image_name + ":" + new_version, nocache=nocache):
             msg = json.loads(line.decode("utf-8"))
             if msg.get("stream") and msg["stream"] != "\n":
                 logger.info(msg["stream"])

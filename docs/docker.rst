@@ -1,6 +1,9 @@
 Building and running Docker
 ===========================
 
+Notice: The planned release 0.2.0 will replace this with a handoff subcommand
+(`handoff docker_build` and etc).
+
 Dockerfile will try to install the project from `./project` directory. So copy
 what you want to build from handoff repository root:
 
@@ -35,6 +38,6 @@ environment variables in <env_var_file>:
 
 See Dockerfile_ for details.
 
-.. _Dockerfile: https://github.com/anelendata/handoff/blob/master/Dockerfile
+.. _Dockerfile: https://github.com/anelendata/handoff/blob/v0.1.2-alpha/Dockerfile
 
 Next: :doc:`fargate`

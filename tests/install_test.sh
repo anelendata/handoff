@@ -40,6 +40,8 @@ if [ -z "$CMD_OUT"  ]; then
     cat install_test/msg
     echo "handoff is not properly installed"
     exit 1;
+else
+    echo "handoff command is returning the expected message."
 fi
 
 deactivate

@@ -68,11 +68,42 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
             handoff_dir = os.path.join(cwd[:pos], "handoff")
             shutil.copytree(handoff_dir, os.path.join(build_dir, "handoff"))
 
-        shutil.copytree(project_dir, os.path.join(build_dir, "project"), symlinks=True)
-        shutil.copytree(os.path.join(docker_file_dir, "script"), os.path.join(build_dir, "script"))
+        shutil.copytree(project_dir, os.path.join(build_dir, "project"),
+                        symlinks=True)
+        shutil.copytree(os.path.join(docker_file_dir, "script"),
+                        os.path.join(build_dir, "script"))
         shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
 
-        for line in cli.build(path=build_dir, tag=image_name + ":" + new_version, nocache=nocache):
+        for line in cli.build(path=build_dir,
+                              tag=image_name + ":" + new_version,
+                              nocache=nocache):
             msg = json.loads(line.decode("utf-8"))
             if msg.get("stream") and msg["stream"] != "\n":
                 logger.info(msg["stream"])
+
+
+def run(project_dir, version=None, extra_env=dict()):
+    env = {"STACK_NAME": os.environ.get("STACK_NAME"),
+           "IMAGE_NAME": os.environ.get("IMAGE_NAME"),
+           "BUCKET_NAME": os.environ.get("BUCKET_NAME"),
+           "AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID"),
+           "AWS_SECRET_ACCESS_KEY": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+           "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN"),
+           "AWS_REGION": os.environ.get("AWS_REGION")
+           }
+    env.update(extra_env)
+
+    image_name = os.environ["IMAGE_NAME"]
+    if not version:
+        version = _get_latest_version(image_name)
+
+    sys.stdout.write("Run %s:%s (y/N)? " % (image_name, version))
+    response = input()
+    if response.lower() not in ["y", "yes"]:
+        return
+
+    client = docker.from_env()
+    for line in client.containers.run(image_name + ":" + version,
+                                      environment=env,
+                                      stream=True, detach=False):
+        logger.info(line.decode("utf-8"))

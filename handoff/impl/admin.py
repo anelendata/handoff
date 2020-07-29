@@ -304,3 +304,9 @@ def docker_build(project_dir, workspace_dir, data, **kwargs):
         raise Exception("Project directory is not set")
     _check_env_vars()
     docker.build(project_dir)
+
+def docker_run(project_dir, workspace_dir, data, **kwargs):
+    if not project_dir:
+        raise Exception("Project directory is not set")
+    _check_env_vars()
+    docker.run(project_dir)

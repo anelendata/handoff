@@ -1,5 +1,5 @@
 import os
-from handoff.provider.aws import s3, ssm
+from handoff.provider.aws import ecr, s3, ssm, sts
 from handoff.impl import utils
 
 LOGGER = utils.get_logger(__name__)
@@ -44,3 +44,24 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
     dest_prefix = os.path.join(os.environ.get("STACK_NAME"), dest_dir)
     s3.copy_dir_to_another_bucket(os.environ.get("BUCKET_NAME"), src_prefix,
                                   os.environ.get("BUCKET_NAME"), dest_prefix)
+
+
+def get_docker_registry_credentials(registry_id=None):
+    if not registry_id:
+        registry_id = sts.get_account_id()
+    return ecr.get_docker_registry_credentials(registry_id)
+
+
+def get_repository_images(image_name=None):
+    if not image_name:
+        image_name = os.environ.get("IMAGE_NAME")
+    ecr_images = ecr.list_images(image_name)
+    if not ecr_images:
+        return None
+    images = [{"id": i["imageDigest"], "tag": i["imageTag"]} for i in ecr_images]
+    return images
+
+
+def create_repository(is_mutable=False):
+    name = os.environ.get("IMAGE_NAME")
+    ecr.create_repository(name, is_mutable)

@@ -1,7 +1,6 @@
 import json, logging, os
 
 import boto3
-import requests
 
 from . import credentials as cred
 

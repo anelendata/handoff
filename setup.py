@@ -30,7 +30,7 @@ setup(
         "attr==0.3.1",
         "boto3==1.10.0",
         "botocore==1.13.0",
-        # "docker==4.2.2",
+        "docker==4.2.2",
         "python-dateutil==2.8.0",
         "pyyaml==5.3.1",
         "requests==2.23.0",

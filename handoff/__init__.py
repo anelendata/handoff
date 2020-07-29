@@ -45,7 +45,8 @@ def do(command,
 
     if command in admin_commands:
         # Run the admin command
-        admin.init_workspace(project_dir, workspace_dir, data)
+        if workspace_dir:
+            admin.init_workspace(project_dir, workspace_dir, data)
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         os.chdir(prev_wd)
         return
@@ -85,8 +86,8 @@ def do(command,
 
     os.chdir(prev_wd)
     if push_artifacts:
-        if not os.environ.get("S3_BUCKET_NAME"):
-            raise Exception("Cannot push artifacts. S3_BUCKET_NAME is not set")
+        if not os.environ.get("BUCKET_NAME"):
+            raise Exception("Cannot push artifacts. BUCKET_NAME is not set")
         admin.push_artifacts(project_dir, workspace_dir, data)
         admin.archive_current(project_dir, workspace_dir, data)
 

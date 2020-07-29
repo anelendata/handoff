@@ -1,3 +1,4 @@
-# include handoff/docker/Dockerfile
+include handoff/docker/Dockerfile
+include handoff/docker/script/*
 recursive-include handoff/ *.py
 recursive-exclude handoff/ *.py[cod]

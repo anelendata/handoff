@@ -84,7 +84,10 @@ RUN chmod 777 -R /app
 WORKDIR /app
 
 RUN pip3 install wheel
-RUN pip3 install handoff
+
+RUN ./script/install_handoff
+# RUN pip3 install handoff
+
 # RUN python3 /app/setup.py install
 
 # It is recommended to make virtual envs for each process

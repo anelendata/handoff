@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      CidrBlock: 10.0.0.0/16
+
+  PublicSubnetOne:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select 
+        - 0
+        - !GetAZs 
+          Ref: AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.0.0/24
+      MapPublicIpOnLaunch: true
+  
+  PublicSubnetTwo:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select 
+        - 1
+        - !GetAZs 
+          Ref: AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+        
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayAttachement:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachement
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetOne
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetTwo
+      RouteTableId: !Ref PublicRouteTable
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupName: !Sub ${AWS::StackName}
+      GroupDescription: "A security group to allow ingress to app hosts"
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          Description: "allows to communicate to everywhere"
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: udp
+          FromPort: 0
+          ToPort: 65535
+          Description: "allows to communicate to everywhere"
+#       SecurityGroupIngress:
+#         - CidrIp: 0.0.0.0/0
+#           Description: "allows ssh on 22 from everywhere"
+#           FromPort: 22
+#           IpProtocol: tcp
+#           ToPort: 22
+      VpcId: !Ref VPC
+          
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-TaskExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ["sts:AssumeRole"]
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${AWS::StackName}-TaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+
+  CloudWatchEventECSRole:
+   Type: AWS::IAM::Role
+   Properties:
+     RoleName: !Sub ${AWS::StackName}-CloudWatchEventECSRole
+     AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+         - Effect: Allow
+           Principal:
+             Service:
+               - events.amazonaws.com
+           Action:
+             - sts:AssumeRole
+     Path: /
+     Policies:
+       - PolicyName: !Sub ${AWS::StackName}-CloudwatchEventsInvokeECSRunTask
+         PolicyDocument:
+           Version: 2012-10-17
+           Statement:
+             - Effect: Allow
+               Action: ecs:RunTask
+               Resource: "*"
+             - Effect: Allow
+               Action: iam:PassRole
+               Resource: "*"
+               Condition:
+                 StringLike:
+                   iam:PassedToService:
+                     ecs-tasks.amazonaws.com

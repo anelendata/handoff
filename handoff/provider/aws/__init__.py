@@ -1,12 +1,12 @@
 import os
-from handoff.provider.aws import ecr, s3, ssm, sts  #, cloudformation
+from handoff.provider.aws import ecr, s3, ssm, sts, cloudformation
 from handoff.impl import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK)
 
 
 LOGGER = utils.get_logger(__name__)
-# TEMPLATE_DIR = "cloudformation_templates"
+TEMPLATE_DIR = "cloudformation_templates"
 
 
 def get_parameter(key):
@@ -78,3 +78,112 @@ def get_repository_images(image_name=None):
 def create_repository(is_mutable=False):
     name = os.environ.get(DOCKER_IMAGE)
     ecr.create_repository(name, is_mutable)
+
+
+def create_bucket(template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    bucket = os.environ.get(BUCKET)
+    stack_name = resource_group + "_bucket"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
+    parameters = [{"ParameterKey": "BucketName", "ParameterValue": bucket}]
+    cloudformation.create_stack(stack_name, template_file, parameters)
+
+
+def update_bucket(template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    bucket = os.environ.get(BUCKET)
+    stack_name = resource_group + "_bucket"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
+    parameters = [{"ParameterKey": "BucketName", "ParameterValue": bucket}]
+    cloudformation.update_stack(stack_name, template_file, parameters)
+
+
+def delete_bucket():
+    LOGGER.warning("This will only delete the CloudFormation stack. The bucket will be retained.")
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "_bucket"
+    cloudformation.delete_stack(stack_name)
+
+
+def create_resources(template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "_resources"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
+    cloudformation.create_stack(stack_name, template_file)
+
+
+def update_resources(template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "_resources"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
+    cloudformation.update_stack(stack_name, template_file)
+
+
+def delete_resources():
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "_resources"
+    cloudformation.delete_stack(stack_name)
+
+
+def create_task(template_file=None):
+    stack_name = os.environ.get(TASK)
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    bucket = os.environ.get(BUCKET)
+    image_domain = os.environ.get(IMAGE_DOMAIN)
+    docker_image = os.environ.get(DOCKER_IMAGE)
+    image_version = os.environ.get(IMAGE_VERSION)
+    parameters = [
+        {"ParameterKey": "ResourceGroup",
+         "ParameterValue": resource_group},
+        {"ParameterKey": "Bucket",
+         "ParameterVlue": bucket},
+        {"ParameterKey": "ImageDomain",
+         "ParameterValue": image_domain},
+        {"ParameterKey": "ImageName",
+         "ParameterValue": docker_image},
+        {"ParameterKey": "ImageVersion",
+         "ParameterValue": image_version}
+    ]
+
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
+    cloudformation.create_stack(stack_name, template_file, parameters)
+
+
+def update_task(template_file=None):
+    stack_name = os.environ.get(TASK)
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    bucket = os.environ.get(BUCKET)
+    image_domain = os.environ.get(IMAGE_DOMAIN)
+    docker_image = os.environ.get(DOCKER_IMAGE)
+    image_version = os.environ.get(IMAGE_VERSION)
+    parameters = [
+        {"ParameterKey": "ResourceGroup",
+         "ParameterValue": resource_group},
+        {"ParameterKey": "Bucket",
+         "ParameterVlue": bucket},
+        {"ParameterKey": "ImageDomain",
+         "ParameterValue": image_domain},
+        {"ParameterKey": "ImageName",
+         "ParameterValue": docker_image},
+        {"ParameterKey": "ImageVersion",
+         "ParameterValue": image_version}
+    ]
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
+    cloudformation.update_stack(stack_name, template_file, parameters)
+
+
+def delete_task():
+    stack_name = os.environ.get(TASK)
+    cloudformation.delete_stack(stack_name)

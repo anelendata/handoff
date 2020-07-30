@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ResourceGroup:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  Bucket:
+    Type: String
+    Description: The name of the bucket to store configs and artifacts
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9-.]*"
+
+  ImageDomain:
+    Type: String
+    Description: Domain part of the Docker image URI to use for app (e.g. in ECR or DockerHub)
+  ImageName:
+    Type: String
+    Description: Name part of the Docker image URI to use for app (e.g. in ECR or DockerHub)
+  ImageVersion:
+    Type: String
+    Description: Version(tag) of the Docker image to use for app
+
+  AllocatedCpu:
+    Type: Number
+    Default: 256
+    Description: CPU units allocated to the task
+  AllocatedMemory:
+    Type: Number
+    Default: 512
+    Description: Memory (in MB) allocated to the task
+
+Resources:
+  FargateCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${ResourceGroup}-${AWS::StackName}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub ${ResourceGroup}-${AWS::StackName}
+      RetentionInDays: 365
+  
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ResourceGroup}-${AWS::StackName}
+      Cpu: !Sub ${AllocatedCpu}
+      Memory: !Sub ${AllocatedMemory}
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref TaskExecutionRole
+      TaskRoleArn: !Ref TaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${ImageName}
+          Cpu: !Sub ${AllocatedCpu}
+          Memory: !Sub ${AllocatedMemory}
+          Image: !Sub ${ImageDomain}/${ImageName}:${ImageVersion}
+          PortMappings:
+            - ContainerPort: 22
+              HostPort: 22
+          Environment:
+            - Name: RESOURCE_GROUP
+              Value: !Sub ${ResourceGroup}
+            - Name: BUCKET
+              Value: !Sub ${Bucket}
+            - Name: TASK
+              Value: !Sub ${AWS::StackName}
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub ${ResourceGroup}-${AWS::StackName}
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:ListBucket
+                - s3:PutObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub arn:aws:s3:::${Bucket}
+                - !Sub arn:aws:s3:::${Bucket}/${AWS::StackName}/*
+
+            - Effect: Allow
+              Action:
+                - ssm:Describe*
+                - ssm:Get*
+                - ssm:List*
+              Resource:
+                # 0.1.x follows ${AWS::StackName}- prefix
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${AWS::StackName}*
+                # 0.2.x will follow ${ResourceGroup}-${AWS::StackName}- prefix
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}-${AWS::StackName}*

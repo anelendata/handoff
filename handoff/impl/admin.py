@@ -5,8 +5,8 @@ from handoff import docker, provider
 from handoff.impl import pyvenvx, utils
 from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
-                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR, RESOURCE_GROUP,
-                            PROJECT_FILE, TASK)
+                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
+                            RESOURCE_GROUP, PROJECT_FILE, TASK)
 
 LOGGER = utils.get_logger(__name__)
 
@@ -98,11 +98,18 @@ def read_project(project_file):
     for key in deploy_env:
         os.environ[key.upper()] = deploy_env[key]
 
+    if not os.environ.get(BUCKET):
+        aws_account_id = platform.get_account_id()
+        os.environ[BUCKET] = aws_account_id + "-" + os.environ[RESOURCE_GROUP]
+        LOGGER.info("Environment veriable %s was set autoamtically as %s" %
+                       (BUCKET, os.environ[BUCKET] ))
     return project
+
 
 def archive_current(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
-    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX, datetime.datetime.utcnow().isoformat())
+    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
+                            datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
 
 
@@ -111,7 +118,8 @@ def get_artifacts(project_dir, workspace_dir, data, **kwargs):
         raise Exception("Workspace directory is not set")
     _check_env_vars()
 
-    LOGGER.info("Downloading artifacts from the remote storage " + os.environ.get(BUCKET))
+    LOGGER.info("Downloading artifacts from the remote storage " +
+                os.environ.get(BUCKET))
 
     _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -130,7 +138,8 @@ def push_artifacts(project_dir, workspace_dir, data, **kwargs):
 
 def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
-    LOGGER.info("Deleting artifacts from the remote storage " + os.environ.get(BUCKET))
+    LOGGER.info("Deleting artifacts from the remote storage " +
+                os.environ.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
     platform.delete_dir(dir_name)
 
@@ -173,6 +182,14 @@ def push_files(project_dir, workspace_dir, data, **kwargs):
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.upload_dir(files_dir, prefix)
+
+
+def delete_files(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    LOGGER.info("Deleting files from the remote storage " +
+                os.environ.get(BUCKET))
+    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.delete_dir(dir_name)
 
 
 def get_config(project_dir, workspace_dir, data, **kwargs):
@@ -300,13 +317,6 @@ def get_workspace(project_dir, workspace_dir, data, **kwargs):
     get_config(project_dir, workspace_dir, data)
     get_artifacts(project_dir, workspace_dir, data)
     get_files(project_dir, workspace_dir, data)
-
-
-def delete_files(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Deleting files from the remote storage " + os.environ.get(BUCKET))
-    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
-    platform.delete_dir(dir_name)
 
 
 def init_workspace(project_dir, workspace_dir, data, **kwargs):

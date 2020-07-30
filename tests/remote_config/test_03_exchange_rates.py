@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
-    envs = ["RESOURCE_GROUP", "BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
+    envs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
     not_set = list()
     for env in envs:
         if os.environ.get(env) is None:

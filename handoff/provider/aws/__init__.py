@@ -59,9 +59,13 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
                                   os.environ.get(BUCKET), dest_prefix)
 
 
+def get_account_id():
+    return sts.get_account_id()
+
+
 def get_docker_registry_credentials(registry_id=None):
     if not registry_id:
-        registry_id = sts.get_account_id()
+        registry_id = get_account_id()
     return ecr.get_docker_registry_credentials(registry_id)
 
 

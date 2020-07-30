@@ -13,5 +13,6 @@ commands:
       - "pip install target-csv"
 deploy:
   envs:
-    docker_image: "exchange_rates"
+    resource_group: "handoff_test"
+    docker_image: "singer_exchange_rates_to_csv"
     task: "test_03_exchange_rates"

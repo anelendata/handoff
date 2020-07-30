@@ -25,6 +25,13 @@ def get_client():
     return SSM_CLIENT
 
 
+def get_parameter(project, name):
+    client = get_client()
+    param = client.get_parameter(Name=project + "_" + name, WithDecryption=True)
+    value = param["Parameter"]["Value"]
+    return value
+
+
 def put_parameter(project, key, value,
                   description="",
                   type_="SecureString",
@@ -58,13 +65,14 @@ def put_parameter(project, key, value,
         kwargs["Policies"] = policies
 
     response = client.put_parameter(**kwargs)
+    return response
 
 
-def get_parameter(project, name):
+def delete_parameter(project, key):
     client = get_client()
-    param = client.get_parameter(Name=project + "_" + name, WithDecryption=True)
-    value = param["Parameter"]["Value"]
-    return value
+    kwargs = {"Name": project + "_" + key}
+    response = client.delete_parameter(**kwargs)
+    return response
 
 
 def set_env_var_from_ssm(project, name):

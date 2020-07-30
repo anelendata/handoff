@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
 To run this project, make the virtual environment first:
 ```
-handoff install -p test_projects/02_collect_stats -w test_workspaces/02_collect_stats
+handoff workspace install -p test_projects/02_collect_stats -w test_workspaces/02_collect_stats
 ```
 
 Try runing:
@@ -107,7 +107,7 @@ commands:
 
 1. Make environments defined in the project and install commands
 ```
-handoff install -p test_projects/03_exchange_rates -w test_workspaces/03_exchange_rates
+handoff workspace install -p test_projects/03_exchange_rates -w test_workspaces/03_exchange_rates
 ```
 
 2. Create a copy of config file for tap-exchangeratesapi:

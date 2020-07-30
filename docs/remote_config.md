@@ -13,13 +13,13 @@ the IAM role from [the previous section](role).
 First push the project configurations at AWS SSM Parameter Store:
 
 ```
-handoff push_config -p test_projects/03_exchange_rates
+handoff config push -p test_projects/03_exchange_rates
 ```
 
 You can check the currently stored values by print command:
 
 ```
-handoff print_config -p test_projects/03_exchange_rates
+handoff config print -p test_projects/03_exchange_rates
 ```
 
 It should return a string like this:
@@ -34,7 +34,7 @@ Note: The maximum size of a value in Parameter Store is 4KB with Standard
 tier. You can bump it up to 8KB with Advanced tier with `--allow-advanced-tier` option:
 
 ```
-handoff print_config -p test_projects/03_exchange_rates --allow-advanced-tier
+handoff config print -p test_projects/03_exchange_rates --allow-advanced-tier
 ```
 
 ## Pushing files to S3
@@ -44,12 +44,12 @@ files needed at run-time. The files should be first pushed to the remote
 store (AWS S3) by running:
 
 ```
-handoff push_files -p test_projects/03_exchange_rates
+handoff files push -p test_projects/03_exchange_rates
 ```
 
 You see handoff fetching the files into `workspace/files` by runnig:
 ```
-handoff get_files -p test_projects/03_exchange_rates
+handoff files get -p test_projects/03_exchange_rates
 ```
 
 You do not need to run the above command explicitly as handoff automatically
@@ -65,7 +65,7 @@ rm -fr test_workspaces/03_exchange_rates/*
 
 First we need to create the virtual environments and install the commands:
 ```
-handoff install -w test_workspaces/03_exchange_rates
+handoff workspace install -w test_workspaces/03_exchange_rates
 ```
 
 Then run:
@@ -84,12 +84,12 @@ With this option, the files under `<workspace_dir>/artifacts` will be push to
 the remote storage after the run. You can download the artifacts from the
 remote storage by runing:
 ```
-handoff get_artifacts -w <workspace_dir>
+handoff artifacts get -w <workspace_dir>
 ```
 
 You can also push the contents of `<workspace_dir>/artifacts` manually:
 ```
-handoff push_artifacts -w <workspace_dir>
+handoff artifacts push -w <workspace_dir>
 ```
 
 In the remote storage, the copy of artifacts from the last run is found at

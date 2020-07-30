@@ -109,6 +109,10 @@ def run(config, data, **kwargs):
     return state
 
 
+def run_remote_config(config, data, **kwargs):
+    return run(config, data, **kwargs)
+
+
 def run_local(config, data, **kwargs):
     return run(config, data, **kwargs)
 

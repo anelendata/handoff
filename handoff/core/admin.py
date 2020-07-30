@@ -2,7 +2,7 @@ import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
 from handoff import docker, provider
-from handoff.impl import pyvenvx, utils
+from handoff.core import pyvenvx, utils
 from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
@@ -99,10 +99,17 @@ def read_project(project_file):
         os.environ[key.upper()] = deploy_env[key]
 
     if not os.environ.get(BUCKET):
-        aws_account_id = platform.get_account_id()
-        os.environ[BUCKET] = aws_account_id + "-" + os.environ[RESOURCE_GROUP]
-        LOGGER.info("Environment veriable %s was set autoamtically as %s" %
-                       (BUCKET, os.environ[BUCKET] ))
+        try:
+            aws_account_id = platform.get_account_id()
+        except Exception:
+            LOGGER.warning(("Environment veriable %s is not set. " +
+                            "Remote config operations will fail.") %
+                           BUCKET)
+        else:
+            os.environ[BUCKET] = (aws_account_id + "-" +
+                                  os.environ[RESOURCE_GROUP])
+            LOGGER.info("Environment veriable %s was set autoamtically as %s" %
+                        (BUCKET, os.environ[BUCKET]))
     return project
 
 

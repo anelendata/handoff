@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import docker
 from docker import APIClient as docker_api_client
-from handoff.impl import utils
+from handoff.core import utils
 from handoff.config import BUCKET, DOCKER_IMAGE, TASK
 
 

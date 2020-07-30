@@ -1,6 +1,6 @@
 import os
 from handoff.provider.aws import ecr, s3, ssm, sts, cloudformation
-from handoff.impl import utils
+from handoff.core import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK)
 

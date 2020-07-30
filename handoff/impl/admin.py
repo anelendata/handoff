@@ -3,8 +3,10 @@ import yaml
 
 from handoff import docker, provider
 from handoff.impl import pyvenvx, utils
-from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, FILES_DIR, PROJECT_FILE,
-                            BUCKET_CURRENT_PREFIX, BUCKET_ARCHIVE_PREFIX)
+from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUCKET,
+                            BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
+                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR, RESOURCE_GROUP,
+                            PROJECT_FILE, TASK)
 
 LOGGER = utils.get_logger(__name__)
 
@@ -13,10 +15,11 @@ platform = provider.get_platform("aws")
 
 
 def _check_env_vars():
-    if not os.environ.get("BUCKET_NAME"):
-        raise Exception("Set BUCKET_NAME env")
-    if not os.environ.get("STACK_NAME"):
-        raise Exception("Set STACK_NAME env")
+    not_defined = [env for env in ADMIN_ENVS if not os.environ.get(env)]
+    if not not_defined:
+        return
+    raise Exception("The following environment variables must be defined %s" %
+                    not_defined)
 
 
 def _get_workspace_dirs(workspace_dir):
@@ -24,14 +27,6 @@ def _get_workspace_dirs(workspace_dir):
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     files_dir = os.path.join(workspace_dir, FILES_DIR)
     return config_dir, artifacts_dir, files_dir
-
-
-def _read_project(project_file, workspace_dir):
-    # load commands from yaml file
-    with open(project_file, "r") as f:
-        project = yaml.load(f, Loader=yaml.FullLoader)
-
-    return project
 
 
 def _make_venv(venv_path):
@@ -72,6 +67,8 @@ def _read_precompiled_config(precompiled_config_file=None):
             config = json.load(f)
     else:
         LOGGER.info("Reading precompiled config from remote.")
+        if not os.environ.get(RESOURCE_GROUP) or not os.environ.get(TASK):
+            raise Exception("RESOURCE_GROUP and TASK environment variables must be set outside the local project.xml file to read the remote configurations.")
         config = json.loads(platform.get_parameter("config"))
     return config
 
@@ -92,7 +89,108 @@ def _set_env(config):
         os.environ[v["key"]] = v["value"]
 
 
-def compile_config(project_dir, workspace_dir, data, **kwargs):
+def read_project(project_file):
+    # load commands from yaml file
+    with open(project_file, "r") as f:
+        project = yaml.load(f, Loader=yaml.FullLoader)
+
+    deploy_env = project.get("deploy", dict()).get("envs", dict())
+    for key in deploy_env:
+        os.environ[key.upper()] = deploy_env[key]
+
+    return project
+
+def archive_current(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX, datetime.datetime.utcnow().isoformat())
+    platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
+
+
+def get_artifacts(project_dir, workspace_dir, data, **kwargs):
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
+    _check_env_vars()
+
+    LOGGER.info("Downloading artifacts from the remote storage " + os.environ.get(BUCKET))
+
+    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
+    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.download_dir(remote_dir, artifacts_dir)
+
+
+def push_artifacts(project_dir, workspace_dir, data, **kwargs):
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
+    _check_env_vars()
+
+    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.upload_dir(artifacts_dir, prefix)
+
+
+def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    LOGGER.info("Deleting artifacts from the remote storage " + os.environ.get(BUCKET))
+    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    platform.delete_dir(dir_name)
+
+
+def get_files(project_dir, workspace_dir, data, **kwargs):
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
+    _check_env_vars()
+
+    LOGGER.info("Downloading config files from the remote storage " +
+                os.environ.get(BUCKET))
+
+    _, _, files_dir = _get_workspace_dirs(workspace_dir)
+    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.download_dir(remote_dir, files_dir)
+
+
+def get_files_local(project_dir, workspace_dir, data):
+    if not project_dir:
+        raise Exception("Project directory is not set")
+
+    LOGGER.info("Copying files from the local project directory " +
+                project_dir)
+
+    project_files_dir = os.path.join(project_dir, FILES_DIR)
+    if not os.path.exists(project_files_dir):
+        return
+    _, _, files_dir = _get_workspace_dirs(workspace_dir)
+    if os.path.exists(files_dir):
+        shutil.rmtree(files_dir)
+    shutil.copytree(project_files_dir, files_dir)
+
+
+def push_files(project_dir, workspace_dir, data, **kwargs):
+    """ Push the contents of project_dir/FILES_DIR to remote storage"""
+    if not project_dir:
+        raise Exception("Project directory is not set")
+    _check_env_vars()
+
+    files_dir = os.path.join(project_dir, FILES_DIR)
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    platform.upload_dir(files_dir, prefix)
+
+
+def get_config(project_dir, workspace_dir, data, **kwargs):
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
+    _check_env_vars()
+
+    LOGGER.info("Reading configurations from remote parameter store.")
+
+    config_dir, _, _ = _get_workspace_dirs(workspace_dir)
+    precompiled_config = _read_precompiled_config()
+    _set_env(precompiled_config)
+    _write_config_files(config_dir, precompiled_config)
+
+    return precompiled_config
+
+
+def get_config_local(project_dir, workspace_dir, data, **kwargs):
     """ Compile configuration JSON file from the project.yml
 
     The output JSON file describes the commands and arguments for each process.
@@ -130,9 +228,10 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
+    LOGGER.info("Reading configurations from the local project directory.")
+
     config = dict()
-    project = _read_project(os.path.join(project_dir, "project.yml"),
-                            workspace_dir)
+    project = read_project(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
     _set_env(config)
@@ -152,101 +251,39 @@ def compile_config(project_dir, workspace_dir, data, **kwargs):
     if workspace_dir:
         ws_config_dir = os.path.join(workspace_dir, CONFIG_DIR)
         _write_config_files(ws_config_dir, config)
+
     return config
-
-
-def archive_current(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX, datetime.datetime.utcnow().isoformat())
-    platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
-
-
-def get_artifacts(project_dir, workspace_dir, data, **kwargs):
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
-
-    _check_env_vars()
-    LOGGER.info("Downloading artifacts from the remote storage " + os.environ.get("BUCKET_NAME"))
-    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
-    platform.download_dir(remote_dir, artifacts_dir)
-
-
-def push_artifacts(project_dir, workspace_dir, data, **kwargs):
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
-
-    _check_env_vars()
-    _, artifacts_dir, _ = _get_workspace_dirs(workspace_dir)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
-    platform.upload_dir(artifacts_dir, prefix)
-
-
-def delete_artifacts(project_dir, workspace_dir, data, **kwargs):
-    _check_env_vars()
-    LOGGER.info("Deleting artifacts from the remote storage " + os.environ.get("BUCKET_NAME"))
-    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
-    platform.delete_dir(dir_name)
-
-
-def get_files(project_dir, workspace_dir, data, **kwargs):
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
-
-    _check_env_vars()
-    LOGGER.info("Downloading config files from the remote storage " + os.environ.get("BUCKET_NAME"))
-    _, _, files_dir = _get_workspace_dirs(workspace_dir)
-    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
-    platform.download_dir(remote_dir, files_dir)
-
-
-def push_files(project_dir, workspace_dir, data, **kwargs):
-    """ Push the contents of project_dir/FILES_DIR to remote storage"""
-    if not project_dir:
-        raise Exception("Project directory is not set")
-
-    _check_env_vars()
-    files_dir = os.path.join(project_dir, FILES_DIR)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
-    platform.upload_dir(files_dir, prefix)
-
-
-def get_config(project_dir, workspace_dir, data, **kwargs):
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
-
-    _check_env_vars()
-    config_dir, _, _ = _get_workspace_dirs(workspace_dir)
-    precompiled_config = _read_precompiled_config()
-    _set_env(precompiled_config)
-    _write_config_files(config_dir, precompiled_config)
-
-    return precompiled_config
 
 
 def push_config(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
     if not project_dir:
         raise Exception("Project directory is not set")
+    _check_env_vars()
 
     LOGGER.info("Compiling config from %s" % project_dir)
-    config = json.dumps(compile_config(project_dir, workspace_dir, data))
+    config = json.dumps(get_config_local(project_dir, workspace_dir, data))
 
-    LOGGER.info("Uploading config to %s." % os.environ.get("STACK_NAME"))
+    LOGGER.info("Uploading config to %s." % os.environ.get(TASK))
     platform.push_parameter("config", config, **kwargs)
+
+
+def delete_config(project_dir, workspace_dir, data, **kwargs):
+    _check_env_vars()
+    platform.delete_parameter("config")
 
 
 def install(project_dir, workspace_dir, data, **kwargs):
     """
     Install dependencies in the local virtual environment
     """
+    if not project_dir:
+        raise Exception("Project directory is not set")
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    if not project_dir:
-        project = get_config(project_dir, workspace_dir, data, **kwargs)
-    else:
-        project = _read_project(os.path.join(project_dir, PROJECT_FILE), workspace_dir)
+    project = read_project(os.path.join(project_dir, PROJECT_FILE))
+
     os.chdir(workspace_dir)
     for command in project["commands"]:
         if command.get("venv"):
@@ -267,21 +304,9 @@ def get_workspace(project_dir, workspace_dir, data, **kwargs):
 
 def delete_files(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
-    LOGGER.info("Deleting files from the remote storage " + os.environ.get("BUCKET_NAME"))
+    LOGGER.info("Deleting files from the remote storage " + os.environ.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
-
-
-def copy_files_from_local_project(project_dir, workspace_dir, data):
-    if not project_dir:
-        raise Exception("Project directory is not set")
-    project_files_dir = os.path.join(project_dir, FILES_DIR)
-    if not os.path.exists(project_files_dir):
-        return
-    _, _, files_dir = _get_workspace_dirs(workspace_dir)
-    if os.path.exists(files_dir):
-        shutil.rmtree(files_dir)
-    shutil.copytree(project_files_dir, files_dir)
 
 
 def init_workspace(project_dir, workspace_dir, data, **kwargs):
@@ -313,8 +338,9 @@ def docker_run(project_dir, workspace_dir, data, **kwargs):
 
 def docker_push(project_dir, workspace_dir, data, **kwargs):
     _check_env_vars()
+
     username, password, registry = platform.get_docker_registry_credentials()
-    image_name = os.environ.get("IMAGE_NAME")
+    image_name = os.environ.get(DOCKER_IMAGE)
     try:
         platform.get_repository_images(image_name)
     except Exception:

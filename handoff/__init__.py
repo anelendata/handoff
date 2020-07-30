@@ -1,6 +1,6 @@
 import argparse, datetime, json, logging, os
 from .impl import admin, runner
-from .config import ARTIFACTS_DIR, PROJECT_FILE
+from .config import ARTIFACTS_DIR, PROJECT_FILE, BUCKET
 
 
 LOGGER = logging.getLogger(__name__)
@@ -26,6 +26,10 @@ def do(command,
        **kwargs):
     """
     """
+    if project_dir:
+        # This will also set environment variables for deployment
+        admin.read_project(os.path.join(project_dir, PROJECT_FILE))
+
     prev_wd = os.getcwd()
     # Try running admin commands
     admin_commands = _list_commands(admin)
@@ -61,8 +65,8 @@ def do(command,
     admin.init_workspace(project_dir, workspace_dir, data)
 
     if command == "run_local":
-        config = admin.compile_config(project_dir, workspace_dir, data)
-        admin.copy_files_from_local_project(project_dir, workspace_dir, data)
+        config = admin.get_config_local(project_dir, workspace_dir, data)
+        admin.get_files_local(project_dir, workspace_dir, data)
     else:
         config = admin.get_config(project_dir, workspace_dir, data)
         admin.get_files(project_dir, workspace_dir, data)
@@ -86,8 +90,8 @@ def do(command,
 
     os.chdir(prev_wd)
     if push_artifacts:
-        if not os.environ.get("BUCKET_NAME"):
-            raise Exception("Cannot push artifacts. BUCKET_NAME is not set")
+        if not os.environ.get(BUCKET):
+            raise Exception("Cannot push artifacts. BUCKET environment variable is not set")
         admin.push_artifacts(project_dir, workspace_dir, data)
         admin.archive_current(project_dir, workspace_dir, data)
 

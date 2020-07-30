@@ -4,6 +4,8 @@ from collections import defaultdict
 import docker
 from docker import APIClient as docker_api_client
 from handoff.impl import utils
+from handoff.config import BUCKET, DOCKER_IMAGE, TASK
+
 
 logger = utils.get_logger(__name__)
 DOCKERFILE = "Dockerfile"
@@ -39,9 +41,9 @@ def _increment_version(version, delimiter="."):
 
 def build(project_dir, new_version=None, docker_file=None, nocache=False):
     cli = docker_api_client()
-    image_name = os.environ["IMAGE_NAME"]
+    image_name = os.environ[DOCKER_IMAGE]
     if not image_name:
-        raise Exception("You need to set IMAGE_NAME environment variable.")
+        raise Exception("You need to set DOCKER_IMAGE environment variable.")
 
     if not docker_file:
         docker_file_dir, _ = os.path.split(__file__)
@@ -79,9 +81,9 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
 
 
 def run(version=None, extra_env=dict()):
-    env = {"STACK_NAME": os.environ.get("STACK_NAME"),
-           "IMAGE_NAME": os.environ.get("IMAGE_NAME"),
-           "BUCKET_NAME": os.environ.get("BUCKET_NAME"),
+    env = {TASK: os.environ.get(TASK),
+           DOCKER_IMAGE: os.environ.get(DOCKER_IMAGE),
+           BUCKET: os.environ.get(BUCKET),
            "AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID"),
            "AWS_SECRET_ACCESS_KEY": os.environ.get("AWS_SECRET_ACCESS_KEY"),
            "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN"),
@@ -89,7 +91,7 @@ def run(version=None, extra_env=dict()):
            }
     env.update(extra_env)
 
-    image_name = os.environ["IMAGE_NAME"]
+    image_name = os.environ[DOCKER_IMAGE]
     if not version:
         version = _get_latest_version(image_name)
 
@@ -106,7 +108,7 @@ def run(version=None, extra_env=dict()):
 
 
 def push(username, password, registry, version=None):
-    image_name = os.environ["IMAGE_NAME"]
+    image_name = os.environ[DOCKER_IMAGE]
     if not version:
         version = _get_latest_version(image_name)
 

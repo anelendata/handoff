@@ -59,4 +59,4 @@ This is extracted from the project config then written out during the run.
 
 The files can be fetched from a remote folder. This will be explained later.
 
-Next: [Remote config & files](remote_config)
+Next: [fgops & IAM role creation](role)

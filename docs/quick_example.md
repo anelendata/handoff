@@ -6,6 +6,23 @@ Prerequisites:
 
 - Python 3.6 or later
 
+You can check your Python version by running:
+```
+python --version
+```
+
+Note: You may have `python` command linked to Python 2.x and `python3` to 3.x.
+If that is the case use `python3` command when you create the virtual
+environment (venv) in the installtion commands below.
+
+Install:
+```
+python -m venv ./venv
+source venv/bin/activate
+pip install handoff
+```
+
+The rest of the instruction uses the test project definitions in the repository.
 Clone [repo](https://github.com/anelendata/handoff) & initialize the submodules:
 ```
 git clone https://github.com/anelendata/handoff.git
@@ -13,16 +30,11 @@ git submodule init
 git submodule update
 ```
 
-Install:
+Note: Instead of installing from Python Package Index with `pip` command, you can
+also install handoff from the repository. This is good for the people who
+wants to try the unreleased version or wants to improve the project:
 ```
-python3 -m venv ./venv
-source venv/bin/activate
-pip install handoff
-```
-
-Or from the repository directory,
-```
-python3 -m venv ./venv
+python -m venv ./venv
 source venv/bin/activate
 python setup.py install
 ```
@@ -30,8 +42,8 @@ python setup.py install
 ## A Super Quick Example
 
 There is a `project.yml` file in `test_projects/01_word_count` directory at
-the root of the repository. The project file defines the commands to be executed as a pipeline,
-for example:
+the root of the repository ([here](https://github.com/anelendata/handoff/blob/master/test_projects/01_word_count/project.yml)).
+The project file defines the commands to be executed as a pipeline, for example:
 ```
 commands:
   - command: cat
@@ -60,7 +72,7 @@ It creates `test_workspaces/01_word_count/artifacts/state` whose content:
 ```
 42
 ```
-is the equivalent of running:
+...which is the equivalent of running:
 ```
 cat ./README.md | wc -l
 ```

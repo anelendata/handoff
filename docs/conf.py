@@ -21,7 +21,7 @@ from m2r import MdInclude
 
 # -- Project information -----------------------------------------------------
 
-project = 'handoff.cloud'
+project = 'handoff'
 copyright = '2020, ANELEN'
 author = 'ANELEN'
 
@@ -104,7 +104,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'handoffclouddoc'
+htmlhelp_basename = 'handoffdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -131,7 +131,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'handoffcloud.tex', 'handoff.cloud Documentation',
+    (master_doc, 'handoff.tex', 'handoff Documentation',
      'ANELEN', 'manual'),
 ]
 
@@ -141,7 +141,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'handoffcloud', 'handoff.cloud Documentation',
+    (master_doc, 'handoff', 'handoff Documentation',
      [author], 1)
 ]
 
@@ -152,7 +152,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'handoffcloud', 'handoff.cloud Documentation',
+    (master_doc, 'handoff', 'handoff Documentation',
      author, 'handoffcloud', 'One line description of project.',
      'Miscellaneous'),
 ]

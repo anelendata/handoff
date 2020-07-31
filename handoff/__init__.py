@@ -54,9 +54,10 @@ def do(top_command,
 
     if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
         print("DOCKER_IMAGE: %s" % os.environ.get(DOCKER_IMAGE))
-        print("IMAGE_VERSION: %s" % os.environ.get(IMAGE_VERSION))
-#        os.environ[IMAGE_VERSION] = docker.get_latest_version(
-#            project_dir, workspace_dir, data, **kwargs)
+        print("IMAGE_VERSION key: %s" % IMAGE_VERSION)
+        print("IMAGE_VERSION value: %s" % os.environ.get(IMAGE_VERSION))
+        os.environ[IMAGE_VERSION] = docker.get_latest_version(
+            project_dir, workspace_dir, data, **kwargs)
 
     prev_wd = os.getcwd()
 

@@ -89,7 +89,7 @@ def run(version=None, extra_env=dict()):
            "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN"),
            "AWS_REGION": os.environ.get("AWS_REGION")
            }
-    for e in ADMIN_ENVS:
+    for e in ADMIN_ENVS.keys():
         env[e] = os.environ.get(e)
 
     env.update(extra_env)

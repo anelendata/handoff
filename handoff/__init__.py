@@ -53,7 +53,8 @@ def do(top_command,
         admin._read_project(os.path.join(project_dir, PROJECT_FILE))
 
     if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
-        pass
+        print("DOCKER_IMAGE: %s" % os.environ.get(DOCKER_IMAGE))
+        print("IMAGE_VERSION: %s" % os.environ.get(IMAGE_VERSION))
 #        os.environ[IMAGE_VERSION] = docker.get_latest_version(
 #            project_dir, workspace_dir, data, **kwargs)
 

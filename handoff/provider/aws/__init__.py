@@ -1,12 +1,42 @@
 import os
 from handoff.provider.aws import ecs, ecr, s3, ssm, sts, cloudformation
+from handoff.provider.aws import credentials as cred
 from handoff.core import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK)
 
-
-LOGGER = utils.get_logger(__name__)
+NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
+LOGGER = utils.get_logger(__name__)
+
+
+def login(profile=None):
+    if profile:
+        os.environ["AWS_PROFILE"] = profile
+        LOGGER.info("AWS_PROFILE set to " + os.environ.get("AWS_PROFILE"))
+
+    region = cred.get_region()
+    if region:
+        os.environ["AWS_REGION"] = region
+    try:
+        sts.get_account_id()
+    except Exception:
+        LOGGER.warning("Login not successful. Remote operation will fail.")
+
+
+def assume_role(role_arn=None, target_account_id=None,  external_id=None):
+    if not role_arn:
+        resource_group = os.environ.get(RESOURCE_GROUP)
+        role_name = ("FargateDeployRole-" + resource_group +
+                     sts.get_account_id())
+        params = {
+            "role_name": role_name,
+            "target_account_id": target_account_id
+        }
+        role_arn = ("role_arn = arn:aws:iam::{target_account_id}:" +
+                    "role/{role_name}").format(**params)
+    response = sts.assume_role(role_arn, external_id)
+    LOGGER.info(response)
 
 
 def get_parameter(key):
@@ -14,7 +44,7 @@ def get_parameter(key):
                              os.environ.get(TASK), key)
 
 
-def push_parameter(key, value, allow_advanced_tier=False):
+def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
     if allow_advanced_tier:
         LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
     tier = "Standard"
@@ -29,7 +59,10 @@ def push_parameter(key, value, allow_advanced_tier=False):
     ssm.put_parameter(os.environ.get(RESOURCE_GROUP) + "-" +
                       os.environ.get(TASK),
                       key, value, tier=tier)
-
+    LOGGER.info("See the parameters at https://console.aws.amazon.com/" +
+                "systems-manager/parameters/?region=" +
+                os.environ.get("AWS_REGION") +
+                "&tab=Table")
 
 def delete_parameter(key):
     ssm.delete_parameter(os.environ.get(RESOURCE_GROUP) + "-" +

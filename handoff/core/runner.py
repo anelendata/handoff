@@ -70,7 +70,7 @@ def _get_time_window(data):
     return start_at, end_at
 
 
-def run(config, data, **kwargs):
+def run(config, data):
     """
     """
     start_at, end_at = _get_time_window(data)
@@ -109,15 +109,15 @@ def run(config, data, **kwargs):
     return state
 
 
-def run_remote_config(config, data, **kwargs):
-    return run(config, data, **kwargs)
+def run_remote_config(config, data):
+    return run(config, data)
 
 
-def run_local(config, data, **kwargs):
-    return run(config, data, **kwargs)
+def run_local(config, data):
+    return run(config, data)
 
 
-def show_commands(config, data, **kwargs):
+def show_commands(config, data):
     """
     """
     start_at, end_at = _get_time_window(data)

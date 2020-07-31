@@ -1,16 +1,32 @@
-import os
+import os, sys
 from importlib import import_module as _import_module
 from handoff.core.utils import get_logger as _get_logger
 from handoff.core.utils import env_check as _env_check
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
                             IMAGE_VERSION)
 
-platform = None
 LOGGER = _get_logger(__name__)
 
 
+PLATFORM = None
+
+
+def _get_platform(provider_name=None, platform_name=None, stdout=False,
+                  profile=None, **kwargs):
+    global PLATFORM
+    if not PLATFORM:
+        if not provider_name or not platform_name:
+            raise Exception("You need to set provider_name and platform_name")
+        PLATFORM = _import_module("handoff.provider." + provider_name)
+        response = PLATFORM.login(profile)
+        if stdout:
+            sys.stdout.write(response)
+    return PLATFORM
+
+
 def _log_stack_info(response):
-    params = {"stack_id": response["StackId"], "region": os.environ["AWS_REGION"]}
+    params = {"stack_id": response["StackId"],
+              "region": os.environ["AWS_REGION"]}
     LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
                  "cloudformation/home?region={region}#/stacks/stackinfo" +
                  "?viewNested=true&hideStacks=false" +
@@ -34,12 +50,16 @@ def _log_task_run_filter(task_name, response):
                  "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
-def _get_platform(provider):
+def assume_role(project_dir, workspace_dir, data, **kwargs):
+    _env_check()
     global platform
-    if platform:
-        return platform
-    platform = _import_module("handoff.provider." + provider)
-    return platform
+    role_arn = data.get("role_arn")
+    target_account_id = data.get("target_account_id")
+    external_id = data.get("external_id")
+    response = platform.assume_role(role_arn=role_arn,
+                                    target_account_id=target_account_id,
+                                    external_id=external_id)
+    LOGGER.info(response)
 
 
 def create_bucket(project_dir, workspace_dir, data, **kwargs):

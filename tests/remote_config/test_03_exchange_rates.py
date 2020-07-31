@@ -8,7 +8,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
-    envs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
+    # envs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
+    envs = []
     not_set = list()
     for env in envs:
         if os.environ.get(env) is None:
@@ -29,21 +30,24 @@ def test_03_exchange_rates():
 
         workspace_dir = os.path.join(root_dir, "workspace")
 
-        allow_advanced_tier = False
-        handoff.do("config", "push", data, project_dir, workspace_dir, push_artifacts=False,
-                   **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("files", "push", data, project_dir, workspace_dir, push_artifacts=False)
+        data["allow_advanced_tier"] = False
+        handoff.do("config", "push", project_dir, workspace_dir, data,
+                   push_artifacts=False)
+        handoff.do("files", "push", project_dir, workspace_dir, data,
+                   push_artifacts=False)
 
-        handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("workspace", "install", project_dir, workspace_dir, data,
+                   push_artifacts=False)
 
-        handoff.do("run", "remote_config", data, None, workspace_dir, push_artifacts=True)
+        handoff.do("run", "remote_config", None, workspace_dir, data,
+                   push_artifacts=True)
 
-        handoff.do("files", "delete", data, None, workspace_dir, push_artifacts=False,
-                   **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("artifacts", "delete", data, None, workspace_dir, push_artifacts=False,
-                   **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("config", "delete", data, None, workspace_dir, push_artifacts=False,
-                   **{"allow_advanced_tier": allow_advanced_tier})
+        handoff.do("files", "delete", None, workspace_dir, data,
+                   push_artifacts=False)
+        handoff.do("artifacts", "delete", None, workspace_dir, data,
+                   push_artifacts=False)
+        handoff.do("config", "delete", None, workspace_dir, data,
+                   push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

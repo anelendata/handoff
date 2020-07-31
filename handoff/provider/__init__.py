@@ -70,6 +70,7 @@ def create_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_bucket()
     LOGGER.info(response)
@@ -77,6 +78,7 @@ def update_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_bucket()
     LOGGER.info(response)

@@ -24,6 +24,16 @@ def _log_stack_filter(stack_name):
                  "?filteringText={stack_name}").format(**params))
 
 
+def _log_task_run_filter(task_name, response):
+    task_arn = response["tasks"][0]["taskArn"]
+    task_id = task_arn[task_arn.find("task/") + len("task/"):]
+    params = {"task":task_name,
+              "region": os.environ["AWS_REGION"],
+              "task_id": task_id}
+    LOGGER.info(("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
+                 "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
+
+
 def _get_platform(provider):
     global platform
     if platform:
@@ -96,3 +106,11 @@ def delete_task(project_dir, workspace_dir, data, **kwargs):
     response = platform.delete_task()
     LOGGER.info(response)
     _log_stack_filter(os.environ[TASK])
+
+
+def run(project_dir, workspace_dir, data, **kwargs):
+    _env_check()
+    response = platform.run_task()
+    LOGGER.info(response)
+    _log_task_run_filter(os.environ[RESOURCE_GROUP] + "-" + os.environ[TASK],
+                         response)

@@ -89,3 +89,8 @@ def delete_stack(stack_name):
     client = get_client()
     response = client.delete_stack(StackName=stack_name)
     return response
+
+
+def describe_stack_resources(stack_name, query=None):
+    client = get_client()
+    return client.describe_stack_resources(StackName=stack_name)

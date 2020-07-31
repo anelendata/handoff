@@ -46,4 +46,6 @@ def push(project_dir, workspace_dir, data, **kwargs):
 def get_latest_version(project_dir, workspace_dir, data, **kwargs):
     _env_check()
     image_name = os.environ.get(DOCKER_IMAGE)
+    print(DOCKER_IMAGE)
+    return None
     return impl.get_latest_version(image_name)

@@ -26,7 +26,8 @@ def get_client():
     return ECS_CLIENT
 
 
-def run_fargate_task(task_stack, resource_group_stack, docker_image, region, env=[]):
+def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
+                     env=[], workers=1):
     env.append({"name": "TASK_TRIGGERED_AT", "value": datetime.datetime.utcnow().isoformat()})
     client = get_client()
     task_resources = cfn.describe_stack_resources(task_stack)["StackResources"]
@@ -44,25 +45,25 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region, env
             task_def = r["PhysicalResourceId"]
 
     rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
-    subnets = []
-    security_group = None
+    subnets = list()
+    security_groups =list()
     for r in rg_resources:
         if r["ResourceType"]  == "AWS::EC2::Subnet":
             subnets.append(r["PhysicalResourceId"])
-        if not security_group and r["ResourceType"] == "AWS::EC2::SecurityGroup":
-            security_group = r["PhysicalResourceId"]
+        if r["ResourceType"] == "AWS::EC2::SecurityGroup":
+            security_groups.append(r["PhysicalResourceId"])
 
-    logger.debug("%s\n%s\n%s\n%s" % (cluster, task_def, subnets, security_group))
+    logger.debug("%s\n%s\n%s\n%s" % (cluster, task_def, subnets, security_groups))
 
     kwargs = {
         "cluster": cluster,
         "taskDefinition": task_def,
-        "count": 1,
+        "count": workers,
         "launchType": "FARGATE",
         "networkConfiguration": {
             "awsvpcConfiguration": {
                 "subnets": subnets,
-                "securityGroups": [security_group],
+                "securityGroups": security_groups,
                 "assignPublicIp": "ENABLED"
             }
         },

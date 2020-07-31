@@ -7,10 +7,10 @@ Parameters:
     MaxLength: 63
     AllowedPattern: "[a-z0-9][a-z0-9-.]*"
 Resources:
-  Bucket:
+  ConfigBucket:
     Type: AWS::S3::Bucket
     Properties:
-      Bucket: !Sub ${Bucket}
+      BucketName: !Sub ${Bucket}
       AccessControl: Private
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true

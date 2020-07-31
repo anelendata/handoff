@@ -1,13 +1,14 @@
 import argparse, datetime, json, logging, os
 from .core import admin, runner
-from .config import ARTIFACTS_DIR, PROJECT_FILE, BUCKET
+from .config import (ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
+                     IMAGE_VERSION)
 from . import docker, provider
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _list_commands(module):
+def _list_commands(module, split_first=False):
     commands = dict()
     objects = dir(module)
     for name in objects:
@@ -16,7 +17,8 @@ def _list_commands(module):
         obj = getattr(module, name)
 
         # Make it "command sub_command" format
-        name = name.replace("_", " ", 1)
+        if split_first:
+            name = name.replace("_", " ", 1)
 
         if callable(obj):
             commands[name] = obj
@@ -24,12 +26,12 @@ def _list_commands(module):
 
 
 def _list_core_commands():
-    return str(list(_list_commands(admin).keys()) +
-               list(_list_commands(runner).keys()))
+    return str(list(_list_commands(admin, True).keys()) +
+               list(_list_commands(runner, True).keys()))
 
 
 def _run_subcommand(module, command, data, project_dir, workspace_dir, **kwargs):
-    commands = _list_commands(module)
+    commands = _list_commands(module, False)
     if command in commands:
         return commands[command](project_dir, workspace_dir, data, **kwargs)
     else:
@@ -50,6 +52,10 @@ def do(top_command,
         # This will also set environment variables for deployment
         admin._read_project(os.path.join(project_dir, PROJECT_FILE))
 
+    if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
+        os.environ[IMAGE_VERSION] = docker.get_latest_version(
+            project_dir, workspace_dir, data, **kwargs)
+
     prev_wd = os.getcwd()
 
     command = (top_command + " " + sub_command).strip()
@@ -58,7 +64,7 @@ def do(top_command,
         admin.workspace_init(project_dir, workspace_dir, data)
 
     # Try running admin commands
-    admin_commands = _list_commands(admin)
+    admin_commands = _list_commands(admin, True)
     if command in admin_commands:
         # Run the admin command
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
@@ -76,7 +82,7 @@ def do(top_command,
         return
 
     # Run command
-    commands = _list_commands(runner)
+    commands = _list_commands(runner, True)
     if command not in commands:
         print("Invalid command: %s\nAvailable commands are %s" %
               (command, _list_core_commands()))

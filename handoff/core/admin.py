@@ -2,16 +2,18 @@ import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
 from handoff import provider
-from handoff.core import pyvenvx, utils
-from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUCKET,
+from handoff.config import (ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
                             RESOURCE_GROUP, PROJECT_FILE, TASK)
+from handoff.core import pyvenvx, utils
+from handoff.core.utils import env_check as _env_check
+
 
 LOGGER = utils.get_logger(__name__)
 
 # TODO: Decide where the user provide the provider name (arg?)
-platform = provider.get_platform("aws")
+platform = provider._get_platform("aws")
 
 
 def _workspace_get_dirs(workspace_dir):
@@ -106,7 +108,7 @@ def _read_project(project_file):
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
-    env_check()
+    _env_check()
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
@@ -115,7 +117,7 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    env_check()
+    _env_check()
 
     LOGGER.info("Downloading artifacts from the remote storage " +
                 os.environ.get(BUCKET))
@@ -128,7 +130,7 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    env_check()
+    _env_check()
 
     _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -136,7 +138,7 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
-    env_check()
+    _env_check()
     LOGGER.info("Deleting artifacts from the remote storage " +
                 os.environ.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -146,7 +148,7 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
 def files_get(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    env_check()
+    _env_check()
 
     LOGGER.info("Downloading config files from the remote storage " +
                 os.environ.get(BUCKET))
@@ -176,7 +178,7 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir/FILES_DIR to remote storage"""
     if not project_dir:
         raise Exception("Project directory is not set")
-    env_check()
+    _env_check()
 
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
@@ -184,7 +186,7 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
-    env_check()
+    _env_check()
     LOGGER.info("Deleting files from the remote storage " +
                 os.environ.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
@@ -194,7 +196,7 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
 def config_get(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    env_check()
+    _env_check()
 
     LOGGER.info("Reading configurations from remote parameter store.")
 
@@ -275,7 +277,7 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
     if not project_dir:
         raise Exception("Project directory is not set")
-    env_check()
+    _env_check()
 
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(config_get_local(project_dir, workspace_dir, data))
@@ -285,7 +287,7 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
-    env_check()
+    _env_check()
     platform.delete_parameter("config")
 
 
@@ -331,11 +333,3 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
             _make_venv(command["venv"])
         for install in command.get("installs", []):
             _install(os.path.join(command["venv"]), install)
-
-
-def env_check():
-    not_defined = [env for env in ADMIN_ENVS if not os.environ.get(env)]
-    if not not_defined:
-        return
-    raise Exception("The following environment variables must be defined %s" %
-                    not_defined)

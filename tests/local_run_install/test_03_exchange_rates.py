@@ -21,8 +21,8 @@ def test_03_exchange_rates():
 
         workspace_dir = os.path.join(root_dir, "workspace")
 
-        handoff.do("install", data, project_dir, workspace_dir, push_artifacts=False)
-        handoff.do("run_local", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("run", "local", data, project_dir, workspace_dir, push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

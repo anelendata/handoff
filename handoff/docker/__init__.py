@@ -2,14 +2,14 @@ import os, sys
 from handoff import provider
 from handoff.config import DOCKER_IMAGE
 from handoff.core import utils
-from handoff.core.admin import env_check as _env_check
+from handoff.core.utils import env_check as _env_check
 from . import impl
 
 
 LOGGER = utils.get_logger(__name__)
 
 # TODO: Decide where the user provide the provider name (arg?)
-platform = provider.get_platform("aws")
+platform = provider._get_platform("aws")
 
 
 def build(project_dir, workspace_dir, data, **kwargs):
@@ -41,3 +41,9 @@ def push(project_dir, workspace_dir, data, **kwargs):
         platform.create_repository()
 
     impl.push(username, password, registry)
+
+
+def get_latest_version(project_dir, workspace_dir, data, **kwargs):
+    _env_check()
+    image_name = os.environ[DOCKER_IMAGE]
+    return impl.get_latest_version(image_name)

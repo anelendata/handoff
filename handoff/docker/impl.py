@@ -11,20 +11,6 @@ logger = utils.get_logger(__name__)
 DOCKERFILE = "Dockerfile"
 
 
-def _get_latest_version(image_name, ignore=["latest"]):
-    client = docker.from_env()
-    images = client.images.list(name=image_name)
-    if not images:
-        return None
-
-    tags = list()
-    for image in images:
-        tags = tags + image.tags
-    tags.sort(reverse=True)
-    version = "".join(tags[0].split(":")[1:])
-    return version
-
-
 def _increment_version(version, delimiter="."):
     digits = version.split(delimiter)
     for i in range(len(digits) - 1, 0, -1):
@@ -39,6 +25,20 @@ def _increment_version(version, delimiter="."):
     return new_version
 
 
+def get_latest_version(image_name, ignore=["latest"]):
+    client = docker.from_env()
+    images = client.images.list(name=image_name)
+    if not images:
+        return None
+
+    tags = list()
+    for image in images:
+        tags = tags + image.tags
+    tags.sort(reverse=True)
+    version = "".join(tags[0].split(":")[1:])
+    return version
+
+
 def build(project_dir, new_version=None, docker_file=None, nocache=False):
     cli = docker_api_client()
     image_name = os.environ[DOCKER_IMAGE]
@@ -50,7 +50,7 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
         docker_file = os.path.join(docker_file_dir, DOCKERFILE)
 
     if not new_version:
-        latest_version = _get_latest_version(image_name)
+        latest_version = get_latest_version(image_name)
         if latest_version:
             new_version = _increment_version(latest_version)
         else:
@@ -96,7 +96,7 @@ def run(version=None, extra_env=dict()):
 
     image_name = os.environ[DOCKER_IMAGE]
     if not version:
-        version = _get_latest_version(image_name)
+        version = get_latest_version(image_name)
 
     sys.stdout.write("Run %s:%s (y/N)? " % (image_name, version))
     response = input()
@@ -113,7 +113,7 @@ def run(version=None, extra_env=dict()):
 def push(username, password, registry, version=None):
     image_name = os.environ[DOCKER_IMAGE]
     if not version:
-        version = _get_latest_version(image_name)
+        version = get_latest_version(image_name)
 
     if not version:
         raise Exception("Image %s not found" % image_name)

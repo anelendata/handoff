@@ -24,7 +24,7 @@ def get_client():
     return CFN_CLIENT
 
 
-def create_stack(stack_name, template_file, parameters={},
+def create_stack(stack_name, template_file, parameters=None,
                  capabilities=["CAPABILITY_NAMED_IAM"]):
     """
     Parameters are a list of dict objects that has these four keys,
@@ -40,15 +40,19 @@ def create_stack(stack_name, template_file, parameters={},
     with open(template_file, "r") as f:
         template = f.read()
     client = get_client()
-    response = client.create_stack(
-        StackName=stack_name,
-        TemplateBody=template,
-        Capabilities=capabilities,
-        Parameters=parameters)
-    logger.info(response)
+    kwargs = {
+        "StackName": stack_name,
+        "TemplateBody": template,
+        "Capabilities": capabilities
+    }
+    if parameters:
+        kwargs["Parameters"] = parameters
+
+    response = client.create_stack(**kwargs)
+    return response
 
 
-def update_stack(stack_name, template_file, parameters={},
+def update_stack(stack_name, template_file, parameters=None,
                  capabilities=["CAPABILITY_NAMED_IAM"]):
     """
     Parameters are a list of dict objects that has these four keys,
@@ -64,12 +68,17 @@ def update_stack(stack_name, template_file, parameters={},
     with open(template_file, "r") as f:
         template = f.read()
     client = get_client()
-    response = client.create_stack(
-        StackName=stack_name,
-        TemplateBody=template,
-        Capabilities=capabilities,
-        Parameters=parameters)
-    logger.info(response)
+
+    kwargs = {
+        "StackName": stack_name,
+        "TemplateBody": template,
+        "Capabilities": capabilities
+    }
+    if parameters:
+        kwargs["Parameters"] = parameters
+
+    response = client.update_stack(**kwargs)
+    return response
 
 
 def delete_stack(stack_name):
@@ -79,4 +88,4 @@ def delete_stack(stack_name):
     """
     client = get_client()
     response = client.delete_stack(StackName=stack_name)
-    logger.info(response)
+    return response

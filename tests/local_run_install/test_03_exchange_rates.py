@@ -1,6 +1,6 @@
 import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
-from handoff.config import ARTIFACTS_DIR, CONFIG_DIR
+from handoff.config import ARTIFACTS_DIR, CONFIG_DIR, BUCKET
 
 TEST_PROJECTS_DIR = "./test_projects"
 
@@ -21,6 +21,8 @@ def test_03_exchange_rates():
 
         workspace_dir = os.path.join(root_dir, "workspace")
 
+        # make up a bucket name for the test
+        os.environ[BUCKET] = "test"
         handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
         handoff.do("run", "local", data, project_dir, workspace_dir, push_artifacts=False)
 

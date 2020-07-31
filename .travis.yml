@@ -7,6 +7,7 @@ python:
   - "3.6"
 
 before_install:
+  - export
   - ls /opt/python/
   - /opt/python/3.6/bin/python --version
 
@@ -20,6 +21,7 @@ install:
 
 script:
   - which python
+  - pytest -s tests/unit
   - pytest -s tests/local_run_no_install
   - pytest -s tests/local_run_install
   - tests/install_test.sh

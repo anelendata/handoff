@@ -91,7 +91,7 @@ RUN ./script/install_handoff
 # RUN python3 /app/setup.py install
 
 # It is recommended to make virtual envs for each process
-RUN handoff install -p project -w workspace
+RUN handoff workspace install -p project -w workspace
 
 # Make sure to delete these directories in case sensitive information was accidentally copied.
 RUN rm -fr project
@@ -102,4 +102,4 @@ RUN rm -fr workspace/artifacts
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -w workspace -a -d ${DATA:-{}} -a
+CMD handoff ${COMMAND:-run remote_config} -w workspace -a -d ${DATA:-{}} -a

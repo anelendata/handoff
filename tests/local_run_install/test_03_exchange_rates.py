@@ -1,6 +1,6 @@
 import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
-from handoff.config import ARTIFACTS_DIR, CONFIG_DIR
+from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, BUCKET, IMAGE_VERSION)
 
 TEST_PROJECTS_DIR = "./test_projects"
 
@@ -21,8 +21,11 @@ def test_03_exchange_rates():
 
         workspace_dir = os.path.join(root_dir, "workspace")
 
-        handoff.do("install", data, project_dir, workspace_dir, push_artifacts=False)
-        handoff.do("run_local", data, project_dir, workspace_dir, push_artifacts=False)
+        # make up a bucket name for the test
+        os.environ[BUCKET] = "test"
+        os.environ[IMAGE_VERSION] = "0.1"
+        handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("run", "local", data, project_dir, workspace_dir, push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

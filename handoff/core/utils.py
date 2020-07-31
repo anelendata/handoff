@@ -1,16 +1,42 @@
-import datetime, json, logging, os, sys
-
+import datetime, json, logging, os, re, sys
 from dateutil.parser import parse as dateparse
-
 import attr
+from handoff.config import ADMIN_ENVS
 
 
 def get_logger(module):
-    logging.basicConfig(stream=sys.stdout,
-                        format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
-                        level=logging.INFO)
+    logging.basicConfig(
+        stream=sys.stdout,
+        format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
+        level=logging.INFO)
     logger = logging.getLogger(module)
     return logger
+
+
+LOGGER = get_logger(__name__)
+
+
+def env_check():
+    invalid = list()
+    for env in ADMIN_ENVS.keys():
+        value = os.environ.get(env)
+        if not value:
+            LOGGER.critical(("%s environment variable is not defined. " +
+                             "It must follow %s") % (env, ADMIN_ENVS[env]))
+            invalid.append(env)
+            continue
+        is_valid = (bool(re.fullmatch(ADMIN_ENVS[env]["pattern"], value)) and
+                    (not ADMIN_ENVS[env].get("min") or
+                     ADMIN_ENVS[env]["min"] <= len(value)) and
+                    (not ADMIN_ENVS[env].get("max") or
+                     ADMIN_ENVS[env]["max"] >= len(value)))
+        if not is_valid:
+            LOGGER.critical(("%s environment variable is not following the " +
+                             "pattern %s. value: %s") %
+                            (env, ADMIN_ENVS[env], value))
+            invalid.append(env)
+    if invalid:
+        raise ValueError("Invalid environment variables")
 
 
 def time_trunc(org_datetime, by='minute'):

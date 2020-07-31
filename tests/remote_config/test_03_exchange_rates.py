@@ -8,7 +8,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
-    envs = ["RESOURCE_GROUP", "BUCKET", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
+    envs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
     not_set = list()
     for env in envs:
         if os.environ.get(env) is None:
@@ -30,19 +30,19 @@ def test_03_exchange_rates():
         workspace_dir = os.path.join(root_dir, "workspace")
 
         allow_advanced_tier = False
-        handoff.do("push_config", data, project_dir, workspace_dir, push_artifacts=False,
+        handoff.do("config", "push", data, project_dir, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("push_files", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("files", "push", data, project_dir, workspace_dir, push_artifacts=False)
 
-        handoff.do("install", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
 
-        handoff.do("run", data, None, workspace_dir, push_artifacts=True)
+        handoff.do("run", "remote_config", data, None, workspace_dir, push_artifacts=True)
 
-        handoff.do("delete_files", data, None, workspace_dir, push_artifacts=False,
+        handoff.do("files", "delete", data, None, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("delete_artifacts", data, None, workspace_dir, push_artifacts=False,
+        handoff.do("artifacts", "delete", data, None, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
-        handoff.do("delete_config", data, None, workspace_dir, push_artifacts=False,
+        handoff.do("config", "delete", data, None, workspace_dir, push_artifacts=False,
                    **{"allow_advanced_tier": allow_advanced_tier})
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))

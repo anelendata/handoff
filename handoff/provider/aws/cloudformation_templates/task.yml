@@ -67,6 +67,8 @@ Resources:
               Value: !Sub ${ResourceGroup}
             - Name: BUCKET
               Value: !Sub ${Bucket}
+            - Name: DOCKER_IMAGE
+              Value: !Sub ${ImageName}
             - Name: TASK
               Value: !Sub ${AWS::StackName}
             - Name: AWS_REGION

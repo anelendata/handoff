@@ -1,5 +1,5 @@
 import os
-from handoff.provider.aws import ecr, s3, ssm, sts, cloudformation
+from handoff.provider.aws import ecs, ecr, s3, ssm, sts, cloudformation
 from handoff.core import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK)
@@ -192,3 +192,11 @@ def update_task(template_file=None):
 def delete_task():
     stack_name = os.environ.get(TASK)
     return cloudformation.delete_stack(stack_name)
+
+
+def run_task(env=[]):
+    task_stack = os.environ.get(TASK)
+    docker_image = os.environ.get(DOCKER_IMAGE)
+    region = os.environ.get("AWS_REGION")
+    resource_group_stack =  os.environ.get(RESOURCE_GROUP) + "-resources"
+    return ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, env)

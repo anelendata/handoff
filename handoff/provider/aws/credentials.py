@@ -50,7 +50,7 @@ def get_client(service):
         return CLIENTS[service]
 
     set_container_credentials()
-    session = boto3.session.Session()
+    session = boto3.session.Session(region_name=os.environ.get("AWS_REGION"))
     CLIENTS[service] = session.client(service)
 
     # boto_session = get_session(aws_access_key_id, aws_secret_access_key,

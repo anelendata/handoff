@@ -51,20 +51,19 @@ def _log_task_run_filter(task_name, response):
 
 
 def assume_role(project_dir, workspace_dir, data, **kwargs):
-    _env_check()
-    global platform
+    _env_check([RESOURCE_GROUP])
+    platform = _get_platform()
     role_arn = data.get("role_arn")
     target_account_id = data.get("target_account_id")
     external_id = data.get("external_id")
-    response = platform.assume_role(role_arn=role_arn,
-                                    target_account_id=target_account_id,
-                                    external_id=external_id)
-    LOGGER.info(response)
+    platform.assume_role(role_arn=role_arn,
+                         target_account_id=target_account_id,
+                         external_id=external_id)
 
 
 def create_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_bucket()
     LOGGER.info(response)
     _log_stack_info(response)
@@ -85,14 +84,15 @@ def delete_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_resources()
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_resources()
     LOGGER.info(response)
@@ -100,6 +100,7 @@ def update_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_resources()
     LOGGER.info(response)
@@ -107,14 +108,15 @@ def delete_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_task()
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_task()
     LOGGER.info(response)
@@ -122,6 +124,7 @@ def update_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_task()
     LOGGER.info(response)
@@ -129,6 +132,7 @@ def delete_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.run_task()
     LOGGER.info(response)

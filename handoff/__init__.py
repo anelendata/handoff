@@ -50,7 +50,7 @@ def do(top_command,
     platform = provider._get_platform(provider_name="aws",
                                       platform_name="fargate",
                                       **data)
-    LOGGER.info("Logged in to %s" % platform.NAME)
+    LOGGER.info("Platform: %s" % platform.NAME)
 
     prev_wd = os.getcwd()
     command = (top_command + " " + sub_command).strip()
@@ -59,7 +59,8 @@ def do(top_command,
         # This will also set environment variables for deployment
         admin._read_project(os.path.join(project_dir, PROJECT_FILE))
 
-    if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
+    if (top_command == "provider" and os.environ.get(DOCKER_IMAGE) and
+            not os.environ.get(IMAGE_VERSION)):
         image_version = docker.get_latest_version(
             project_dir, workspace_dir, data)
         if image_version:

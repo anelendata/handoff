@@ -26,17 +26,23 @@ def login(profile=None):
 
 def assume_role(role_arn=None, target_account_id=None,  external_id=None):
     if not role_arn:
+        account_id = sts.get_account_id()
         resource_group = os.environ.get(RESOURCE_GROUP)
-        role_name = ("FargateDeployRole-" + resource_group +
-                     sts.get_account_id())
+        role_name = ("FargateDeployRole-%s-%s" %
+                     (resource_group, account_id))
+        if not target_account_id:
+            target_account_id = account_id
         params = {
             "role_name": role_name,
             "target_account_id": target_account_id
         }
-        role_arn = ("role_arn = arn:aws:iam::{target_account_id}:" +
+        role_arn = ("arn:aws:iam::{target_account_id}:" +
                     "role/{role_name}").format(**params)
-    response = sts.assume_role(role_arn, external_id)
-    LOGGER.info(response)
+    response = sts.assume_role(role_arn, external_id=external_id)
+    os.environ["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
+    os.environ["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
+    os.environ["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
+    return response
 
 
 def get_parameter(key):

@@ -24,11 +24,6 @@ def test_03_exchange_rates():
 
         # make up a bucket name for the test
         os.environ[BUCKET] = "test"
-        if os.environ.get(DOCKER_IMAGE):
-            del os.environ[DOCKER_IMAGE]
-        if os.environ.get(IMAGE_VERSION):
-            del os.environ[IMAGE_VERSION]
-
         handoff.do("workspace", "install", data, project_dir, workspace_dir, push_artifacts=False)
         handoff.do("run", "local", data, project_dir, workspace_dir, push_artifacts=False)
 

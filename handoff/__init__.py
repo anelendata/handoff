@@ -52,9 +52,9 @@ def do(top_command,
         # This will also set environment variables for deployment
         admin._read_project(os.path.join(project_dir, PROJECT_FILE))
 
-    if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
-        os.environ[IMAGE_VERSION] = docker.get_latest_version(
-            project_dir, workspace_dir, data, **kwargs)
+#    if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
+#        os.environ[IMAGE_VERSION] = docker.get_latest_version(
+#            project_dir, workspace_dir, data, **kwargs)
 
     prev_wd = os.getcwd()
 

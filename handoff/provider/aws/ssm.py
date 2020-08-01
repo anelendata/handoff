@@ -4,25 +4,12 @@ import boto3
 
 from . import credentials as cred
 
-SSM_CLIENT = None
-
 
 logger = logging.getLogger(__name__)
 
 
 def get_client():
-    global SSM_CLIENT
-    if SSM_CLIENT:
-        return SSM_CLIENT
-    aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region = cred.get_credentials()
-    logger.debug(aws_access_key_id[0:-5] + "***** " + aws_secret_access_key[0:-5] + "***** " + aws_region)
-    boto_session = boto3.session.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-            region_name=aws_region)
-    SSM_CLIENT = boto_session.client("ssm")
-    return SSM_CLIENT
+    return cred.get_client("ssm")
 
 
 def get_parameter(project, name):

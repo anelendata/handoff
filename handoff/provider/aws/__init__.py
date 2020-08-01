@@ -1,12 +1,48 @@
 import os
 from handoff.provider.aws import ecs, ecr, s3, ssm, sts, cloudformation
+from handoff.provider.aws import credentials as cred
 from handoff.core import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK)
 
-
-LOGGER = utils.get_logger(__name__)
+NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
+LOGGER = utils.get_logger(__name__)
+
+
+def login(profile=None):
+    if profile:
+        os.environ["AWS_PROFILE"] = profile
+        LOGGER.info("AWS_PROFILE set to " + os.environ.get("AWS_PROFILE"))
+
+    region = cred.get_region()
+    if region:
+        os.environ["AWS_REGION"] = region
+    try:
+        sts.get_account_id()
+    except Exception:
+        LOGGER.warning("Login not successful. Remote operation will fail.")
+
+
+def assume_role(role_arn=None, target_account_id=None,  external_id=None):
+    if not role_arn:
+        account_id = sts.get_account_id()
+        resource_group = os.environ.get(RESOURCE_GROUP)
+        role_name = ("FargateDeployRole-%s-%s" %
+                     (resource_group, account_id))
+        if not target_account_id:
+            target_account_id = account_id
+        params = {
+            "role_name": role_name,
+            "target_account_id": target_account_id
+        }
+        role_arn = ("arn:aws:iam::{target_account_id}:" +
+                    "role/{role_name}").format(**params)
+    response = sts.assume_role(role_arn, external_id=external_id)
+    os.environ["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
+    os.environ["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
+    os.environ["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
+    return response
 
 
 def get_parameter(key):
@@ -14,7 +50,7 @@ def get_parameter(key):
                              os.environ.get(TASK), key)
 
 
-def push_parameter(key, value, allow_advanced_tier=False):
+def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
     if allow_advanced_tier:
         LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
     tier = "Standard"
@@ -29,7 +65,10 @@ def push_parameter(key, value, allow_advanced_tier=False):
     ssm.put_parameter(os.environ.get(RESOURCE_GROUP) + "-" +
                       os.environ.get(TASK),
                       key, value, tier=tier)
-
+    LOGGER.info("See the parameters at https://console.aws.amazon.com/" +
+                "systems-manager/parameters/?region=" +
+                os.environ.get("AWS_REGION") +
+                "&tab=Table")
 
 def delete_parameter(key):
     ssm.delete_parameter(os.environ.get(RESOURCE_GROUP) + "-" +
@@ -82,6 +121,46 @@ def get_repository_images(image_name=None):
 def create_repository(is_mutable=False):
     name = os.environ.get(DOCKER_IMAGE)
     ecr.create_repository(name, is_mutable)
+
+
+def create_role(grantee_account_id, external_id, template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-role"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
+    parameters = [{"ParameterKey": "ResourceGroup",
+                   "ParameterValue": resource_group},
+                  {"ParameterKey": "GranteeAccountId",
+                   "ParameterValue": grantee_account_id},
+                  {"ParameterKey": "ExternalId",
+                   "ParameterValue": external_id}
+                  ]
+    return cloudformation.create_stack(stack_name, template_file, parameters)
+
+
+def update_role(grantee_account_id, external_id, template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-role"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
+    parameters = [{"ParameterKey": "ResourceGroup",
+                   "ParameterValue": resource_group},
+                  {"ParameterKey": "GranteeAccountId",
+                   "ParameterValue": grantee_account_id},
+                  {"ParameterKey": "ExternalId",
+                   "ParameterValue": external_id}
+                  ]
+    return cloudformation.update_stack(stack_name, template_file, parameters)
+
+
+def delete_role():
+    LOGGER.warning("This will only delete the CloudFormation stack. " +
+                   "The bucket %s will be retained." % os.environ.get(BUCKET))
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-bucket"
+    return cloudformation.delete_stack(stack_name)
 
 
 def create_bucket(template_file=None):

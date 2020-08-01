@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  DeployGroupName:
+  ResourceGroup:
     Type: String
     Description: The deploy group name
     MaxLength: 27
@@ -19,7 +19,7 @@ Resources:
   FargateDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub FargateDeployRole-${DeployGroupName}-${GranteeAccountId}
+      RoleName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -32,7 +32,7 @@ Resources:
               sts:ExternalId: !Sub ${ExternalId}
       Path: /
       Policies:
-        - PolicyName: !Sub FargateDeployRole-${DeployGroupName}-${GranteeAccountId}
+        - PolicyName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
           PolicyDocument:
             Statement:
             - Effect: Allow

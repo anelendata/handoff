@@ -12,9 +12,6 @@ from handoff.core.utils import env_check as _env_check
 
 LOGGER = utils.get_logger(__name__)
 
-# TODO: Decide where the user provide the provider name (arg?)
-platform = provider._get_platform("aws")
-
 
 def _workspace_get_dirs(workspace_dir):
     config_dir = os.path.join(workspace_dir, CONFIG_DIR)
@@ -52,6 +49,7 @@ def _read_precompiled_config(precompiled_config_file=None):
     Read parameters from a file if a file name is given.
     Read them from remote parameters store (e.g. AWS SSM) otherwise.
     """
+    platform = provider._get_platform()
     if precompiled_config_file:
         if not os.path.isfile(precompiled_config_file):
             raise ValueError(precompiled_config_file + " not found.")
@@ -84,6 +82,7 @@ def _set_env(config):
 
 
 def _read_project(project_file):
+    platform = provider._get_platform()
     # load commands from yaml file
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
@@ -108,6 +107,7 @@ def _read_project(project_file):
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     _env_check()
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
@@ -115,6 +115,7 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     _env_check()
@@ -128,6 +129,7 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     _env_check()
@@ -138,6 +140,7 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     _env_check()
     LOGGER.info("Deleting artifacts from the remote storage " +
                 os.environ.get(BUCKET))
@@ -146,6 +149,7 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_get(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     _env_check()
@@ -158,7 +162,7 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
     platform.download_dir(remote_dir, files_dir)
 
 
-def files_get_local(project_dir, workspace_dir, data):
+def files_get_local(project_dir, workspace_dir, data, **kwargs):
     if not project_dir:
         raise Exception("Project directory is not set")
 
@@ -176,6 +180,7 @@ def files_get_local(project_dir, workspace_dir, data):
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir/FILES_DIR to remote storage"""
+    platform = provider._get_platform()
     if not project_dir:
         raise Exception("Project directory is not set")
     _env_check()
@@ -186,6 +191,7 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     _env_check()
     LOGGER.info("Deleting files from the remote storage " +
                 os.environ.get(BUCKET))
@@ -275,6 +281,7 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 
 def config_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
+    platform = provider._get_platform()
     if not project_dir:
         raise Exception("Project directory is not set")
     _env_check()
@@ -283,10 +290,11 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     config = json.dumps(config_get_local(project_dir, workspace_dir, data))
 
     LOGGER.info("Uploading config to %s." % os.environ.get(TASK))
-    platform.push_parameter("config", config, **kwargs)
+    platform.push_parameter("config", config, **data)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
+    platform = provider._get_platform()
     _env_check()
     platform.delete_parameter("config")
 

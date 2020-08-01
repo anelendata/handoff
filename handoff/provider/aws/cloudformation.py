@@ -6,22 +6,9 @@ from . import credentials as cred
 
 logger = logging.getLogger(__name__)
 
-CFN_CLIENT = None
-
 
 def get_client():
-    global CFN_CLIENT
-    if CFN_CLIENT:
-        return CFN_CLIENT
-    aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region = cred.get_credentials()
-    logger.debug(aws_access_key_id[0:-5] + "***** " + aws_secret_access_key[0:-5] + "***** " + aws_region)
-    boto_session = boto3.session.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-            region_name=aws_region)
-    CFN_CLIENT = boto_session.client("cloudformation")
-    return CFN_CLIENT
+    return cred.get_client("cloudformation")
 
 
 def create_stack(stack_name, template_file, parameters=None,

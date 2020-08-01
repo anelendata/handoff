@@ -1,16 +1,32 @@
-import os
+import os, sys
 from importlib import import_module as _import_module
 from handoff.core.utils import get_logger as _get_logger
 from handoff.core.utils import env_check as _env_check
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
                             IMAGE_VERSION)
 
-platform = None
 LOGGER = _get_logger(__name__)
 
 
+PLATFORM = None
+
+
+def _get_platform(provider_name=None, platform_name=None, stdout=False,
+                  profile=None, **kwargs):
+    global PLATFORM
+    if not PLATFORM:
+        if not provider_name or not platform_name:
+            raise Exception("You need to set provider_name and platform_name")
+        PLATFORM = _import_module("handoff.provider." + provider_name)
+        response = PLATFORM.login(profile)
+        if stdout:
+            sys.stdout.write(response)
+    return PLATFORM
+
+
 def _log_stack_info(response):
-    params = {"stack_id": response["StackId"], "region": os.environ["AWS_REGION"]}
+    params = {"stack_id": response["StackId"],
+              "region": os.environ["AWS_REGION"]}
     LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
                  "cloudformation/home?region={region}#/stacks/stackinfo" +
                  "?viewNested=true&hideStacks=false" +
@@ -34,23 +50,57 @@ def _log_task_run_filter(task_name, response):
                  "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
-def _get_platform(provider):
-    global platform
-    if platform:
-        return platform
-    platform = _import_module("handoff.provider." + provider)
-    return platform
+def assume_role(project_dir, workspace_dir, data, **kwargs):
+    _env_check([RESOURCE_GROUP])
+    platform = _get_platform()
+    role_arn = data.get("role_arn")
+    target_account_id = data.get("target_account_id")
+    external_id = data.get("external_id")
+    platform.assume_role(role_arn=role_arn,
+                         target_account_id=target_account_id,
+                         external_id=external_id)
+
+
+def create_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.create_role(
+        grantee_account_id=data.get("grantee_account_id"),
+        external_id=data.get("external_id")
+    )
+    LOGGER.info(response)
+    _log_stack_info(response)
+
+
+def update_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.update_role(
+        grantee_account_id=data.get("grantee_account_id"),
+        external_id=data.get("external_id")
+    )
+    LOGGER.info(response)
+    _log_stack_info(response)
+
+
+def delete_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.delete_role()
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[BUCKET])
 
 
 def create_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_bucket()
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_bucket()
     LOGGER.info(response)
@@ -58,6 +108,7 @@ def update_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_bucket(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_bucket()
     LOGGER.info(response)
@@ -65,14 +116,15 @@ def delete_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_resources()
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_resources()
     LOGGER.info(response)
@@ -80,6 +132,7 @@ def update_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_resources(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_resources()
     LOGGER.info(response)
@@ -87,14 +140,15 @@ def delete_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
-    global platform
     response = platform.create_task()
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.update_task()
     LOGGER.info(response)
@@ -102,6 +156,7 @@ def update_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_task(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.delete_task()
     LOGGER.info(response)
@@ -109,6 +164,7 @@ def delete_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
     _env_check()
     response = platform.run_task()
     LOGGER.info(response)

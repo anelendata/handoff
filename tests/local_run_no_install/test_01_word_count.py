@@ -15,7 +15,7 @@ def test_01_word_count():
         os.mkdir(workspaces_dir)
         shutil.copyfile(text_file, os.path.join(root_dir, text_file))
         workspace_dir = os.path.join(workspaces_dir, project_name)
-        handoff.do("run", "local", data, project_dir, workspace_dir, push_artifacts=False)
+        handoff.do("run", "local", project_dir, workspace_dir, data, push_artifacts=False)
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR, "state")) as f:
             state = f.read()
             assert(int(state) > 40)

@@ -16,9 +16,11 @@ def get_logger(module):
 LOGGER = get_logger(__name__)
 
 
-def env_check():
+def env_check(keys=None):
     invalid = list()
-    for env in ADMIN_ENVS.keys():
+    if not keys:
+        keys = ADMIN_ENVS.keys()
+    for env in keys:
         value = os.environ.get(env)
         if not value:
             LOGGER.critical(("%s environment variable is not defined. " +

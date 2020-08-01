@@ -5,22 +5,10 @@ from botocore.exceptions import ClientError
 from . import credentials as cred
 
 logger = logging.getLogger(__name__)
-ECR_CLIENT = None
 
 
 def get_client():
-    global ECR_CLIENT
-    if ECR_CLIENT:
-        return ECR_CLIENT
-    aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region = cred.get_credentials()
-    logger.debug(aws_access_key_id[0:-5] + "***** " + aws_secret_access_key[0:-5] + "***** " + aws_region)
-    boto_session = boto3.session.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-            region_name=aws_region)
-    ECR_CLIENT = boto_session.client("ecr")
-    return ECR_CLIENT
+    return cred.get_client("ecr")
 
 
 def get_token(registry_id):

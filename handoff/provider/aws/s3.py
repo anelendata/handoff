@@ -4,25 +4,12 @@ import boto3
 
 from . import credentials as cred
 
-S3_CLIENT = None
-
 
 logger = logging.getLogger(__name__)
 
 
 def get_client():
-    global S3_CLIENT
-    if S3_CLIENT:
-        return S3_CLIENT
-    aws_access_key_id, aws_secret_access_key, aws_session_token, aws_region = cred.get_credentials()
-    logger.debug(aws_access_key_id[0:-5] + "***** " + aws_secret_access_key[0:-5] + "***** " + aws_region)
-    boto_session = boto3.session.Session(
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-            region_name=aws_region)
-    S3_CLIENT = boto_session.client("s3")
-    return S3_CLIENT
+    return cred.get_client("s3")
 
 
 def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix):
@@ -30,7 +17,6 @@ def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix)
                 (os.path.join(src_bucket, src_prefix), os.path.join(dest_bucket, dest_prefix)))
     client = get_client()
     keys = []
-    dirs = []
     next_token = ""
     base_kwargs = {
         "Bucket": src_bucket,

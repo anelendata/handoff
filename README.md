@@ -5,7 +5,7 @@
 
 Deploy configurable unix pipeline jobs serverlessly.
 
-<img src="./assets/handoff_landscape.png"/>
+<img src="https://github.com/anelendata/handoff/raw/doc/assets/handoff_landscape_transparent.png"/>
 
 ## What is it?
 

@@ -2,7 +2,7 @@ import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
 from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, BUCKET, IMAGE_VERSION)
 
-TEST_PROJECTS_DIR = "./test_projects"
+TEST_PROJECTS_DIR = "./handoff/test_projects"
 
 LOGGER = logging.getLogger(__name__)
 

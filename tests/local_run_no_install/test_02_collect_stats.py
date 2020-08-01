@@ -2,7 +2,7 @@ import json, os, shutil, tempfile
 import handoff
 from handoff.config import ARTIFACTS_DIR
 
-TEST_PROJECTS_DIR = "./test_projects"
+TEST_PROJECTS_DIR = "./handoff/test_projects"
 
 
 def test_02_collect_stats():

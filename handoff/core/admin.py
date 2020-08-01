@@ -2,7 +2,7 @@ import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
 from handoff import provider
-from handoff.config import (ARTIFACTS_DIR, BUCKET,
+from handoff.config import (VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
                             RESOURCE_GROUP, PROJECT_FILE, TASK)
@@ -99,10 +99,15 @@ def _read_project(project_file):
                             "Remote config operations will fail.") %
                            BUCKET)
         else:
-            os.environ[BUCKET] = (aws_account_id + "-" +
-                                  os.environ[RESOURCE_GROUP])
-            LOGGER.info("Environment veriable %s was set autoamtically as %s" %
-                        (BUCKET, os.environ[BUCKET]))
+            if os.environ.get(RESOURCE_GROUP):
+                os.environ[BUCKET] = (aws_account_id + "-" +
+                                      os.environ[RESOURCE_GROUP])
+                LOGGER.info("Environment veriable %s was set autoamtically as %s" %
+                            (BUCKET, os.environ[BUCKET]))
+            else:
+                LOGGER.warning(("Environment veriable %s is not set. " +
+                                "Remote config operations will fail.") %
+                               BUCKET)
     return project
 
 
@@ -341,3 +346,7 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
             _make_venv(command["venv"])
         for install in command.get("installs", []):
             _install(os.path.join(command["venv"]), install)
+
+
+def version(project_dir, workspace_dir, data, **kwargs):
+    print(VERSION)

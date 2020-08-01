@@ -2,19 +2,20 @@ import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
 from handoff.config import ARTIFACTS_DIR, CONFIG_DIR
 
-TEST_PROJECTS_DIR = "./test_projects"
+TEST_PROJECTS_DIR = "./handoff/test_projects"
 
 LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
-    # envs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION"]
-    envs = []
-    not_set = list()
-    for env in envs:
-        if os.environ.get(env) is None:
-            not_set.append(env)
-    assert len(not_set) == 0, "Please set environment variables: %s" % str(not_set)
+    if (not os.environ.get("AWS_PROFILE") and
+        not os.environ.get("AWS_ACCESS_KEY_ID")):
+        print("Please set environment variable AWS_PROFILE or " +
+              "(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) to run this test.")
+        assert False
+
+    if os.environ.get("BUCKET"):
+        del os.environ["BUCKET"]
 
     project_name = "03_exchange_rates"
     orig_project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)

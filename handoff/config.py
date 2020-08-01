@@ -1,3 +1,5 @@
+VERSION = "0.1.2a0"
+
 ARTIFACTS_DIR = "artifacts"
 CONFIG_DIR = "config"
 FILES_DIR = "files"

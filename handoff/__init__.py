@@ -1,11 +1,24 @@
-import argparse, datetime, json, logging, os
+import argparse, datetime, json, logging, os, sys
 from .core import admin, runner
 from .config import (ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
                      IMAGE_VERSION)
-from . import docker, provider
+from . import docker, plugins, provider
 
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _list_plugins():
+    modules = dict()
+    objects = dir(plugins)
+    for name in objects:
+        if name[0] == "_":
+            continue
+        obj = getattr(plugins, name)
+
+        if not callable(obj):
+            modules[name] = obj
+    return modules
 
 
 def _list_commands(module, split_first=False):
@@ -47,13 +60,12 @@ def do(top_command,
        push_artifacts=True):
     """
     """
+    prev_wd = os.getcwd()
+    command = (top_command + " " + sub_command).strip()
+
     platform = provider._get_platform(provider_name="aws",
                                       platform_name="fargate",
                                       **data)
-    LOGGER.info("Platform: %s" % platform.NAME)
-
-    prev_wd = os.getcwd()
-    command = (top_command + " " + sub_command).strip()
 
     if project_dir:
         # This will also set environment variables for deployment
@@ -72,6 +84,8 @@ def do(top_command,
     # Try running admin commands
     admin_commands = _list_commands(admin, True)
     if command in admin_commands:
+        LOGGER.info("Platform: %s" % platform.NAME)
+
         # Run the admin command
         admin_commands[command](project_dir, workspace_dir, data)
         os.chdir(prev_wd)
@@ -85,6 +99,13 @@ def do(top_command,
     if top_command == "provider":
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
                         data)
+        os.chdir(prev_wd)
+        return
+
+    plugin_modules = _list_plugins()
+    if top_command in plugin_modules.keys():
+        _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
+                        workspace_dir, data)
         os.chdir(prev_wd)
         return
 
@@ -131,7 +152,7 @@ def do(top_command,
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run parameterized Unix pipeline command https://dev/handoff.cloud")
+        description="Run parameterized Unix pipeline command. Try running: `handoff tutorial start` in a new directory. Check out https://dev.handoff.cloud to learn more.")
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("subcommand", type=str, nargs="?", default="",
                         help="subcommand")
@@ -148,8 +169,11 @@ def main():
     parser.add_argument("--profile", type=str, default=None,
                         help="Profile name for logging in to platform")
 
-    args = parser.parse_args()
+    if len(sys.argv)==1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
 
+    args = parser.parse_args()
     data_json = args.data
     try:
         data = json.loads(data_json)

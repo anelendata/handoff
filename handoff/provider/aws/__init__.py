@@ -21,8 +21,9 @@ def login(profile=None):
         os.environ["AWS_REGION"] = region
     try:
         sts.get_account_id()
+        LOGGER.warning("You have the access to AWS resources.")
     except Exception:
-        LOGGER.warning("Login not successful. Remote operation will fail.")
+        pass
 
 
 def assume_role(role_arn=None, target_account_id=None,  external_id=None):

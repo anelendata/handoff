@@ -1,5 +1,6 @@
 include handoff/docker/Dockerfile
 include handoff/docker/script/*
 include handoff/provider/aws/cloudformation_templates/*
+recursive-include handoff/test_projects *
 recursive-include handoff/ *.py
 recursive-exclude handoff/ *.py[cod]

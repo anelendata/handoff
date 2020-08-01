@@ -170,3 +170,18 @@ def run(project_dir, workspace_dir, data, **kwargs):
     LOGGER.info(response)
     _log_task_run_filter(os.environ[RESOURCE_GROUP] + "-" + os.environ[TASK],
                          response)
+
+
+def schedule(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    target_id = str(data["target_id"])
+    cronexp = "cron(" + data["cron"] + ")"
+    platform.schedule_task(target_id, cronexp)
+
+
+def unschedule(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    target_id = str(data["target_id"])
+    platform.unschedule_task(target_id)

@@ -61,6 +61,36 @@ def assume_role(project_dir, workspace_dir, data, **kwargs):
                          external_id=external_id)
 
 
+def create_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.create_role(
+        grantee_account_id=data.get("grantee_account_id"),
+        external_id=data.get("external_id")
+    )
+    LOGGER.info(response)
+    _log_stack_info(response)
+
+
+def update_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.update_role(
+        grantee_account_id=data.get("grantee_account_id"),
+        external_id=data.get("external_id")
+    )
+    LOGGER.info(response)
+    _log_stack_info(response)
+
+
+def delete_role(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    _env_check()
+    response = platform.delete_role()
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[BUCKET])
+
+
 def create_bucket(project_dir, workspace_dir, data, **kwargs):
     platform = _get_platform()
     _env_check()

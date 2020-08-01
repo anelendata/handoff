@@ -123,6 +123,46 @@ def create_repository(is_mutable=False):
     ecr.create_repository(name, is_mutable)
 
 
+def create_role(grantee_account_id, external_id, template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-role"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
+    parameters = [{"ParameterKey": "ResourceGroup",
+                   "ParameterValue": resource_group},
+                  {"ParameterKey": "GranteeAccountId",
+                   "ParameterValue": grantee_account_id},
+                  {"ParameterKey": "ExternalId",
+                   "ParameterValue": external_id}
+                  ]
+    return cloudformation.create_stack(stack_name, template_file, parameters)
+
+
+def update_role(grantee_account_id, external_id, template_file=None):
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-role"
+    if not template_file:
+        aws_dir, _ = os.path.split(__file__)
+        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
+    parameters = [{"ParameterKey": "ResourceGroup",
+                   "ParameterValue": resource_group},
+                  {"ParameterKey": "GranteeAccountId",
+                   "ParameterValue": grantee_account_id},
+                  {"ParameterKey": "ExternalId",
+                   "ParameterValue": external_id}
+                  ]
+    return cloudformation.update_stack(stack_name, template_file, parameters)
+
+
+def delete_role():
+    LOGGER.warning("This will only delete the CloudFormation stack. " +
+                   "The bucket %s will be retained." % os.environ.get(BUCKET))
+    resource_group = os.environ.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-bucket"
+    return cloudformation.delete_stack(stack_name)
+
+
 def create_bucket(template_file=None):
     resource_group = os.environ.get(RESOURCE_GROUP)
     bucket = os.environ.get(BUCKET)

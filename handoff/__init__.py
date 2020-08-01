@@ -1,7 +1,7 @@
 import argparse, datetime, json, logging, os, sys
-from .core import admin, runner
+from .core import admin, task
 from .config import (ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
-                     IMAGE_VERSION)
+                     IMAGE_VERSION, PROVIDER, PLATFORM)
 from . import docker, plugins, provider
 
 
@@ -52,65 +52,10 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data):
               (command, commands.keys()))
 
 
-def do(top_command,
-       sub_command,
-       project_dir,
-       workspace_dir,
-       data,
-       push_artifacts=True):
-    """
-    """
+def _run_task_subcommand(command, project_dir, workspace_dir, data,
+                         push_artifacts=False):
     prev_wd = os.getcwd()
-    command = (top_command + " " + sub_command).strip()
-
-    platform = provider._get_platform(provider_name="aws",
-                                      platform_name="fargate",
-                                      **data)
-
-    if project_dir:
-        # This will also set environment variables for deployment
-        admin._read_project(os.path.join(project_dir, PROJECT_FILE))
-
-    if (top_command == "provider" and os.environ.get(DOCKER_IMAGE) and
-            not os.environ.get(IMAGE_VERSION)):
-        image_version = docker.get_latest_version(
-            project_dir, workspace_dir, data)
-        if image_version:
-            os.environ[IMAGE_VERSION] = image_version
-
-    if workspace_dir:
-        admin.workspace_init(project_dir, workspace_dir, data)
-
-    # Try running admin commands
-    admin_commands = _list_commands(admin, True)
-    if command in admin_commands:
-        LOGGER.info("Platform: %s" % platform.NAME)
-
-        # Run the admin command
-        admin_commands[command](project_dir, workspace_dir, data)
-        os.chdir(prev_wd)
-        return
-
-    if top_command == "docker":
-        _run_subcommand(docker, sub_command, project_dir, workspace_dir, data)
-        os.chdir(prev_wd)
-        return
-
-    if top_command == "provider":
-        _run_subcommand(provider, sub_command, project_dir, workspace_dir,
-                        data)
-        os.chdir(prev_wd)
-        return
-
-    plugin_modules = _list_plugins()
-    if top_command in plugin_modules.keys():
-        _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
-                        workspace_dir, data)
-        os.chdir(prev_wd)
-        return
-
-    # Run command
-    commands = _list_commands(runner, True)
+    commands = _list_commands(task, True)
     if command not in commands:
         print("Invalid command: %s\nAvailable commands are %s" %
               (command, _list_core_commands()))
@@ -118,12 +63,14 @@ def do(top_command,
 
     admin.workspace_init(project_dir, workspace_dir, data)
 
-    if command == "run local":
+    if command in ["run", "run remote_config"]:
+        config = admin.config_get(project_dir, workspace_dir, data)
+        admin.files_get(project_dir, workspace_dir, data)
+    elif command in ["run local", "show commands"]:
         config = admin.config_get_local(project_dir, workspace_dir, data)
         admin.files_get_local(project_dir, workspace_dir, data)
     else:
-        config = admin.config_get(project_dir, workspace_dir, data)
-        admin.files_get(project_dir, workspace_dir, data)
+        config = {}
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
@@ -143,11 +90,54 @@ def do(top_command,
             f.write(state)
 
     os.chdir(prev_wd)
-    if push_artifacts:
+
+    if push_artifacts and os.environ.get(PROVIDER) and os.environ.get(PLATFORM):
         if not os.environ.get(BUCKET):
             raise Exception("Cannot push artifacts. BUCKET environment variable is not set")
         admin.artifacts_push(project_dir, workspace_dir, data)
         admin.artifacts_archive(project_dir, workspace_dir, data)
+
+
+def do(top_command, sub_command, project_dir, workspace_dir, data,
+       push_artifacts=True):
+    prev_wd = os.getcwd()
+    command = (top_command + " " + sub_command).strip()
+    if workspace_dir:
+        admin.workspace_init(project_dir, workspace_dir, data)
+
+    plugin_modules = _list_plugins()
+
+    admin_commands = _list_commands(admin, True)
+    if command in admin_commands:
+        # Run the admin command
+        admin_commands[command](project_dir, workspace_dir, data)
+
+    elif command in _list_commands(task, True):
+        # Wrap with try except for better logging in docker execution
+        try:
+            _run_task_subcommand(command, project_dir, workspace_dir, data,
+                                 push_artifacts)
+        except Exception as e:
+            LOGGER.critical(e)
+
+    elif top_command == "docker":
+        _run_subcommand(docker, sub_command, project_dir, workspace_dir, data)
+
+    elif top_command == "provider":
+        if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
+            image_version = docker.get_latest_version(
+                project_dir, workspace_dir, data)
+            if image_version:
+                os.environ[IMAGE_VERSION] = image_version
+        _run_subcommand(provider, sub_command, project_dir, workspace_dir,
+                        data)
+
+    elif top_command in plugin_modules.keys():
+        _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
+                        workspace_dir, data)
+
+    # This will prevent breaking the tests that has multiple do() calls
+    os.chdir(prev_wd)
 
 
 def main():
@@ -168,6 +158,10 @@ def main():
                         help="Allow AWS SSM Parameter Store Advanced tier")
     parser.add_argument("--profile", type=str, default=None,
                         help="Profile name for logging in to platform")
+    parser.add_argument("--provider", type=str, default="aws",
+                        help="Cloud provider name")
+    parser.add_argument("--platform", type=str, default="fargate",
+                        help="Cloud platform name")
 
     if len(sys.argv)==1:
         parser.print_help(sys.stderr)
@@ -179,6 +173,9 @@ def main():
         data = json.loads(data_json)
     except json.JSONDecodeError:
         data = json.loads(data_json[0:-1])
+
+    os.environ[PROVIDER] = args.provider
+    os.environ[PLATFORM] = args.platform
 
     data["allow_advanced_tier"] = args.allow_advanced_tier
     data["profile"] = args.profile

@@ -23,14 +23,17 @@ def env_check(keys=None):
     for env in keys:
         value = os.environ.get(env)
         if not value:
-            LOGGER.critical(("%s environment variable is not defined. " +
-                             "It must follow %s") % (env, ADMIN_ENVS[env]))
+            msg = env + " environment variable is not defined."
+            if ADMIN_ENVS.get(env, dict()).get("pattern"):
+                msg = msg + " Valid pattern: " + ADMIN_ENVS[env]["pattern"]
+            LOGGER.critical(msg)
             invalid.append(env)
             continue
-        is_valid = (bool(re.fullmatch(ADMIN_ENVS[env]["pattern"], value)) and
-                    (not ADMIN_ENVS[env].get("min") or
+        is_valid = ((not ADMIN_ENVS.get(env, dict()).get("pattern") or
+                    bool(re.fullmatch(ADMIN_ENVS[env]["pattern"], value))) and
+                    (not ADMIN_ENVS.get(env, dict()).get("min") or
                      ADMIN_ENVS[env]["min"] <= len(value)) and
-                    (not ADMIN_ENVS[env].get("max") or
+                    (not ADMIN_ENVS.get(env, dict()).get("max") or
                      ADMIN_ENVS[env]["max"] >= len(value)))
         if not is_valid:
             LOGGER.critical(("%s environment variable is not following the " +

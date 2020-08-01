@@ -1,6 +1,7 @@
 import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
-from handoff.config import ARTIFACTS_DIR, CONFIG_DIR
+from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, PROVIDER, PLATFORM,
+                            BUCKET)
 
 TEST_PROJECTS_DIR = "./handoff/test_projects"
 
@@ -8,14 +9,17 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
+    os.environ[PROVIDER] = os.environ.get(PROVIDER, "aws")
+    os.environ[PLATFORM] = os.environ.get(PLATFORM, "fargate")
+
     if (not os.environ.get("AWS_PROFILE") and
         not os.environ.get("AWS_ACCESS_KEY_ID")):
         print("Please set environment variable AWS_PROFILE or " +
               "(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) to run this test.")
         assert False
 
-    if os.environ.get("BUCKET"):
-        del os.environ["BUCKET"]
+    if os.environ.get(BUCKET):
+        del os.environ[BUCKET]
 
     project_name = "03_exchange_rates"
     orig_project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)

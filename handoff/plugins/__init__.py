@@ -1,1 +1,1 @@
-from . import tutorial
+from . import quick_start

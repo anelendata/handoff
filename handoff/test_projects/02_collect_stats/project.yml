@@ -1,6 +1,6 @@
 commands:
   - command: cat
-    args: "../../README.md"
-  - command: "python files/stats_collector.py"
-    venv: "proc_01"
-  - command: "wc"
+    args: ./files/the_great_dictator_speech.txt
+  - command: python files/stats_collector.py
+    venv: proc_01
+  - command: wc

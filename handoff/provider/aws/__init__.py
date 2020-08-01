@@ -11,6 +11,31 @@ TEMPLATE_DIR = "cloudformation_templates"
 LOGGER = utils.get_logger(__name__)
 
 
+def _log_stack_info(response):
+    params = {"stack_id": response["StackId"],
+              "region": os.environ["AWS_REGION"]}
+    LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
+                 "cloudformation/home?region={region}#/stacks/stackinfo" +
+                 "?viewNested=true&hideStacks=false" +
+                 "&stackId={stack_id}").format(**params))
+
+
+def _log_stack_filter(stack_name):
+    params = {"stack_name": stack_name, "region": os.environ["AWS_REGION"]}
+    LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
+                 "cloudformation/home?region={region}#/stacks/stackinfo" +
+                 "?filteringText={stack_name}").format(**params))
+
+
+def _log_task_run_filter(task_name, response):
+    task_arn = response["tasks"][0]["taskArn"]
+    task_id = task_arn[task_arn.find("task/") + len("task/"):]
+    params = {"task":task_name,
+              "region": os.environ["AWS_REGION"],
+              "task_id": task_id}
+    LOGGER.info(("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
+                 "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
+
 def login(profile=None):
     if profile:
         os.environ["AWS_PROFILE"] = profile
@@ -19,11 +44,27 @@ def login(profile=None):
     region = cred.get_region()
     if region:
         os.environ["AWS_REGION"] = region
+
     try:
-        sts.get_account_id()
-        LOGGER.warning("You have the access to AWS resources.")
+        account_id = sts.get_account_id()
+        LOGGER.info("You have the access to AWS resources.")
+        return account_id
     except Exception:
-        pass
+        return None
+
+
+def get_platform_auth_env(data):
+    if not os.environ.get("AWS_ACCESS_KEY_ID"):
+        role_arn = data.get("role_arn")
+        target_account_id = data.get("target_account_id")
+        external_id = data.get("external_id")
+        assume_role(role_arn, target_account_id, external_id)
+    env = {"AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID"),
+           "AWS_SECRET_ACCESS_KEY": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+           "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN"),
+           "AWS_REGION": os.environ.get("AWS_REGION")
+           }
+    return env
 
 
 def assume_role(role_arn=None, target_account_id=None,  external_id=None):
@@ -53,6 +94,8 @@ def get_parameter(key):
 
 
 def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
+    utils.env_check([RESOURCE_GROUP, TASK, "AWS_REGION"])
+
     if allow_advanced_tier:
         LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
     tier = "Standard"
@@ -84,6 +127,7 @@ def download_dir(remote_dir, local_dir):
 
 
 def upload_dir(src_dir_name, dest_prefix):
+    utils.env_check([BUCKET, "AWS_REGION"])
     dest_prefix = os.path.join(os.environ.get(TASK), dest_prefix)
     s3.upload_dir(src_dir_name, dest_prefix, os.environ.get(BUCKET))
 
@@ -138,7 +182,10 @@ def create_role(grantee_account_id, external_id, template_file=None):
                   {"ParameterKey": "ExternalId",
                    "ParameterValue": external_id}
                   ]
-    return cloudformation.create_stack(stack_name, template_file, parameters)
+    response = cloudformation.create_stack(stack_name, template_file,
+                                           parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def update_role(grantee_account_id, external_id, template_file=None):
@@ -154,7 +201,9 @@ def update_role(grantee_account_id, external_id, template_file=None):
                   {"ParameterKey": "ExternalId",
                    "ParameterValue": external_id}
                   ]
-    return cloudformation.update_stack(stack_name, template_file, parameters)
+    response = cloudformation.update_stack(stack_name, template_file, parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def delete_role():
@@ -162,7 +211,9 @@ def delete_role():
                    "The bucket %s will be retained." % os.environ.get(BUCKET))
     resource_group = os.environ.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
-    return cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name)
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[BUCKET])
 
 
 def create_bucket(template_file=None):
@@ -173,7 +224,9 @@ def create_bucket(template_file=None):
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
     parameters = [{"ParameterKey": "Bucket", "ParameterValue": bucket}]
-    return cloudformation.create_stack(stack_name, template_file, parameters)
+    response = cloudformation.create_stack(stack_name, template_file, parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def update_bucket(template_file=None):
@@ -184,7 +237,9 @@ def update_bucket(template_file=None):
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
     parameters = [{"ParameterKey": "Bucket", "ParameterValue": bucket}]
-    return cloudformation.update_stack(stack_name, template_file, parameters)
+    response = cloudformation.update_stack(stack_name, template_file, parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def delete_bucket():
@@ -192,7 +247,9 @@ def delete_bucket():
                    "The bucket %s will be retained." % os.environ.get(BUCKET))
     resource_group = os.environ.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
-    return cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name)
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[BUCKET])
 
 
 def create_resources(template_file=None):
@@ -201,7 +258,9 @@ def create_resources(template_file=None):
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
-    return cloudformation.create_stack(stack_name, template_file)
+    response = cloudformation.create_stack(stack_name, template_file)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def update_resources(template_file=None):
@@ -210,13 +269,17 @@ def update_resources(template_file=None):
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
-    return cloudformation.update_stack(stack_name, template_file)
+    response = cloudformation.update_stack(stack_name, template_file)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def delete_resources():
     resource_group = os.environ.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
-    return cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name)
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[RESOURCE_GROUP])
 
 
 def create_task(template_file=None):
@@ -242,7 +305,9 @@ def create_task(template_file=None):
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
-    return cloudformation.create_stack(stack_name, template_file, parameters)
+    response = cloudformation.create_stack(stack_name, template_file, parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def update_task(template_file=None):
@@ -267,12 +332,16 @@ def update_task(template_file=None):
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
-    return cloudformation.update_stack(stack_name, template_file, parameters)
+    response = cloudformation.update_stack(stack_name, template_file, parameters)
+    LOGGER.info(response)
+    _log_stack_info(response)
 
 
 def delete_task():
     stack_name = os.environ.get(TASK)
-    return cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name)
+    LOGGER.info(response)
+    _log_stack_filter(os.environ[TASK])
 
 
 def run_task(env=[]):
@@ -280,7 +349,10 @@ def run_task(env=[]):
     docker_image = os.environ.get(DOCKER_IMAGE)
     region = os.environ.get("AWS_REGION")
     resource_group_stack = os.environ.get(RESOURCE_GROUP) + "-resources"
-    return ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, env)
+    response = ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, env)
+    LOGGER.info(response)
+    _log_task_run_filter(os.environ[RESOURCE_GROUP] + "-" + os.environ[TASK],
+                         response)
 
 
 def schedule_task(target_id, cronexp, role_arn=None):

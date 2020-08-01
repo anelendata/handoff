@@ -1,7 +1,7 @@
 import os, sys
 from handoff import provider
 from handoff.config import DOCKER_IMAGE
-from handoff.core import utils
+from handoff.core import admin, utils
 from handoff.core.utils import env_check as _env_check
 from . import impl
 
@@ -9,19 +9,33 @@ from . import impl
 LOGGER = utils.get_logger(__name__)
 
 
+def _envs(project_dir, workspace_dir, data, **kwargs):
+    _ = admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
+    platform = provider._get_platform()
+    if not platform.login():
+        raise Exception("Please set platform credentials")
+    # Do this again to set DOCKER_IMAGE
+    _ = admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
+
+
 def build(project_dir, workspace_dir, data, **kwargs):
-    if not project_dir:
-        raise Exception("Project directory is not set")
+    _envs(project_dir, workspace_dir, data, **kwargs)
     _env_check([DOCKER_IMAGE])
     impl.build(project_dir)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
-    platform = provider._get_platform()
-    _env_check()
-    if not os.environ.get("AWS_ACCESS_KEY_ID"):
-        platform.assume_role()
-    impl.run()
+    _envs(project_dir, workspace_dir, data, **kwargs)
+    _env_check([DOCKER_IMAGE])
+
+    env = provider.get_platform_auth_env(project_dir, workspace_dir,
+                                         data, **kwargs)
+    env.update(data)
+    try:
+        impl.run(extra_env=env)
+    except Exception as e:
+        LOGGER.critical(str(e).replace("\\n", "\n"))
+        raise
 
 
 def push(project_dir, workspace_dir, data, **kwargs):

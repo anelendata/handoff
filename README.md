@@ -5,7 +5,7 @@
 
 Deploy configurable unix pipeline jobs serverlessly.
 
-<img width="320px" src="./assets/handoff_logo.png"/>
+<img style="width: 320px; text-align: center;" src="./assets/handoff_logo.png"/>
 
 ## What is it?
 

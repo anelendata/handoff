@@ -1,5 +1,6 @@
 import os
-from handoff.provider.aws import ecs, ecr, s3, ssm, sts, cloudformation
+from handoff.provider.aws import (ecs, ecr, events, iam, s3, ssm, sts,
+                                  cloudformation)
 from handoff.provider.aws import credentials as cred
 from handoff.core import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
@@ -277,5 +278,52 @@ def run_task(env=[]):
     task_stack = os.environ.get(TASK)
     docker_image = os.environ.get(DOCKER_IMAGE)
     region = os.environ.get("AWS_REGION")
-    resource_group_stack =  os.environ.get(RESOURCE_GROUP) + "-resources"
+    resource_group_stack = os.environ.get(RESOURCE_GROUP) + "-resources"
     return ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, env)
+
+
+def schedule_task(target_id, cronexp, role_arn=None):
+    task_stack = os.environ.get(TASK)
+    region = os.environ.get("AWS_REGION")
+    resource_group_stack = os.environ.get(RESOURCE_GROUP) + "-resources"
+
+    role_name = (os.environ.get(RESOURCE_GROUP) +
+                 "-resources-CloudWatchEventECSRole")
+
+    if not role_arn:
+        roles = iam.list_roles()
+        for r in roles:
+            print(r["RoleName"])
+            if r["RoleName"] == role_name:
+                role_arn = r["Arn"]
+                break
+    if not role_arn:
+        raise Exception("Role %s not found" % role_name)
+
+    response = events.schedule_task(task_stack, resource_group_stack, region,
+                                    target_id, cronexp, role_arn)
+    LOGGER.info(response)
+    params = {
+        "region": os.environ.get("AWS_REGION"),
+        "resource_group": os.environ.get(RESOURCE_GROUP),
+        "task": os.environ.get(TASK)
+    }
+    LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
+                 "home?region={region}#/clusters/{resource_group}-" +
+                 "{task}/scheduledTasks").format(**params))
+
+
+def unschedule_task(target_id):
+    task_stack = os.environ.get(TASK)
+    resource_group_stack = os.environ.get(RESOURCE_GROUP) + "-resources"
+    response = events. unschedule_task(task_stack, resource_group_stack,
+                                       target_id)
+    LOGGER.info(response)
+    params = {
+        "region": os.environ.get("AWS_REGION"),
+        "resource_group": os.environ.get(RESOURCE_GROUP),
+        "task": os.environ.get(TASK)
+    }
+    LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
+                 "home?region={region}#/clusters/{resource_group}-" +
+                 "{task}/scheduledTasks").format(**params))

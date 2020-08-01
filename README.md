@@ -5,6 +5,8 @@
 
 Deploy configurable unix pipeline jobs serverlessly.
 
+<img width="320px" src="./assets/handoff_logo.png"/>
+
 ## What is it?
 
 handoff ([repository](https://github.com/anelendata/handoff))

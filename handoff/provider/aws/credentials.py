@@ -14,8 +14,6 @@ def set_container_credentials():
     """
     rel_uri = os.environ.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
     if not rel_uri:
-        logger.info("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI is not set." +
-                    "Not retrieving access keys from the server.")
         return
 
     # See https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-iam-roles.html

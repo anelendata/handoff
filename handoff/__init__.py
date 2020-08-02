@@ -1,6 +1,9 @@
 import argparse, datetime, json, logging, os, sys
+from lxml import html
+import requests
+
 from .core import admin, task
-from .config import (ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
+from .config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
                      RESOURCE_GROUP, TASK,
                      IMAGE_VERSION, PROVIDER, PLATFORM)
 from . import docker, plugins, provider
@@ -113,13 +116,6 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
 
     plugin_modules = _list_plugins()
 
-    admin_commands = _list_commands(admin, True)
-    if command in admin_commands:
-        prev_wd = os.getcwd()
-        admin_commands[command](project_dir, workspace_dir, data, **kwargs)
-        os.chdir(prev_wd)
-        return
-
     if command in _list_commands(task, True):
         # Wrap with try except for better logging in docker execution
         try:
@@ -129,9 +125,18 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
             LOGGER.critical(e)
         return
 
+    admin_commands = _list_commands(admin, True)
+    if command in admin_commands:
+        prev_wd = os.getcwd()
+        admin_commands[command](project_dir, workspace_dir, data, **kwargs)
+        os.chdir(prev_wd)
+        check_update()
+        return
+
     if top_command == "docker":
         _run_subcommand(docker, sub_command, project_dir, workspace_dir, data,
                         **kwargs)
+        check_update()
         return
 
     if top_command == "provider":
@@ -143,14 +148,49 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
                 os.environ[IMAGE_VERSION] = image_version
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
                         data, **kwargs)
+        check_update()
         return
 
     if top_command in plugin_modules.keys():
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
                         workspace_dir, data, **kwargs)
+        check_update()
         return
 
     print("Unrecognized command %s. Run handoff -h for help." % command)
+
+
+class bcolors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
+def check_update():
+    try:
+        response = requests.get("https://pypi.org/simple/handoff")
+    except Exception:
+        return
+    tree = html.fromstring(response.content)
+    package_list = [package for package in tree.xpath("//a/text()")]
+    package_list.sort(reverse=True)
+    latest = package_list[0][:-len(".tar.gz")]
+
+    if "handoff-" + VERSION >= latest:
+        return
+
+    print(bcolors.OKGREEN)
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print(":tada: handoff Ver. %s available!" % latest)
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + bcolors.ENDC)
+    print(bcolors.BOLD + "Upgrade now:" + bcolors.ENDC +
+          " pip install -U handoff\n")
+    print("See what's new at https://dev.handoff.cloud/en/latest/history.html\n")
 
 
 def main():
@@ -178,6 +218,7 @@ def main():
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
+        check_update()
         sys.exit(1)
 
     args = parser.parse_args()

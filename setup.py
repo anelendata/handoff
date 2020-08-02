@@ -31,6 +31,7 @@ setup(
         "boto3==1.10.0",
         "botocore==1.13.0",
         "docker==4.2.2",
+        "lxml>=4.2.0",
         "python-dateutil==2.8.0",
         "pyyaml==5.3.1",
         "requests==2.23.0",

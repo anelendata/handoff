@@ -103,9 +103,9 @@ def run(config, data):
         procs[i].wait()
 
     state = (procs[-1].communicate()[0]).decode("utf-8")
-    if not state:
-        return
+
     LOGGER.debug("State after the execution: %s" % state)
+
     return state
 
 
@@ -118,15 +118,12 @@ def run_local(config, data):
 
 
 def show_commands(config, data):
-    """
-    """
     start_at, end_at = _get_time_window(data)
     data.update({"start_at": start_at, "end_at": end_at})
     commands = _get_commands(config, data)
-
     for command in commands:
         print(command)
 
 
-if __name__ == "__main__":
-    print("Test this from runner.py")
+def show_env(config, data):
+    LOGGER.info(os.system("export"))

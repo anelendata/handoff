@@ -8,13 +8,13 @@ def start(project_dir, workspace_dir, data, **kwargs):
     d, f = os.path.split(__file__)
     try:
         shutil.copytree(os.path.join(d, "../..",  "test_projects"),
-                        os.path.join(os.getcwd(), "test_projects"))
+                        os.path.join(os.getcwd(), "projects"))
     except FileExistsError:
-        print("It looks like you already copied the test projects to ./test_projects")
+        print("It looks like you already copied the test projects to ./projects")
     else:
-        print("Copied the test projects to ./test_projects")
+        print("Copied the test projects to ./projects")
     print("Try running:")
-    print("    handoff run local --project ./test_projects/01_word_count --workspace ./workspace")
+    print("    handoff --project ./projects/01_word_count --workspace ./workspace run local")
     print("Then:")
     print("    cat ./workspace/artifacts/state")
     print("Then, continue on https://dev.handoff.cloud")

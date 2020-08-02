@@ -1,4 +1,4 @@
-import json, os, shutil, sys, tempfile
+import json, logging, os, shutil, sys, tempfile
 from collections import defaultdict
 
 import docker
@@ -8,6 +8,7 @@ from handoff.config import ADMIN_ENVS, DOCKER_IMAGE
 
 
 logger = utils.get_logger(__name__)
+
 DOCKERFILE = "Dockerfile"
 
 
@@ -84,11 +85,7 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
 
 
 def run(version=None, extra_env=dict()):
-    env = {"AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID"),
-           "AWS_SECRET_ACCESS_KEY": os.environ.get("AWS_SECRET_ACCESS_KEY"),
-           "AWS_SESSION_TOKEN": os.environ.get("AWS_SESSION_TOKEN"),
-           "AWS_REGION": os.environ.get("AWS_REGION")
-           }
+    env = {}
     for e in ADMIN_ENVS.keys():
         env[e] = os.environ.get(e)
 
@@ -107,7 +104,7 @@ def run(version=None, extra_env=dict()):
     for line in client.containers.run(image_name + ":" + version,
                                       environment=env,
                                       stream=True, detach=False):
-        logger.info(line.decode("utf-8"))
+        print(line.decode("utf-8"))
 
 
 def push(username, password, registry, version=None):

@@ -12,6 +12,8 @@ commands:
     installs:
       - "pip install target-csv"
 deploy:
+  provider: "aws"
+  platform: "fargate"
   envs:
     resource_group: "handoff-test"
     docker_image: "singer_exchange_rates_to_csv"

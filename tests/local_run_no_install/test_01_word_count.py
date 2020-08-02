@@ -18,4 +18,4 @@ def test_01_word_count():
         handoff.do("run", "local", project_dir, workspace_dir, data, push_artifacts=False)
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR, "state")) as f:
             state = f.read()
-            assert(state == "We just counted that there are 644 words in the final speech of the movie the Great Dictator. The file is in workspace/files which is copied from test_projects/01_word_count\n")
+            assert(state == "We just counted 644 words in the final speech of the movie the Great Dictator. The file is in workspace/files which was copied from test_projects/01_word_count\n")

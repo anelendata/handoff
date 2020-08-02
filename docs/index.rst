@@ -24,6 +24,7 @@ Contents
    faq
    contributing
    code_of_conduct
+   history
 
 ----
 

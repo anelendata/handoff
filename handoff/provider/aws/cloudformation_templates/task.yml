@@ -1,5 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
+  EnvVarPrefix:
+    Type: String
+    Description: Prefix for environment variables
+    Default: HO_
+    AllowedPattern: "[A-Z][A-Z0-9_]*"
+
   ResourceGroup:
     Type: String
     Description: A name to group the task belongs to
@@ -63,14 +69,18 @@ Resources:
             - ContainerPort: 22
               HostPort: 22
           Environment:
-            - Name: RESOURCE_GROUP
+            - Name: !Sub ${EnvVarPrefix}RESOURCE_GROUP
               Value: !Sub ${ResourceGroup}
-            - Name: BUCKET
+            - Name: !Sub ${EnvVarPrefix}BUCKET
               Value: !Sub ${Bucket}
-            - Name: DOCKER_IMAGE
+            - Name: !Sub ${EnvVarPrefix}DOCKER_IMAGE
               Value: !Sub ${ImageName}
-            - Name: TASK
+            - Name: !Sub ${EnvVarPrefix}TASK
               Value: !Sub ${AWS::StackName}
+            - Name: !Sub ${EnvVarPrefix}PROVIDER
+              Value: aws
+            - Name: !Sub ${EnvVarPrefix}PLATFORM
+              Value: fargate
             - Name: AWS_REGION
               Value: !Ref AWS::Region
           LogConfiguration:

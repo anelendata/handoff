@@ -2,10 +2,11 @@ import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
 from handoff import provider
-from handoff.config import (VERSION, ARTIFACTS_DIR, BUCKET,
+from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
-                            RESOURCE_GROUP, PROJECT_FILE, TASK)
+                            RESOURCE_GROUP, PROJECT_FILE, TASK,
+                            PROVIDER, PLATFORM)
 from handoff.core import pyvenvx, utils
 from handoff.core.utils import env_check as _env_check
 
@@ -44,27 +45,6 @@ def _install(venv_path, install):
     p.wait()
 
 
-def _read_precompiled_config(precompiled_config_file=None):
-    """
-    Read parameters from a file if a file name is given.
-    Read them from remote parameters store (e.g. AWS SSM) otherwise.
-    """
-    platform = provider._get_platform()
-    if precompiled_config_file:
-        if not os.path.isfile(precompiled_config_file):
-            raise ValueError(precompiled_config_file + " not found.")
-        LOGGER.info("Reading precompiled config from: " +
-                    precompiled_config_file)
-        with open(precompiled_config_file, "r") as f:
-            config = json.load(f)
-    else:
-        LOGGER.info("Reading precompiled config from remote.")
-        if not os.environ.get(RESOURCE_GROUP) or not os.environ.get(TASK):
-            raise Exception("RESOURCE_GROUP and TASK environment variables must be set outside the local project.xml file to read the remote configurations.")
-        config = json.loads(platform.get_parameter("config"))
-    return config
-
-
 def _write_config_files(workspace_config_dir, precompiled_config):
     if not os.path.exists(workspace_config_dir):
         os.mkdir(workspace_config_dir)
@@ -75,39 +55,66 @@ def _write_config_files(workspace_config_dir, precompiled_config):
 
 def _set_env(config):
     LOGGER.info("Setting environment variables from config.")
-    if not config.get("envs"):
-        return
-    for v in config["envs"]:
+    for v in config.get("envs", list()):
         os.environ[v["key"]] = v["value"]
+
+    if not os.environ.get(BUCKET):
+        try:
+            platform = provider._get_platform()
+            aws_account_id = platform.get_account_id()
+        except Exception:
+            pass
+        else:
+            if os.environ.get(RESOURCE_GROUP):
+                os.environ[BUCKET] = (aws_account_id + "-" +
+                                      os.environ[RESOURCE_GROUP])
+                LOGGER.info("Environment variable %s was set autoamtically as %s" %
+                            (BUCKET, os.environ[BUCKET]))
+
+    if not os.environ.get(BUCKET):
+        LOGGER.warning(("Environment variable %s is not set. " +
+                        "Remote file read/write will fail.") %
+                       BUCKET)
+
+
+def _read_precompiled_config(precompiled_config_file=None):
+    """
+    Read parameters from a file if a file name is given.
+    Read them from remote parameters store (e.g. AWS SSM) otherwise.
+    """
+    if precompiled_config_file:
+        LOGGER.info("Reading precompiled config from: " +
+                    precompiled_config_file)
+        if not os.path.isfile(precompiled_config_file):
+            raise ValueError(precompiled_config_file + " not found.")
+        with open(precompiled_config_file, "r") as f:
+            config = json.load(f)
+    else:
+        LOGGER.info("Reading precompiled config from remote.")
+        # TODO: Decide what to do with config_get (remote)
+        _env_check([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM])
+        platform = provider._get_platform(provider_name=os.environ.get(PROVIDER),
+                                          platform_name=os.environ.get(PLATFORM))
+        config = json.loads(platform.get_parameter("config"))
+    return config
 
 
 def _read_project(project_file):
-    platform = provider._get_platform()
-    # load commands from yaml file
+    LOGGER.info("Reading configurations from " + project_file)
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
     deploy_env = project.get("deploy", dict()).get("envs", dict())
     for key in deploy_env:
-        os.environ[key.upper()] = deploy_env[key]
+        os.environ[ENV_PREFIX + key.upper()] = deploy_env[key]
 
-    if not os.environ.get(BUCKET):
-        try:
-            aws_account_id = platform.get_account_id()
-        except Exception:
-            LOGGER.warning(("Environment veriable %s is not set. " +
-                            "Remote config operations will fail.") %
-                           BUCKET)
-        else:
-            if os.environ.get(RESOURCE_GROUP):
-                os.environ[BUCKET] = (aws_account_id + "-" +
-                                      os.environ[RESOURCE_GROUP])
-                LOGGER.info("Environment veriable %s was set autoamtically as %s" %
-                            (BUCKET, os.environ[BUCKET]))
-            else:
-                LOGGER.warning(("Environment veriable %s is not set. " +
-                                "Remote config operations will fail.") %
-                               BUCKET)
+    provider_name = project.get("deploy", dict()).get("provider")
+    platform_name = project.get("deploy", dict()).get("platform")
+    if provider_name and platform_name:
+        platform = provider._get_platform(provider_name=provider_name,
+                                          platform_name=platform_name)
+        LOGGER.info("Platform: " + platform.NAME)
+
     return project
 
 
@@ -154,13 +161,17 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_get(project_dir, workspace_dir, data, **kwargs):
-    platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    _env_check()
+    if not os.environ.get(BUCKET):
+       config_get(project_dir, workspace_dir, data, **kwargs)
+    _env_check([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM, BUCKET])
 
     LOGGER.info("Downloading config files from the remote storage " +
                 os.environ.get(BUCKET))
+
+    platform = provider._get_platform(provider_name=os.environ.get(PROVIDER),
+                                      platform_name=os.environ.get(PLATFORM))
 
     _, _, files_dir = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
@@ -185,11 +196,8 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir/FILES_DIR to remote storage"""
+    _ = config_get_local(project_dir, workspace_dir, data)
     platform = provider._get_platform()
-    if not project_dir:
-        raise Exception("Project directory is not set")
-    _env_check()
-
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.upload_dir(files_dir, prefix)
@@ -207,10 +215,7 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
 def config_get(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    _env_check()
-
     LOGGER.info("Reading configurations from remote parameter store.")
-
     config_dir, _, _ = _workspace_get_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
     _set_env(precompiled_config)
@@ -254,11 +259,6 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
     """
     if not project_dir:
         raise Exception("Project directory is not set")
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
-
-    LOGGER.info("Reading configurations from the local project directory.")
-
     config = dict()
     project = _read_project(os.path.join(project_dir, "project.yml"))
     config.update(project)
@@ -279,6 +279,9 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 
     if workspace_dir:
         ws_config_dir = os.path.join(workspace_dir, CONFIG_DIR)
+        LOGGER.info("Writing configuration files in the workspace" +
+                    " configuration directory " +
+                    ws_config_dir)
         _write_config_files(ws_config_dir, config)
 
     return config
@@ -286,16 +289,11 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 
 def config_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
-    platform = provider._get_platform()
-    if not project_dir:
-        raise Exception("Project directory is not set")
-    _env_check()
-
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(config_get_local(project_dir, workspace_dir, data))
 
-    LOGGER.info("Uploading config to %s." % os.environ.get(TASK))
-    platform.push_parameter("config", config, **data)
+    platform = provider._get_platform()
+    platform.push_parameter("config", config, **kwargs)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):

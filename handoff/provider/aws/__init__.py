@@ -169,7 +169,8 @@ def create_repository(is_mutable=False):
     ecr.create_repository(name, is_mutable)
 
 
-def create_role(grantee_account_id, external_id, template_file=None):
+def create_role(grantee_account_id, external_id, template_file=None,
+                update=False):
     resource_group = os.environ.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role"
     if not template_file:
@@ -182,8 +183,14 @@ def create_role(grantee_account_id, external_id, template_file=None):
                   {"ParameterKey": "ExternalId",
                    "ParameterValue": external_id}
                   ]
-    response = cloudformation.create_stack(stack_name, template_file,
-                                           parameters)
+
+    if not update:
+        response = cloudformation.create_stack(stack_name, template_file,
+                                               parameters)
+    else:
+        response = cloudformation.update_stack(stack_name, template_file,
+                                               parameters)
+
     LOGGER.info(response)
     _log_stack_info(response)
 
@@ -196,48 +203,21 @@ def create_role(grantee_account_id, external_id, template_file=None):
     }
     role_arn = ("arn:aws:iam::{account_id}:" +
                 "role/{role_name}").format(**params)
-    LOGGER.info("Add this info to ~/.aws/credentials")
-    print("""[<new-profile-name>]
-source_profile = <aws_profile>
-role_arn = {role_arn}
-external_id = {external_id}
-region = {region}""".format(**{"role_arn": role_arn, "external_id": external_id,
-                               "region": os.environ.get("AWS_REGION")}))
+    LOGGER.info("""Add this info to ~/.aws/credentials\n
+    [<new-profile-name>]
+    source_profile = <aws_profile>
+    role_arn = {role_arn}
+    external_id = {external_id}
+    region = {region}
+
+And update the environment varialbe:
+    export AWS_PROFILE=<new-profile-name>
+""".format(**{"role_arn": role_arn, "external_id": external_id,
+              "region": os.environ.get("AWS_REGION")}))
 
 
 def update_role(grantee_account_id, external_id, template_file=None):
-    resource_group = os.environ.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-role"
-    if not template_file:
-        aws_dir, _ = os.path.split(__file__)
-        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
-    parameters = [{"ParameterKey": "ResourceGroup",
-                   "ParameterValue": resource_group},
-                  {"ParameterKey": "GranteeAccountId",
-                   "ParameterValue": grantee_account_id},
-                  {"ParameterKey": "ExternalId",
-                   "ParameterValue": external_id}
-                  ]
-    response = cloudformation.update_stack(stack_name, template_file, parameters)
-    LOGGER.info(response)
-    _log_stack_info(response)
-
-    account_id = sts.get_account_id()
-    role_name = ("FargateDeployRole-%s-%s" %
-                 (resource_group, grantee_account_id))
-    params = {
-        "role_name": role_name,
-        "account_id": account_id
-    }
-    role_arn = ("arn:aws:iam::{account_id}:" +
-                "role/{role_name}").format(**params)
-    LOGGER.info("Add this info to ~/.aws/credentials")
-    print("""[<new-profile-name>]
-source_profile = <aws_profile>
-role_arn = {role_arn}
-external_id = {external_id}
-region = {region}""".format(**{"role_arn": role_arn, "external_id": external_id,
-                               "region": os.environ.get("AWS_REGION")}))
+    create_role(grantee_account_id, external_id, template_file, update=True)
 
 
 def delete_role():
@@ -246,9 +226,10 @@ def delete_role():
     response = cloudformation.delete_stack(stack_name)
     LOGGER.info(response)
     _log_stack_filter(stack_name)
+    LOGGER.info("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
 
 
-def create_bucket(template_file=None):
+def create_bucket(template_file=None, update=False):
     resource_group = os.environ.get(RESOURCE_GROUP)
     bucket = os.environ.get(BUCKET)
     stack_name = resource_group + "-bucket"
@@ -256,22 +237,18 @@ def create_bucket(template_file=None):
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
     parameters = [{"ParameterKey": "Bucket", "ParameterValue": bucket}]
-    response = cloudformation.create_stack(stack_name, template_file, parameters)
+
+    if not update:
+        response = cloudformation.create_stack(stack_name, template_file, parameters)
+    else:
+        response = cloudformation.update_stack(stack_name, template_file, parameters)
+
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_bucket(template_file=None):
-    resource_group = os.environ.get(RESOURCE_GROUP)
-    bucket = os.environ.get(BUCKET)
-    stack_name = resource_group + "-bucket"
-    if not template_file:
-        aws_dir, _ = os.path.split(__file__)
-        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
-    parameters = [{"ParameterKey": "Bucket", "ParameterValue": bucket}]
-    response = cloudformation.update_stack(stack_name, template_file, parameters)
-    LOGGER.info(response)
-    _log_stack_info(response)
+    create_bucket(template_file, update=True)
 
 
 def delete_bucket():
@@ -284,26 +261,24 @@ def delete_bucket():
     _log_stack_filter(os.environ[BUCKET])
 
 
-def create_resources(template_file=None):
+def create_resources(template_file=None, update=False):
     resource_group = os.environ.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
-    response = cloudformation.create_stack(stack_name, template_file)
+
+    if not update:
+        response = cloudformation.create_stack(stack_name, template_file)
+    else:
+        response = cloudformation.update_stack(stack_name, template_file)
+
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_resources(template_file=None):
-    resource_group = os.environ.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-resources"
-    if not template_file:
-        aws_dir, _ = os.path.split(__file__)
-        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
-    response = cloudformation.update_stack(stack_name, template_file)
-    LOGGER.info(response)
-    _log_stack_info(response)
+    create_resources(template_file, update=True)
 
 
 def delete_resources():
@@ -314,7 +289,7 @@ def delete_resources():
     _log_stack_filter(os.environ[RESOURCE_GROUP])
 
 
-def create_task(template_file=None):
+def create_task(template_file=None, update=False):
     stack_name = os.environ.get(TASK)
     resource_group = os.environ.get(RESOURCE_GROUP)
     bucket = os.environ.get(BUCKET)
@@ -337,36 +312,20 @@ def create_task(template_file=None):
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
-    response = cloudformation.create_stack(stack_name, template_file, parameters)
+
+    if not update:
+        response = cloudformation.create_stack(stack_name, template_file,
+                                               parameters)
+    else:
+        response = cloudformation.update_stack(stack_name, template_file,
+                                               parameters)
+
     LOGGER.info(response)
     _log_stack_info(response)
 
 
 def update_task(template_file=None):
-    stack_name = os.environ.get(TASK)
-    resource_group = os.environ.get(RESOURCE_GROUP)
-    bucket = os.environ.get(BUCKET)
-    _, _, image_domain = get_docker_registry_credentials()
-    docker_image = os.environ.get(DOCKER_IMAGE)
-    image_version = os.environ.get(IMAGE_VERSION)
-    parameters = [
-        {"ParameterKey": "ResourceGroup",
-         "ParameterValue": resource_group},
-        {"ParameterKey": "Bucket",
-         "ParameterValue": bucket},
-        {"ParameterKey": "ImageDomain",
-         "ParameterValue": image_domain},
-        {"ParameterKey": "ImageName",
-         "ParameterValue": docker_image},
-        {"ParameterKey": "ImageVersion",
-         "ParameterValue": image_version}
-    ]
-    if not template_file:
-        aws_dir, _ = os.path.split(__file__)
-        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
-    response = cloudformation.update_stack(stack_name, template_file, parameters)
-    LOGGER.info(response)
-    _log_stack_info(response)
+    create_task(template_file, update=True)
 
 
 def delete_task():
@@ -381,7 +340,11 @@ def run_task(env=[]):
     docker_image = os.environ.get(DOCKER_IMAGE)
     region = os.environ.get("AWS_REGION")
     resource_group_stack = os.environ.get(RESOURCE_GROUP) + "-resources"
-    response = ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, env)
+
+    extra_env = []
+    for key in env.keys():
+        extra_env.append({"name": key, "value": env[key]})
+    response = ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, extra_env)
     LOGGER.info(response)
     _log_task_run_filter(os.environ[RESOURCE_GROUP] + "-" + os.environ[TASK],
                          response)

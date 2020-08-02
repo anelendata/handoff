@@ -138,14 +138,14 @@ def delete_resources(project_dir, workspace_dir, data, **kwargs):
 def create_task(project_dir, workspace_dir, data, **kwargs):
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    _env_check([IMAGE_VERSION])
     platform.create_task()
 
 
 def update_task(project_dir, workspace_dir, data, **kwargs):
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    _env_check([IMAGE_VERSION])
     platform.update_task()
 
 
@@ -160,7 +160,7 @@ def run(project_dir, workspace_dir, data, **kwargs):
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     _env_check()
-    platform.run_task()
+    platform.run_task(env=data)
 
 
 def schedule(project_dir, workspace_dir, data, **kwargs):

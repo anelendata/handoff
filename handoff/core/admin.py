@@ -163,6 +163,8 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
 def files_get(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
+    if not os.environ.get(BUCKET):
+       config_get(project_dir, workspace_dir, data, **kwargs)
     _env_check([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM, BUCKET])
 
     LOGGER.info("Downloading config files from the remote storage " +
@@ -291,7 +293,7 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     config = json.dumps(config_get_local(project_dir, workspace_dir, data))
 
     platform = provider._get_platform()
-    platform.push_parameter("config", config, **data)
+    platform.push_parameter("config", config, **kwargs)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):

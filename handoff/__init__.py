@@ -1,6 +1,7 @@
 import argparse, datetime, json, logging, os, sys
 from .core import admin, task
 from .config import (ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
+                     RESOURCE_GROUP, TASK,
                      IMAGE_VERSION, PROVIDER, PLATFORM)
 from . import docker, plugins, provider
 
@@ -40,10 +41,11 @@ def _list_commands(module, split_first=False):
 
 def _list_core_commands():
     return str(list(_list_commands(admin, True).keys()) +
-               list(_list_commands(runner, True).keys()))
+               list(_list_commands(task, True).keys()))
 
 
-def _run_subcommand(module, command, project_dir, workspace_dir, data):
+def _run_subcommand(module, command, project_dir, workspace_dir, data,
+                    **kwargs):
     prev_wd = os.getcwd()
     commands = _list_commands(module, False)
     if command in commands:
@@ -55,7 +57,7 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data):
 
 
 def _run_task_subcommand(command, project_dir, workspace_dir, data,
-                         push_artifacts=False):
+                         push_artifacts=False, **kwargs):
     prev_wd = os.getcwd()
     commands = _list_commands(task, True)
     if command not in commands:
@@ -65,10 +67,14 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
 
     admin.workspace_init(project_dir, workspace_dir, data)
 
-    if command in ["run", "run remote_config"]:
+    remote_ops = ["run", "run remote_config"]
+    local_ops = ["run local", "show commands"]
+    if command in remote_ops:
+        if not os.environ.get(RESOURCE_GROUP) or not os.environ.get(TASK):
+            admin.config_get_local(project_dir, workspace_dir, data)
         config = admin.config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
-    elif command in ["run local", "show commands"]:
+    elif command in local_ops:
         config = admin.config_get_local(project_dir, workspace_dir, data)
         admin.files_get_local(project_dir, workspace_dir, data)
     else:
@@ -100,8 +106,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
         admin.artifacts_archive(project_dir, workspace_dir, data)
 
 
-def do(top_command, sub_command, project_dir, workspace_dir, data,
-       push_artifacts=True):
+def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
     command = (top_command + " " + sub_command).strip()
     if workspace_dir:
         admin.workspace_init(project_dir, workspace_dir, data)
@@ -111,35 +116,38 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
     admin_commands = _list_commands(admin, True)
     if command in admin_commands:
         prev_wd = os.getcwd()
-        admin_commands[command](project_dir, workspace_dir, data)
+        admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         os.chdir(prev_wd)
+        return
 
     if command in _list_commands(task, True):
         # Wrap with try except for better logging in docker execution
         try:
             _run_task_subcommand(command, project_dir, workspace_dir, data,
-                                 push_artifacts)
+                                 **kwargs)
         except Exception as e:
             LOGGER.critical(e)
         return
 
     if top_command == "docker":
-        _run_subcommand(docker, sub_command, project_dir, workspace_dir, data)
+        _run_subcommand(docker, sub_command, project_dir, workspace_dir, data,
+                        **kwargs)
         return
 
     if top_command == "provider":
+        admin.config_get_local(project_dir, workspace_dir, data)
         if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
             image_version = docker.get_latest_version(
                 project_dir, workspace_dir, data)
             if image_version:
                 os.environ[IMAGE_VERSION] = image_version
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
-                        data)
+                        data, **kwargs)
         return
 
     if top_command in plugin_modules.keys():
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
-                        workspace_dir, data)
+                        workspace_dir, data, **kwargs)
         return
 
     print("Unrecognized command %s. Run handoff -h for help." % command)
@@ -168,7 +176,7 @@ def main():
     parser.add_argument("--platform", type=str, default="fargate",
                         help="Cloud platform name")
 
-    if len(sys.argv)==1:
+    if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
@@ -182,12 +190,14 @@ def main():
     os.environ[PROVIDER] = args.provider
     os.environ[PLATFORM] = args.platform
 
-    data["allow_advanced_tier"] = args.allow_advanced_tier
-    data["profile"] = args.profile
+    kwargs = dict()
+    kwargs["allow_advanced_tier"] = args.allow_advanced_tier
+    kwargs["profile"] = args.profile
+    kwargs["push_artifacts"] = args.push_artifacts
 
     do(args.command, args.subcommand,
        args.project_dir, args.workspace_dir,
-       data, args.push_artifacts)
+       data, **kwargs)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
     subnets = list()
     security_groups =list()
     for r in rg_resources:
-        if r["ResourceType"]  == "AWS::EC2::Subnet":
+        if r["ResourceType"] == "AWS::EC2::Subnet":
             subnets.append(r["PhysicalResourceId"])
         if r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])

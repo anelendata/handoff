@@ -39,8 +39,10 @@ def run(project_dir, workspace_dir, data, **kwargs):
 
 
 def push(project_dir, workspace_dir, data, **kwargs):
+    _envs(project_dir, workspace_dir, data, **kwargs)
+    _env_check([DOCKER_IMAGE])
+
     platform = provider._get_platform()
-    _env_check()
     username, password, registry = platform.get_docker_registry_credentials()
     image_name = os.environ.get(DOCKER_IMAGE)
     try:

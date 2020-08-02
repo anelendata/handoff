@@ -2,11 +2,13 @@ import argparse, datetime, json, logging, os, sys
 from lxml import html
 import requests
 
-from .core import admin, task
-from .config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, BUCKET, DOCKER_IMAGE,
-                     RESOURCE_GROUP, TASK,
-                     IMAGE_VERSION, PROVIDER, PLATFORM)
 from . import docker, plugins, provider
+from .config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
+                     BUCKET, DOCKER_IMAGE, RESOURCE_GROUP, TASK,
+                     IMAGE_VERSION, PROVIDER, PLATFORM,
+                     get_state)
+from .core import admin, task
+from .core.utils import bcolors
 
 
 LOGGER = logging.getLogger(__name__)
@@ -61,6 +63,7 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data,
 
 def _run_task_subcommand(command, project_dir, workspace_dir, data,
                          push_artifacts=False, **kwargs):
+    state = get_state()
     prev_wd = os.getcwd()
     commands = _list_commands(task, True)
     if command not in commands:
@@ -73,7 +76,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     remote_ops = ["run", "run remote_config"]
     local_ops = ["run local", "show commands"]
     if command in remote_ops:
-        if not os.environ.get(RESOURCE_GROUP) or not os.environ.get(TASK):
+        if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
             admin.config_get_local(project_dir, workspace_dir, data)
         config = admin.config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
@@ -89,27 +92,29 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     LOGGER.info("Job started at " + str(start))
 
     # Run the command
-    state = commands[command](config, data)
+    output = commands[command](config, data)
 
     end = datetime.datetime.utcnow()
     LOGGER.info("Job ended at " + str(end))
     duration = end - start
     LOGGER.info("Processed in " + str(duration))
 
-    if state:
-        with open(os.path.join(ARTIFACTS_DIR, "state"), "w") as f:
-            f.write(state)
+    if output:
+        with open(os.path.join(ARTIFACTS_DIR, STATE_FILE), "w") as f:
+            f.write(output)
 
     os.chdir(prev_wd)
 
     if push_artifacts:
-        if not os.environ.get(BUCKET):
-            raise Exception("Cannot push artifacts. BUCKET environment variable is not set")
+        if not state.get_env(BUCKET):
+            raise Exception("Cannot push artifacts. BUCKET environment" +
+                            "variable is not set")
         admin.artifacts_push(project_dir, workspace_dir, data)
         admin.artifacts_archive(project_dir, workspace_dir, data)
 
 
 def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     command = (top_command + " " + sub_command).strip()
     if workspace_dir:
         admin.workspace_init(project_dir, workspace_dir, data)
@@ -141,11 +146,11 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
 
     if top_command == "provider":
         admin.config_get_local(project_dir, workspace_dir, data)
-        if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
+        if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = docker.get_latest_version(
                 project_dir, workspace_dir, data)
             if image_version:
-                os.environ[IMAGE_VERSION] = image_version
+                state.set_env(IMAGE_VERSION, image_version)
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
                         data, **kwargs)
         check_update()
@@ -158,17 +163,6 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
         return
 
     print("Unrecognized command %s. Run handoff -h for help." % command)
-
-
-class bcolors:
-    HEADER = "\033[95m"
-    OKBLUE = "\033[94m"
-    OKGREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
 
 
 def check_update():
@@ -190,12 +184,15 @@ def check_update():
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + bcolors.ENDC)
     print(bcolors.BOLD + "Upgrade now:" + bcolors.ENDC +
           " pip install -U handoff\n")
-    print("See what's new at https://dev.handoff.cloud/en/latest/history.html\n")
+    print("See what's new at " +
+          "https://dev.handoff.cloud/en/latest/history.html\n")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run parameterized Unix pipeline command. Try running: `handoff tutorial start` in a new directory. Check out https://dev.handoff.cloud to learn more.")
+        description=("Run parameterized Unix pipeline command. Try running: " +
+                     "`handoff tutorial start` in a new directory. Check " +
+                     "out https://dev.handoff.cloud to learn more."))
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("subcommand", type=str, nargs="?", default="",
                         help="subcommand")

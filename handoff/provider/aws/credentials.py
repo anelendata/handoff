@@ -23,7 +23,8 @@ def set_container_credentials():
     os.environ["AWS_ACCESS_KEY_ID"] = cred["AccessKeyId"]
     os.environ["AWS_SECRET_ACCESS_KEY"] = cred["SecretAccessKey"]
     os.environ["AWS_SESSION_TOKEN"] = cred["Token"]
-    logger.info("Set AWS credentials from AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+    logger.info("Set AWS credentials from " +
+                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
 
 
 def get_session(aws_access_key_id, aws_secret_access_key,

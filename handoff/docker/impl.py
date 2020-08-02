@@ -4,7 +4,7 @@ from collections import defaultdict
 import docker
 from docker import APIClient as docker_api_client
 from handoff.core import utils
-from handoff.config import ADMIN_ENVS, DOCKER_IMAGE
+from handoff.config import ADMIN_ENVS, DOCKER_IMAGE, get_state
 
 
 logger = utils.get_logger(__name__)
@@ -41,8 +41,9 @@ def get_latest_version(image_name, ignore=["latest"]):
 
 
 def build(project_dir, new_version=None, docker_file=None, nocache=False):
+    state = get_state()
     cli = docker_api_client()
-    image_name = os.environ[DOCKER_IMAGE]
+    image_name = state[DOCKER_IMAGE]
     if not image_name:
         raise Exception("You need to set DOCKER_IMAGE environment variable.")
 
@@ -85,13 +86,14 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
 
 
 def run(version=None, extra_env=dict()):
+    state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
-        env[e] = os.environ.get(e)
+        env[e] = state.get(e)
 
     env.update(extra_env)
 
-    image_name = os.environ[DOCKER_IMAGE]
+    image_name = state[DOCKER_IMAGE]
     if not version:
         version = get_latest_version(image_name)
 
@@ -108,7 +110,8 @@ def run(version=None, extra_env=dict()):
 
 
 def push(username, password, registry, version=None):
-    image_name = os.environ[DOCKER_IMAGE]
+    state = get_state()
+    image_name = state[DOCKER_IMAGE]
     if not version:
         version = get_latest_version(image_name)
 

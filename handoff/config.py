@@ -1,9 +1,15 @@
 VERSION = "0.1.2a0"
 
+import os, re
+from handoff.core import utils
+
+LOGGER = utils.get_logger(__name__)
+
 ARTIFACTS_DIR = "artifacts"
 CONFIG_DIR = "config"
 FILES_DIR = "files"
 PROJECT_FILE = "project.yml"
+STATE_FILE = "state"
 
 BUCKET_CURRENT_PREFIX = "last"
 BUCKET_ARCHIVE_PREFIX = "runs"
@@ -21,6 +27,7 @@ BUCKET = ENV_PREFIX + "BUCKET"
 DOCKER_IMAGE = ENV_PREFIX + "DOCKER_IMAGE"
 IMAGE_DOMAIN = ENV_PREFIX + "IMAGE_DOMAIN"
 IMAGE_VERSION = ENV_PREFIX + "IMAGE_VERSION"
+
 
 ADMIN_ENVS = {
     RESOURCE_GROUP: {
@@ -48,3 +55,95 @@ ADMIN_ENVS = {
     PLATFORM: {
     }
 }
+
+SAFE_ENVS = {
+    "AWS_REGION": {
+        "pattern": "^[a-z][a-z0-9-]*$",
+        "min": 4,
+        "max": 63
+    }
+}
+
+
+class State(dict):
+    """
+    Central-manage the environment variables and in-memory states
+
+    - in-memory key-values are accessed like a regular dict object.
+    - env vars are accessed via set/get_env methods only.
+    - env vars are not copied to in-memory key-values.
+    - env vars are whitelisted and validated before they are set.
+    """
+    def __init__(self, *args, **kwargs):
+        super(State, self).__init__(*args,  **kwargs)
+        self._mandatory_envs = ADMIN_ENVS
+        self._allowed_envs = {**self._mandatory_envs, **SAFE_ENVS}
+
+    def __getitem__(self, key):
+        """
+        First look up in-memory key. Tries to return env var if not in memory
+        """
+        v = super(State, self).get(key)
+        if not v:
+            v = self.get_env(key)
+        return v
+
+    def get(self, key):
+        return self.__getitem__(key)
+
+    def unset(self, key):
+        if super(State, self).get(key):
+            super(State, self).pop(key)
+        if os.environ.get(key):
+            del os.environ[key]
+
+    def set_env(self, key, value, trust=False):
+        if not trust and key not in self._allowed_envs.keys():
+            raise KeyError(key + " is not whitelisted for env var usage.")
+        os.environ[key] = value
+
+    def get_env(self, name):
+        return os.environ.get(name)
+
+    def validate_env(self, keys=None):
+        """
+        Check if env vars are present and valid
+        """
+        invalid = list()
+        if not keys:
+            keys = self._mandatory_envs.keys()
+        for env in keys:
+            value = os.environ.get(env)
+            if not value:
+                msg = env + " environment variable is not defined."
+                if self._mandatory_envs.get(env, dict()).get("pattern"):
+                    msg = (msg + " Valid pattern: " +
+                           self._mandatory_envs[env]["pattern"])
+                LOGGER.critical(msg)
+                invalid.append(env)
+                continue
+            is_valid = (
+                (not self._mandatory_envs.get(env, dict()).get("pattern") or
+                 bool(re.fullmatch(self._mandatory_envs[env]["pattern"],
+                                   value))) and
+                (not self._mandatory_envs.get(env, dict()).get("min") or
+                 self._mandatory_envs[env]["min"] <= len(value)) and
+                (not self._mandatory_envs.get(env, dict()).get("max") or
+                 self._mandatory_envs[env]["max"] >= len(value)))
+            if not is_valid:
+                LOGGER.critical(("%s environment variable is not following" +
+                                 " the pattern %s. value: %s") %
+                                (env, self._mandatory_envs[env], value))
+                invalid.append(env)
+        if invalid:
+            raise ValueError("Invalid environment variables")
+
+
+STATE = None
+
+
+def get_state():
+    global STATE
+    if not STATE:
+        STATE = State()
+    return STATE

@@ -2,9 +2,8 @@ import os, sys
 from importlib import import_module as _import_module
 from handoff.core import admin
 from handoff.core.utils import get_logger as _get_logger
-from handoff.core.utils import env_check as _env_check
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
-                            IMAGE_VERSION, PROVIDER, PLATFORM)
+                            IMAGE_VERSION, PROVIDER, PLATFORM, get_state)
 
 LOGGER = _get_logger(__name__)
 
@@ -14,10 +13,11 @@ PLATFORM_MODULE = None
 
 def _get_platform(provider_name=None, platform_name=None,
                   stdout=False, profile=None, **kwargs):
+    state = get_state()
     if not provider_name:
-        provider_name = os.environ.get(PROVIDER)
+        provider_name = state.get(PROVIDER)
     if not platform_name:
-        platform_name = os.environ.get(PLATFORM)
+        platform_name = state.get(PLATFORM)
     global PLATFORM_MODULE
     if not PLATFORM_MODULE:
         if not provider_name or not platform_name:
@@ -35,8 +35,9 @@ def get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
 
 
 def assume_role(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
-    _env_check([RESOURCE_GROUP])
+    state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
     role_arn = data.get("role_arn")
     target_account_id = data.get("target_account_id")
@@ -47,10 +48,11 @@ def assume_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_role(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
-    _env_check()
+    state.validate_env()
     if not data.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
                          "handoff provider create_role -p <project-dir> " +
@@ -67,10 +69,11 @@ def create_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_role(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
-    _env_check()
+    state.validate_env()
     if not data.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
                          "handoff provider create_role -p <project-dir> " +
@@ -87,94 +90,107 @@ def update_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_role(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.delete_role()
 
 
 def create_bucket(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.create_bucket()
 
 
 def update_bucket(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.update_bucket()
 
 
 def delete_bucket(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.delete_bucket()
 
 
 def create_resources(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.create_resources()
 
 
 def update_resources(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.update_resources()
 
 
 def delete_resources(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.delete_resources()
 
 
 def create_task(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check([IMAGE_VERSION])
+    state.validate_env([IMAGE_VERSION])
     platform.create_task()
 
 
 def update_task(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check([IMAGE_VERSION])
+    state.validate_env([IMAGE_VERSION])
     platform.update_task()
 
 
 def delete_task(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.delete_task()
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     platform.run_task(env=data)
 
 
 def schedule(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     target_id = str(data["target_id"])
     cronexp = "cron(" + data["cron"] + ")"
     platform.schedule_task(target_id, cronexp)
 
 
 def unschedule(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
-    _env_check()
+    state.validate_env()
     target_id = str(data["target_id"])
     platform.unschedule_task(target_id)

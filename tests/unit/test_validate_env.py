@@ -1,7 +1,9 @@
 import os
 from handoff.config import (RESOURCE_GROUP, TASK, DOCKER_IMAGE, BUCKET,
-                            PROVIDER, PLATFORM)
-from handoff.core.utils import env_check
+                            PROVIDER, PLATFORM, get_state)
+
+
+state = get_state()
 
 
 def test_valid():
@@ -11,7 +13,7 @@ def test_valid():
     os.environ[TASK] = "test-task-0123"
     os.environ[BUCKET] = "test-bucket.0123"
     os.environ[DOCKER_IMAGE] = "test-resource_0.123"
-    env_check()
+    state.validate_env()
 
 
 def test_missing_variable():
@@ -22,7 +24,7 @@ def test_missing_variable():
     os.environ[BUCKET] = "test-bucket.0123"
     os.environ[DOCKER_IMAGE] = "test-resource_0.123"
     try:
-        env_check()
+        state.validate_env()
     except:
         pass
     else:
@@ -37,7 +39,7 @@ def test_invalid_resource_group():
     os.environ[BUCKET] = "test-bucket.0123"
     os.environ[DOCKER_IMAGE] = "test-resource_0.123"
     try:
-        env_check()
+        state.validate_env()
     except:
         pass
     else:
@@ -52,7 +54,7 @@ def test_too_many_characters():
     os.environ[BUCKET] = "test-bucket.0123"
     os.environ[DOCKER_IMAGE] = "test-resource_0.123"
     try:
-        env_check()
+        state.validate_env()
     except:
         pass
     else:
@@ -67,7 +69,7 @@ def test_too_few_characters():
     os.environ[BUCKET] = "test-bucket.0123"
     os.environ[DOCKER_IMAGE] = "test-resource_0.123"
     try:
-        env_check()
+        state.validate_env()
     except:
         pass
     else:

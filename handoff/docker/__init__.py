@@ -1,8 +1,7 @@
 import os, sys
 from handoff import provider
-from handoff.config import DOCKER_IMAGE
+from handoff.config import DOCKER_IMAGE, get_state
 from handoff.core import admin, utils
-from handoff.core.utils import env_check as _env_check
 from . import impl
 
 
@@ -20,13 +19,15 @@ def _envs(project_dir, workspace_dir, data, **kwargs):
 
 def build(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    _env_check([DOCKER_IMAGE])
+    state = get_state()
+    state.validate_env([DOCKER_IMAGE])
     impl.build(project_dir)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    _env_check([DOCKER_IMAGE])
+    state = get_state()
+    state.validate_env([DOCKER_IMAGE])
 
     env = provider.get_platform_auth_env(project_dir, workspace_dir,
                                          data, **kwargs)
@@ -40,11 +41,12 @@ def run(project_dir, workspace_dir, data, **kwargs):
 
 def push(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    _env_check([DOCKER_IMAGE])
+    state = get_state()
+    state.validate_env([DOCKER_IMAGE])
 
     platform = provider._get_platform()
     username, password, registry = platform.get_docker_registry_credentials()
-    image_name = os.environ.get(DOCKER_IMAGE)
+    image_name = state.get(DOCKER_IMAGE)
     try:
         platform.get_repository_images(image_name)
     except Exception:
@@ -60,6 +62,7 @@ def push(project_dir, workspace_dir, data, **kwargs):
 
 
 def get_latest_version(project_dir, workspace_dir, data, **kwargs):
-    _env_check([DOCKER_IMAGE])
-    image_name = os.environ.get(DOCKER_IMAGE)
+    state = get_state()
+    state.validate_env([DOCKER_IMAGE])
+    image_name = state.get(DOCKER_IMAGE)
     return impl.get_latest_version(image_name)

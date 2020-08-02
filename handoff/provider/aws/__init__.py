@@ -187,6 +187,23 @@ def create_role(grantee_account_id, external_id, template_file=None):
     LOGGER.info(response)
     _log_stack_info(response)
 
+    account_id = sts.get_account_id()
+    role_name = ("FargateDeployRole-%s-%s" %
+                 (resource_group, grantee_account_id))
+    params = {
+        "role_name": role_name,
+        "account_id": account_id
+    }
+    role_arn = ("arn:aws:iam::{account_id}:" +
+                "role/{role_name}").format(**params)
+    LOGGER.info("Add this info to ~/.aws/credentials")
+    print("""[<new-profile-name>]
+source_profile = <aws_profile>
+role_arn = {role_arn}
+external_id = {external_id}
+region = {region}""".format(**{"role_arn": role_arn, "external_id": external_id,
+                               "region": os.environ.get("AWS_REGION")}))
+
 
 def update_role(grantee_account_id, external_id, template_file=None):
     resource_group = os.environ.get(RESOURCE_GROUP)
@@ -205,15 +222,30 @@ def update_role(grantee_account_id, external_id, template_file=None):
     LOGGER.info(response)
     _log_stack_info(response)
 
+    account_id = sts.get_account_id()
+    role_name = ("FargateDeployRole-%s-%s" %
+                 (resource_group, grantee_account_id))
+    params = {
+        "role_name": role_name,
+        "account_id": account_id
+    }
+    role_arn = ("arn:aws:iam::{account_id}:" +
+                "role/{role_name}").format(**params)
+    LOGGER.info("Add this info to ~/.aws/credentials")
+    print("""[<new-profile-name>]
+source_profile = <aws_profile>
+role_arn = {role_arn}
+external_id = {external_id}
+region = {region}""".format(**{"role_arn": role_arn, "external_id": external_id,
+                               "region": os.environ.get("AWS_REGION")}))
+
 
 def delete_role():
-    LOGGER.warning("This will only delete the CloudFormation stack. " +
-                   "The bucket %s will be retained." % os.environ.get(BUCKET))
     resource_group = os.environ.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-bucket"
+    stack_name = resource_group + "-role"
     response = cloudformation.delete_stack(stack_name)
     LOGGER.info(response)
-    _log_stack_filter(os.environ[BUCKET])
+    _log_stack_filter(stack_name)
 
 
 def create_bucket(template_file=None):

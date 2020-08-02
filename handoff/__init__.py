@@ -44,12 +44,14 @@ def _list_core_commands():
 
 
 def _run_subcommand(module, command, project_dir, workspace_dir, data):
+    prev_wd = os.getcwd()
     commands = _list_commands(module, False)
     if command in commands:
-        return commands[command](project_dir, workspace_dir, data)
+        commands[command](project_dir, workspace_dir, data)
     else:
         print("Invalid command: %s\nAvailable commands are %s" %
               (command, commands.keys()))
+    os.chdir(prev_wd)
 
 
 def _run_task_subcommand(command, project_dir, workspace_dir, data,
@@ -91,7 +93,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
 
     os.chdir(prev_wd)
 
-    if push_artifacts and os.environ.get(PROVIDER) and os.environ.get(PLATFORM):
+    if push_artifacts:
         if not os.environ.get(BUCKET):
             raise Exception("Cannot push artifacts. BUCKET environment variable is not set")
         admin.artifacts_push(project_dir, workspace_dir, data)
@@ -100,7 +102,6 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
 
 def do(top_command, sub_command, project_dir, workspace_dir, data,
        push_artifacts=True):
-    prev_wd = os.getcwd()
     command = (top_command + " " + sub_command).strip()
     if workspace_dir:
         admin.workspace_init(project_dir, workspace_dir, data)
@@ -109,21 +110,24 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
     admin_commands = _list_commands(admin, True)
     if command in admin_commands:
-        # Run the admin command
+        prev_wd = os.getcwd()
         admin_commands[command](project_dir, workspace_dir, data)
+        os.chdir(prev_wd)
 
-    elif command in _list_commands(task, True):
+    if command in _list_commands(task, True):
         # Wrap with try except for better logging in docker execution
         try:
             _run_task_subcommand(command, project_dir, workspace_dir, data,
                                  push_artifacts)
         except Exception as e:
             LOGGER.critical(e)
+        return
 
-    elif top_command == "docker":
+    if top_command == "docker":
         _run_subcommand(docker, sub_command, project_dir, workspace_dir, data)
+        return
 
-    elif top_command == "provider":
+    if top_command == "provider":
         if os.environ.get(DOCKER_IMAGE) and not os.environ.get(IMAGE_VERSION):
             image_version = docker.get_latest_version(
                 project_dir, workspace_dir, data)
@@ -131,13 +135,14 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                 os.environ[IMAGE_VERSION] = image_version
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
                         data)
+        return
 
-    elif top_command in plugin_modules.keys():
+    if top_command in plugin_modules.keys():
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
                         workspace_dir, data)
+        return
 
-    # This will prevent breaking the tests that has multiple do() calls
-    os.chdir(prev_wd)
+    print("Unrecognized command %s. Run handoff -h for help." % command)
 
 
 def main():

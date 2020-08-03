@@ -1,0 +1,282 @@
+#!/bin/bash
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+    echo The project does not exist...try running
+    echo "    handoff quick_start start"
+    echo in a new directory.
+    exit 1
+fi
+
+cd $PROJECT_DIR
+source scripts/colors
+
+echo Welcome to module 04_run_remote_config!
+
+echo "
+We will continue using 03_exchange_rates example. But this time, we will
+store the configurations to the remote data store.
+"
+
+echo "Ready? (ctl-c to quit anytime)"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+a=`cat ~/.aws/credentials | grep "\[default\]"`
+if [[ ! -f ~/.aws/credentials ]]
+then
+echo "
+Hmm...it looks like you don't have ~/.aws/credentials file set up from
+the previous tutorial. 
+"
+echo -e $GREEN; read -p "Woud you like to go back? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Nn]$ ]]
+then
+    echo "OK!"
+    echo
+    $PROJECT_DIR/scripts/03_set_up_aws_account
+    exit 0
+fi
+fi
+
+IFS=$'\n' read -r -d '' -a OPTIONS < <( cat ~/.aws/credentials |grep "\[" | sed "s/\[\(.*\)]/\1/" && printf '\0' )
+echo "
+First we tell AWS which account profile we want to use. It looks like you have
+${#OPTIONS[@]} profile(s):
+"
+
+i=1
+for s in "${OPTIONS[@]}"; do echo "- [$i] $s"; i=$((i+1)); done
+
+read -p "Which one would you like? " -n 1
+while [[ ( "$REPLY" -lt 1 || "$REPLY" -gt ${#OPTIONS[@]} ) ]]
+do
+    echo Hmm...you did not enter the number expected. Plesae try again.
+    read -p "> "
+done
+
+response=$(($REPLY-1))
+choice=${OPTIONS[$c]}
+
+CMD="export AWS_PROFILE=$choice"
+echo "
+
+Running this to select the profile:
+"
+
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e "$DIM"; $CMD; echo -e $RESET
+
+echo "
+Review how 03_exchange_rates project directory is structured:
+"
+
+echo 03_exchange_rates:
+for i in `ls 03_exchange_rates`; do echo - $i; done
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo "
+In the config directory, we have a couple of configuration files:
+"
+echo 03_exchange_rates/config:
+for i in `ls 03_exchange_rates/config`; do echo - $i; done
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo "
+...which look like:
+
+tap-config.json:
+"
+CMD="cat 03_exchange_rates/config/tap-config.json"
+echo -e $DIM; $CMD; echo -e $RESET
+echo "
+
+target-config.json:
+"
+CMD="cat 03_exchange_rates/config/target-config.json"
+echo -e $DIM; $CMD; echo -e $RESET
+
+CMD="handoff -p 03_exchange_rates config push"
+echo "
+Often times, such configuration files contain sensitive information.
+So we push the configrations to a secure key store such as
+AWS Systems Manager (SSM) Parameter Store (In SecuresString format)
+handoff wraps this proces by a command so you can push everything inside
+JSON files under config directory.
+
+Try running:
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+echo "
+We also have some files needed for the task execution:
+"
+echo 03_exchange_rates/files:
+for i in `ls 03_exchange_rates/files`; do echo - $i; done
+
+CMD="handoff -p 03_exchange_rates provider create_bucket"
+echo "
+We need to store this somewhere accessible.
+So we will create a cloud data storage (S3 bucket) for that.
+
+Try running:
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+echo "
+Wait for a minute and check here
+
+https://s3.console.aws.amazon.com/s3
+
+to make sure the bucket is created before you can proceed.
+"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+CMD="handoff -p 03_exchange_rates files push"
+echo "
+Now it's time to push the files to the bucket.
+
+Try running:
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
+BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+
+echo "
+Check
+
+    $BUCKET_URL/$BUCKET/$TASK/last
+
+to see the files directory is uploaded.
+"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+rm -fr workspace
+CMD="handoff -p 03_exchange_rates -w workspace workspace install"
+echo "
+Install the workspace:
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+CMD="handoff -p 03_exchange_rates -w workspace run remote_config --push-artifacts"
+echo "
+Now let's run the command by pulling the configurations and files from remote. 
+
+Try running:
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
+BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+
+echo "
+Notice that we used --push-artifacts option in
+
+    $CMD
+
+We pushed the result to the bucket:
+
+    $BUCKET_URL/$BUCKET/$TASK/last/artifacts/
+
+Also note that artifacts are automatically archived at each run at
+
+    $BUCKET_URL/$BUCKET/$TASK/last/runs/
+"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo Great. This concludes this section of the tutorial.
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo Thanks for completing this section of tutorial. Oh, before you go,
+echo do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
+echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+
+URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+open $URL
+else
+echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
+echo -e $GREEN$URL$RESET
+fi
+echo
+
+echo "
+Next step is to prepare a Docker image and test running it locally.
+"
+
+echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+    echo "OK!"
+    echo "Remember that you can continue by"
+    echo -e $GREEN    $PROJECT_DIR/begin$RESET
+    echo
+    echo "bye!"
+    exit 0
+fi
+
+$PROJECT_DIR/scripts/05_docker

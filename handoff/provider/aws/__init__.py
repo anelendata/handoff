@@ -1,4 +1,4 @@
-import os
+import logging, os
 from handoff.provider.aws import (ecs, ecr, events, iam, s3, ssm, sts,
                                   cloudformation)
 from handoff.provider.aws import credentials as cred
@@ -8,7 +8,14 @@ from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
 
 NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
-LOGGER = utils.get_logger(__name__)
+LOGGER = utils.get_logger()
+
+
+boto3_logger = logging.getLogger("boto3")
+boto3_logger.setLevel(LOGGER.level)
+botocore_logger = logging.getLogger("botocore")
+botocore_logger.setLevel(LOGGER.level)
+
 
 
 def _log_stack_info(response):
@@ -234,7 +241,9 @@ def create_role(grantee_account_id, external_id, template_file=None,
     }
     role_arn = ("arn:aws:iam::{account_id}:" +
                 "role/{role_name}").format(**params)
-    LOGGER.info("""Add this info to ~/.aws/credentials\n
+    LOGGER.info("""Add this info to ~/.aws/credentials (Linux & Mac)\n
+%USERPROFILE%\.aws\credentials (Windows)
+
     [<new-profile-name>]
     source_profile = <aws_profile>
     role_arn = {role_arn}
@@ -242,7 +251,11 @@ def create_role(grantee_account_id, external_id, template_file=None,
     region = {region}
 
 And update the environment varialbe:
-    export AWS_PROFILE=<new-profile-name>
+    export AWS_PROFILE=<new-profile-name> (Linux & Mac)
+    setx AWS_PROFILE <new-profile-name> (Windows)
+
+Learn more about AWS name profiles at
+https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 """.format(**{"role_arn": role_arn, "external_id": external_id,
               "region": state.get("AWS_REGION")}))
 

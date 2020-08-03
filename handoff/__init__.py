@@ -8,10 +8,9 @@ from .config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
                      IMAGE_VERSION, PROVIDER, PLATFORM,
                      get_state)
 from .core import admin, task
-from .core.utils import bcolors
+from .core.utils import bcolors, get_logger
 
-
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_logger("handoff")
 
 
 def _list_plugins():
@@ -196,6 +195,9 @@ def main():
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("subcommand", type=str, nargs="?", default="",
                         help="subcommand")
+    parser.add_argument("-l", "--log-level", type=str, default="info",
+                        help="Set log level (DEBUG, INFO, WARNING, ERROR," +
+                        "CRITICAL)")
     parser.add_argument("-d", "--data", type=str, default="{}",
                         help="Data required for the command as a JSON string")
     parser.add_argument("-p", "--project-dir", type=str, default=None,
@@ -219,6 +221,9 @@ def main():
         sys.exit(1)
 
     args = parser.parse_args()
+
+    LOGGER.setLevel(args.log_level.upper())
+
     data_json = args.data
     try:
         data = json.loads(data_json)

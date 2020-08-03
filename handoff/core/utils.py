@@ -3,16 +3,18 @@ from dateutil.parser import parse as dateparse
 import attr
 
 
-def get_logger(module):
-    logging.basicConfig(
-        stream=sys.stdout,
-        format="%(levelname)s - %(asctime)s - %(name)s: %(message)s",
-        level=logging.INFO)
-    logger = logging.getLogger(module)
-    return logger
+LOGGER = None
 
 
-LOGGER = get_logger(__name__)
+def get_logger(name="handoff"):
+    global LOGGER
+    if not LOGGER:
+        logging.basicConfig(
+            stream=sys.stdout,
+            format="%(levelname)s - %(asctime)s - %(name)s - %(message)s",
+            level=logging.INFO)
+        LOGGER = logging.getLogger(name)
+    return LOGGER
 
 
 class bcolors:

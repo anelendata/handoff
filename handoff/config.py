@@ -61,7 +61,8 @@ SAFE_ENVS = {
         "pattern": "^[a-z][a-z0-9-]*$",
         "min": 4,
         "max": 63
-    }
+    },
+    IMAGE_VERSION: {}
 }
 
 

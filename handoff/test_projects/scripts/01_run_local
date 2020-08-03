@@ -49,11 +49,11 @@ echo -e $DIM; $CMD; echo -e $RESET
 
 echo If you see the output that looks like:
 
-echo -e "\e[2m"
+echo -e $DIM
 echo "INFO - 2020-08-03 04:51:01,971 - handoff.config - Reading configurations from 01_word_count/project.yml"
 echo "..."
 echo "INFO - 2020-08-03 04:51:02,690 - handoff.config - Processed in 0:00:00.005756"
-echo -e "\e[0m_"
+echo -e $RESET
 
 echo Then great! You just ran the first local test. It created a workspace directory that looks like:
 echo
@@ -105,7 +105,7 @@ CMD="handoff --project 02_collect_stats --workspace workspace run local"
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
 echo Now let\'s run. Try entering this command below:
-echo -e "\e[38;5;82m    $CMD\e[0m"
+echo -e $GREEN    $CMD$RESET
 echo
 read -p "> "
 while [[ ! $REPLY = $CMD ]]
@@ -113,7 +113,7 @@ do
     echo Hmm...you did not enter correctly, try again.
     read -p "> "
 done
-echo -e "\e[2m"; $CMD; echo -e "\e[0m_"
+echo -e $DIM; $CMD; echo -e $RESET
 
 echo Let\'s check out the contents of the second command:
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt

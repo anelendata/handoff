@@ -1,7 +1,9 @@
 #!/bin/bash
 
-export GREEN="\e[38;5;82m"
-export BLINK="\e[5m"
-export DIM="\e[2m"
-export BLUE="\e[34m"
-export RESET="\e[0m"
+export RESET="\033[0m"
+export RED="\033[91m"
+export GREEN="\033[32m"
+export BLUE="\033[34m"
+export YELLOW="\033[33m"
+export BLINK="\033[5m"
+export DIM="\033[2m"

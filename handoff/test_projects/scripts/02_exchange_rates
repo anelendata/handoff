@@ -55,7 +55,7 @@ echo -e "$DIM"; $CMD; echo -e $RESET
 
 CMD="handoff -p 03_exchange_rates -w workspace_03 run local"
 echo Now let\'s run. Try entering this command below:
-echo -e "\e[38;5;82m    $CMD\e[0m"
+echo -e $GREEN    $CMD$RESET
 echo
 read -p "> "
 while [[ ! $REPLY = $CMD ]]

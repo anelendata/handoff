@@ -8,8 +8,7 @@ if [ ! -d $PROJECT_DIR/01_word_count ]; then
     exit 1
 fi
 
-pushd $PROJECT_DIR
-
+cd $PROJECT_DIR
 source scripts/colors
 
 echo Welcome to module 01_run_local
@@ -123,18 +122,38 @@ cat workspace/artifacts/collect_stats.json
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
-echo Great. This concludes this section of the tutorial. Go ahead and run
-echo
-echo -e $GREEN$PROJECT_DIR/02_exchange_rates$RESET
-echo
-echo ...that contains an example of pulling currency exchange rates.
-echo You will also learn how to create Python virtual enviroments for each command and pip-install commands.
+echo Great. This concludes this section of the tutorial.
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
 echo Thanks for completing this section of tutorial. Oh, before you go,
-echo do you use Twitter? Can you do me a favor and let your fellow engineer know about handoff? Open this link in your browser to draft your tweet:
-echo -e $BLUE https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud $RESET
+echo do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
+echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
 
+URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+open $URL
+else
+echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
+echo -e $GREEN$URL$RESET
+fi
 echo
-popd
+
+echo In the next section, we will try pullin the currency exchange rate data.
+echo You will also learn how to create Python virtual enviroments for each command and pip-install commands.
+
+echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+    echo "OK!"
+    echo "Remember that you can continue by"
+    echo -e $GREEN    $PROJECT_DIR/begin$RESET
+    echo
+    echo "bye!"
+    exit 0
+fi
+
+$PROJECT_DIR/scripts/02_exchange_rates

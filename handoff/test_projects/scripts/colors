@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export GREEN="\e[38;5;82m"
+export BLINK="\e[5m"
+export DIM="\e[2m"
+export BLUE="\e[34m"
+export RESET="\e[0m"

@@ -13,8 +13,6 @@ def start(project_dir, workspace_dir, data, **kwargs):
         print("It looks like you already copied the test projects to ./projects")
     else:
         print("Copied the test projects to ./projects")
-    print("Try running:")
-    print("    handoff --project ./projects/01_word_count --workspace ./workspace run local")
-    print("Then:")
-    print("    cat ./workspace/artifacts/state")
-    print("Then, continue on https://dev.handoff.cloud")
+    print("Now just enter:")
+    print("    ./projects/begin")
+    print("to start the even-monkeys-can-follow tutorial.")

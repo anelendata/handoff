@@ -242,7 +242,7 @@ def create_role(grantee_account_id, external_id, template_file=None,
     role_arn = ("arn:aws:iam::{account_id}:" +
                 "role/{role_name}").format(**params)
     LOGGER.info("""Add this info to ~/.aws/credentials (Linux & Mac)\n
-%USERPROFILE%\.aws\credentials (Windows)
+%USERPROFILE%\\.aws\\credentials (Windows)
 
     [<new-profile-name>]
     source_profile = <aws_profile>

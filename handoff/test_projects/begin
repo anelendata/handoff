@@ -1,0 +1,26 @@
+#!/bin/bash
+
+echo Welcome to handoff tutorial
+
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+    echo The project does not exist
+    exit 1
+fi
+
+echo This tutorial has 9 short parts:
+for s in `ls $PROJECT_DIR/scripts |grep -v colors`; do echo "- $s"; done
+echo You can run individually:
+echo $PROJECT_DIR/scripts/01_run_local
+
+read -p "Continue with 01_run_local? (Y/n)?" -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+    echo "bye!"
+exit 0
+fi
+
+echo
+$PROJECT_DIR/scripts/01_run_local

@@ -6,9 +6,8 @@ from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
                             RESOURCE_GROUP, PROJECT_FILE, TASK,
-                            PROVIDER, PLATFORM)
+                            PROVIDER, PLATFORM, get_state)
 from handoff.core import pyvenvx, utils
-from handoff.core.utils import env_check as _env_check
 
 
 LOGGER = utils.get_logger(__name__)
@@ -54,24 +53,26 @@ def _write_config_files(workspace_config_dir, precompiled_config):
 
 
 def _set_env(config):
+    state = get_state()
     LOGGER.info("Setting environment variables from config.")
     for v in config.get("envs", list()):
-        os.environ[v["key"]] = v["value"]
+        # Trust the values from project file
+        state.set_env(v["key"], v["value"], trust=True)
 
-    if not os.environ.get(BUCKET):
+    if not state.get(BUCKET):
         try:
             platform = provider._get_platform()
             aws_account_id = platform.get_account_id()
         except Exception:
             pass
         else:
-            if os.environ.get(RESOURCE_GROUP):
-                os.environ[BUCKET] = (aws_account_id + "-" +
-                                      os.environ[RESOURCE_GROUP])
+            if state.get(RESOURCE_GROUP):
+                state.set_env(BUCKET, (aws_account_id + "-" +
+                                       state[RESOURCE_GROUP]))
                 LOGGER.info("Environment variable %s was set autoamtically as %s" %
-                            (BUCKET, os.environ[BUCKET]))
+                            (BUCKET, state[BUCKET]))
 
-    if not os.environ.get(BUCKET):
+    if not state.get(BUCKET):
         LOGGER.warning(("Environment variable %s is not set. " +
                         "Remote file read/write will fail.") %
                        BUCKET)
@@ -82,6 +83,7 @@ def _read_precompiled_config(precompiled_config_file=None):
     Read parameters from a file if a file name is given.
     Read them from remote parameters store (e.g. AWS SSM) otherwise.
     """
+    state = get_state()
     if precompiled_config_file:
         LOGGER.info("Reading precompiled config from: " +
                     precompiled_config_file)
@@ -92,21 +94,22 @@ def _read_precompiled_config(precompiled_config_file=None):
     else:
         LOGGER.info("Reading precompiled config from remote.")
         # TODO: Decide what to do with config_get (remote)
-        _env_check([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM])
-        platform = provider._get_platform(provider_name=os.environ.get(PROVIDER),
-                                          platform_name=os.environ.get(PLATFORM))
+        state.validate_env([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM])
+        platform = provider._get_platform(provider_name=state.get(PROVIDER),
+                                          platform_name=state.get(PLATFORM))
         config = json.loads(platform.get_parameter("config"))
     return config
 
 
 def _read_project(project_file):
+    state = get_state()
     LOGGER.info("Reading configurations from " + project_file)
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
     deploy_env = project.get("deploy", dict()).get("envs", dict())
     for key in deploy_env:
-        os.environ[ENV_PREFIX + key.upper()] = deploy_env[key]
+        state.set_env(ENV_PREFIX + key.upper(), deploy_env[key])
 
     provider_name = project.get("deploy", dict()).get("provider")
     platform_name = project.get("deploy", dict()).get("platform")
@@ -119,21 +122,23 @@ def _read_project(project_file):
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
+    state.validate_env()
     platform = provider._get_platform()
-    _env_check()
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
 
 
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    _env_check()
+    state.validate_env()
 
     LOGGER.info("Downloading artifacts from the remote storage " +
-                os.environ.get(BUCKET))
+                state.get(BUCKET))
 
     _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -141,10 +146,11 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     platform = provider._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    _env_check()
+    state.validate_env()
 
     _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -152,26 +158,28 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     platform = provider._get_platform()
-    _env_check()
+    state.validate_env()
     LOGGER.info("Deleting artifacts from the remote storage " +
-                os.environ.get(BUCKET))
+                state.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
     platform.delete_dir(dir_name)
 
 
 def files_get(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    if not os.environ.get(BUCKET):
+    if not state.get(BUCKET):
        config_get(project_dir, workspace_dir, data, **kwargs)
-    _env_check([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM, BUCKET])
+    state.validate_env([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM, BUCKET])
 
     LOGGER.info("Downloading config files from the remote storage " +
-                os.environ.get(BUCKET))
+                state.get(BUCKET))
 
-    platform = provider._get_platform(provider_name=os.environ.get(PROVIDER),
-                                      platform_name=os.environ.get(PLATFORM))
+    platform = provider._get_platform(provider_name=state.get(PROVIDER),
+                                      platform_name=state.get(PLATFORM))
 
     _, _, files_dir = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
@@ -204,10 +212,11 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     platform = provider._get_platform()
-    _env_check()
+    state.validate_env()
     LOGGER.info("Deleting files from the remote storage " +
-                os.environ.get(BUCKET))
+                state.get(BUCKET))
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
 
@@ -297,8 +306,9 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
     platform = provider._get_platform()
-    _env_check()
+    state.validate_env()
     platform.delete_parameter("config")
 
 

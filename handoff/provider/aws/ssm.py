@@ -60,8 +60,3 @@ def delete_parameter(project, key):
     kwargs = {"Name": project + "_" + key}
     response = client.delete_parameter(**kwargs)
     return response
-
-
-def set_env_var_from_ssm(project, name):
-    value = get_parameter(project, name)
-    os.environ[name] = value

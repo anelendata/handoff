@@ -1,0 +1,199 @@
+#!/bin/bash
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+    echo The project does not exist...try running
+    echo "    handoff quick_start start"
+    echo in a new directory.
+    exit 1
+fi
+
+cd $PROJECT_DIR
+source scripts/colors
+
+echo Welcome to module 05_docker!
+
+echo "
+We will continue using 03_exchange_rates example.
+Instead of running the task on the host machine, let's run on Docker.
+"
+
+echo "Ready? (ctl-c to quit anytime)"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+d=`which docker`
+if [[ -z "$d" ]]
+then
+echo "
+Looks like you don't have Docker installed.
+Please follow this web page to install Docker:
+
+    https://docs.docker.com/get-docker/
+"
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+fi
+
+a=`cat ~/.aws/credentials | grep "\[default\]"`
+if [[ ! -f ~/.aws/credentials ]]
+then
+echo "
+Hmm...it looks like you don't have ~/.aws/credentials file set up from
+the previous tutorial. 
+"
+echo -e $GREEN; read -p "Woud you like to go back? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+if [[ ! $REPLY =~ ^[Nn]$ ]]
+then
+    echo "OK!"
+    echo
+    $PROJECT_DIR/scripts/03_set_up_aws_account
+    exit 0
+fi
+fi
+
+if [[ -z "$AWS_PROFILE" ]]
+then
+
+IFS=$'\n' read -r -d '' -a OPTIONS < <( cat ~/.aws/credentials |grep "\[" | sed "s/\[\(.*\)]/\1/" && printf '\0' )
+echo "
+First we tell AWS which account profile we want to use. It looks like you have
+${#OPTIONS[@]} profile(s):
+"
+
+i=1
+for s in "${OPTIONS[@]}"; do echo "- [$i] $s"; i=$((i+1)); done
+
+read -p "Which one would you like? " -n 1
+while [[ ( "$REPLY" -lt 1 || "$REPLY" -gt ${#OPTIONS[@]} ) ]]
+do
+    echo Hmm...you did not enter the number expected. Plesae try again.
+    read -p "> "
+done
+
+response=$(($REPLY-1))
+choice=${OPTIONS[$c]}
+
+CMD="export AWS_PROFILE=$choice"
+echo "
+
+Running this to select the profile:
+"
+
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e "$DIM"; $CMD; echo -e $RESET
+
+fi # if [ -z "$AWS_PROFILE" ]
+
+CMD="handoff -p 03_exchange_rates docker build"
+echo "
+Let's build a Docker image.
+
+Try running the following command. Type y when prompted at the beginning.
+The build may take 5~10 minutes.
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+CMD="handoff -p 03_exchange_rates docker run"
+echo "
+Now let's run the code in the Docker container.
+
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
+BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+
+echo "
+Confirm the run by checking the logs. Also check the artifacts on S3:
+
+    $BUCKET_URL/$BUCKET/$TASK/last/artifacts/
+"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+CMD="handoff -p 03_exchange_rates docker push"
+echo "
+Now that we know the Docker container runs fine, let's push it to
+AWS Elastic Container Registry. This may take a few minutes.
+"
+echo -e $GREEN    $CMD$RESET
+echo
+read -p "> "
+while [[ ! $REPLY = $CMD ]]
+do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+done
+echo -e $DIM; $CMD; echo -e $RESET
+
+REGION=`handoff -p 03_exchange_rates envs get -d '{"key":"AWS_REGION"}' -l critical`
+echo "
+Confirm that the Docker image has been uploaded to:
+
+https://console.aws.amazon.com/ecr/repositories?region=$REGION
+"
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo Great. This concludes this section of the tutorial.
+
+echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+
+echo Thanks for completing this section of tutorial. Oh, before you go,
+echo do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
+echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+
+URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+open $URL
+else
+echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
+echo -e $GREEN$URL$RESET
+fi
+echo
+
+echo "
+Now that the Docker image is prepared, we will run it on AWS Fargate in the
+next tutorial.
+"
+
+echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+    echo "OK!"
+    echo "Remember that you can continue by"
+    echo -e $GREEN    $PROJECT_DIR/begin$RESET
+    echo
+    echo "bye!"
+    exit 0
+fi
+
+$PROJECT_DIR/scripts/06_create_resources

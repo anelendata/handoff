@@ -34,9 +34,8 @@ setup(
         "lxml>=4.2.0",
         "python-dateutil==2.8.0",
         "pyyaml==5.3.1",
-        "requests==2.23.0",
+        "requests>=2.19.0",
         "s3transfer==0.2.1",
-        # "setuptools>=40.3.0",
     ],
     entry_points="""
     [console_scripts]

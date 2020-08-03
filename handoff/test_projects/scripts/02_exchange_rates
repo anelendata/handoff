@@ -2,46 +2,53 @@
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 
 if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
-    echo The project does not exist...try running
-    echo "    handoff quick_start start"
-    echo in a new directory.
+echo "
+The project does not exist...try running
+    handoff quick_start start
+in a new directory.
+"
     exit 1
 fi
 
 cd $PROJECT_DIR
 source scripts/colors
 
-echo Welcome to module 02_exchange_rates!
-echo We will retrieve currency exchange rates and write out to CSV file.
-echo "We will install singer.io (https://singer.io), a data collection framework,"
-echo in Python vitual environment.
+echo "
+Welcome to module 02_exchange_rates!
+We will retrieve currency exchange rates and write out to CSV file.
+We will install singer.io (https://singer.io), a data collection framework,
+in Python vitual environment.
+"
 
 echo "Ready? (ctl-c to quit anytime)"
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
-echo We use 03_exchange_rates project. project.yml looks like:
-echo
+echo "
+We use 03_exchange_rates project. project.yml looks like:
+"
 cat 03_exchange_rates/project.yml
-echo
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
-echo ...which is shell equivalent to
-echo
-echo "    tap-exchangeratesapi | python files/stats_collector.py | target-csv"
+echo "
+...which is shell equivalent to
 
-echo
+    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+"
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
 rm -fr workspace_03
 
 CMD="handoff -p 03_exchange_rates -w workspace_03 workspace install"
-echo Before we can run this, we need to install tap-exchangeratesapi and target-csv.
-echo The installation instructions are listed in install section of project.yml.
-echo Notice venv entries for each command. handoff can create Python virtual enviroment for each command to avoid conflicting dependencies between the commands.
-echo To install everything, run this command:
+echo "
+Before we can run this, we need to install tap-exchangeratesapi and target-csv.
+The installation instructions are listed in install section of project.yml.
+Notice venv entries for each command. handoff can create Python virtual enviroment for each command to avoid conflicting dependencies between the commands.
+
+To install everything, run this command:
+"
 
 echo -e $GREEN    $CMD$RESET
 echo
@@ -67,8 +74,6 @@ echo -e $DIM; $CMD; echo -e $RESET
 
 echo This process should have created a CSV file in artifacts directory:
 
-echo
-
 FILES=`ls workspace_03/artifacts | grep csv`
 echo $FILES
 
@@ -86,8 +91,11 @@ echo Great. This concludes this section of the tutorial.
 
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
 
-echo Thanks for completing this section of tutorial. Oh, before you go,
-echo do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
+echo "
+Thanks for completing this section of tutorial. Oh, before you go,
+do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
+"
+
 echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
 echo    # (optional) move to a new line
 
@@ -96,14 +104,19 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
 open $URL
 else
-echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
+echo "
+OK! In case you change your mind, here is the link to auto-draft your tweets
+(you can edit before you tweet)
+"
 echo -e $GREEN$URL$RESET
 fi
 echo
 
-echo "Now that we know how to run locally, we will gradually thinking about how to deploy this in the cloud *severlessly*."
-echo We will learn how to save and fetch the configurations to the remote storage.
-echo Before doing that, we will cover how to set up AWS Role with handoff in the next section.
+echo "
+Now that we know how to run locally, we will gradually thinking about how to deploy this in the cloud *severlessly*.
+We will learn how to save and fetch the configurations to the remote storage.
+Before doing that, we will cover how to set up AWS Role with handoff in the next section.
+"
 
 echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
 echo    # (optional) move to a new line

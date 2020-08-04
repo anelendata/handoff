@@ -49,14 +49,27 @@ def _list_core_commands():
 
 
 def _run_subcommand(module, command, project_dir, workspace_dir, data,
-                    **kwargs):
+                    show_help, **kwargs):
     prev_wd = os.getcwd()
     commands = _list_commands(module, False)
     if command in commands:
+        if show_help:
+            print(commands[command].__doc__ or
+                  "No help doc available for %s %s" %
+                  (module.__name__.split(".")[-1], command))
+            os.chdir(prev_wd)
+            return
+
         commands[command](project_dir, workspace_dir, data)
     else:
-        print("Invalid command: %s\nAvailable commands are %s" %
-              (command, commands.keys()))
+        if command:
+            print("Invalid command")
+        print("Available commands:")
+        for key in commands.keys():
+            print(" " * 4 + key + ": " +
+                  (commands[key].__doc__ or " ").splitlines()[0])
+        print("'handoff %s <command>'--help for more info" %
+              module.__name__.split(".")[-1])
     os.chdir(prev_wd)
 
 
@@ -112,7 +125,8 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
         admin.artifacts_archive(project_dir, workspace_dir, data)
 
 
-def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
+def do(top_command, sub_command, project_dir, workspace_dir, data,
+       show_help=False, **kwargs):
     state = get_state()
     command = (top_command + " " + sub_command).strip()
     if workspace_dir:
@@ -132,6 +146,11 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
     admin_commands = _list_commands(admin, True)
     if command in admin_commands:
         prev_wd = os.getcwd()
+        if show_help:
+            print(admin_commands[command].__doc__,
+                  "No help doc available for " + command)
+            os.chdir(prev_wd)
+            return
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         os.chdir(prev_wd)
         check_update()
@@ -139,25 +158,31 @@ def do(top_command, sub_command, project_dir, workspace_dir, data, **kwargs):
 
     if top_command == "docker":
         _run_subcommand(docker, sub_command, project_dir, workspace_dir, data,
-                        **kwargs)
+                        show_help, **kwargs)
         check_update()
         return
 
     if top_command == "provider":
+        if show_help:
+            _run_subcommand(provider, sub_command, project_dir, workspace_dir,
+                            data, show_help, **kwargs)
+            return
+
         admin.config_get_local(project_dir, workspace_dir, data)
         if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
-            image_version = docker.get_latest_version(
+            image_version = docker._get_latest_version(
                 project_dir, workspace_dir, data)
             if image_version:
                 state.set_env(IMAGE_VERSION, image_version)
+
         _run_subcommand(provider, sub_command, project_dir, workspace_dir,
-                        data, **kwargs)
+                        data, show_help, **kwargs)
         check_update()
         return
 
     if top_command in plugin_modules.keys():
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
-                        workspace_dir, data, **kwargs)
+                        workspace_dir, data, show_help, **kwargs)
         check_update()
         return
 
@@ -188,10 +213,12 @@ def check_update():
 
 
 def main():
+    admin_command_list = "\n- ".join(_list_commands(admin, True))
+    task_command_list = "\n- ".join(_list_commands(task, True))
+    plugin_list = "\n- ".join(_list_plugins().keys())
     parser = argparse.ArgumentParser(
-        description=("Run parameterized Unix pipeline command. Try running: " +
-                     "`handoff tutorial start` in a new directory. Check " +
-                     "out https://dev.handoff.cloud to learn more."))
+        add_help=False,
+        description=("Run parameterized Unix pipeline command."))
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("subcommand", type=str, nargs="?", default="",
                         help="subcommand")
@@ -214,9 +241,29 @@ def main():
                         help="Cloud provider name")
     parser.add_argument("--platform", type=str, default="fargate",
                         help="Cloud platform name")
+    parser.add_argument("-h", "--help", action="store_true")
 
-    if len(sys.argv) == 1:
+    if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
+        print("""Try running:
+    handoff tutorial start
+in a new directory.
+Check out https://dev.handoff.cloud to learn more.
+
+Available admin commands:
+- %s
+
+Availabe run commands:
+- %s
+
+Available subcommands:
+- provider
+- docker
+- %s
+
+handoff <command> -h for more help.
+""" % (admin_command_list, task_command_list, plugin_list))
+
         check_update()
         sys.exit(1)
 
@@ -237,6 +284,7 @@ def main():
     kwargs["allow_advanced_tier"] = args.allow_advanced_tier
     kwargs["profile"] = args.profile
     kwargs["push_artifacts"] = args.push_artifacts
+    kwargs["show_help"] = args.help
 
     do(args.command, args.subcommand,
        args.project_dir, args.workspace_dir,

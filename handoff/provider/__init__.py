@@ -2,8 +2,9 @@ import os, sys
 from importlib import import_module as _import_module
 from handoff.core import admin
 from handoff.core.utils import get_logger as _get_logger
+from handoff import config
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
-                            IMAGE_VERSION, PROVIDER, PLATFORM, get_state)
+                            IMAGE_VERSION, PROVIDER, PLATFORM)
 
 LOGGER = _get_logger(__name__)
 
@@ -13,7 +14,7 @@ PLATFORM_MODULE = None
 
 def _get_platform(provider_name=None, platform_name=None,
                   stdout=False, profile=None, **kwargs):
-    state = get_state()
+    state = config.get_state()
     if not provider_name:
         provider_name = state.get(PROVIDER)
     if not platform_name:
@@ -29,13 +30,8 @@ def _get_platform(provider_name=None, platform_name=None,
     return PLATFORM_MODULE
 
 
-def get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
-    platform = _get_platform()
-    return platform.get_platform_auth_env(data)
-
-
-def assume_role(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+def _assume_role(project_dir, workspace_dir, data, **kwargs):
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
@@ -47,8 +43,13 @@ def assume_role(project_dir, workspace_dir, data, **kwargs):
                          external_id=external_id)
 
 
+def _get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
+    platform = _get_platform()
+    return platform.get_platform_auth_env(data)
+
+
 def create_role(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
@@ -69,7 +70,7 @@ def create_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_role(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
@@ -90,7 +91,7 @@ def update_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_role(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -98,7 +99,7 @@ def delete_role(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_bucket(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -106,7 +107,7 @@ def create_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_bucket(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -114,7 +115,7 @@ def update_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_bucket(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -122,7 +123,7 @@ def delete_bucket(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_resources(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -130,7 +131,7 @@ def create_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_resources(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -138,7 +139,7 @@ def update_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_resources(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -146,7 +147,7 @@ def delete_resources(project_dir, workspace_dir, data, **kwargs):
 
 
 def create_task(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
@@ -154,7 +155,7 @@ def create_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def update_task(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
@@ -162,7 +163,7 @@ def update_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def delete_task(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -170,7 +171,9 @@ def delete_task(project_dir, workspace_dir, data, **kwargs):
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    """Run a task once in the platform
+    """
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -178,7 +181,13 @@ def run(project_dir, workspace_dir, data, **kwargs):
 
 
 def schedule(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    """Schedule a task
+    Must have --data option
+    -d '{"target_id": <target_id>, "cron": <cron_format>}'
+
+    An example of cron-format string is "10 01 * * ? *"
+    """
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
@@ -188,7 +197,11 @@ def schedule(project_dir, workspace_dir, data, **kwargs):
 
 
 def unschedule(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    """Unschedule a task
+    Must have --data option:
+    -d '{"target_id": <target_id>}'
+    """
+    state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()

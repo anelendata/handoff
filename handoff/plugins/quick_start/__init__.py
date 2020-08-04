@@ -1,10 +1,12 @@
 import os, shutil
-from handoff.core.utils import get_logger
+from handoff.core.utils import get_logger as _get_logger
 
-LOGGER = get_logger(__name__)
+LOGGER = _get_logger(__name__)
 
 
 def start(project_dir, workspace_dir, data, **kwargs):
+    """Copy the test projects to the test_projects under the current directory
+    """
     d, f = os.path.split(__file__)
     try:
         shutil.copytree(os.path.join(d, "../..",  "test_projects"),

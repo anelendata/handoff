@@ -21,17 +21,17 @@ def _get_platform(provider_name=None):
 
 
 def build(project_dir, workspace_dir, data, **kwargs):
-    _get_platform.build(project_dir, workspace_dir, data, **kwargs)
+    _get_platform().build(project_dir, workspace_dir, data, **kwargs)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
-    _get_platform.run(project_dir, workspace_dir, data, **kwargs)
+    _get_platform().run(project_dir, workspace_dir, data, **kwargs)
 
 
 def push(project_dir, workspace_dir, data, **kwargs):
-    _get_platform.push(project_dir, workspace_dir, data, **kwargs)
+    _get_platform().push(project_dir, workspace_dir, data, **kwargs)
 
 
 def get_latest_image_version(project_dir, workspace_dir, data, **kwargs):
-    return _get_platform.get_latest_version(project_dir, workspace_dir,
-                                            data, **kwargs)
+    return _get_platform().get_latest_image_version(project_dir, workspace_dir,
+                                                    data, **kwargs)

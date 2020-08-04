@@ -13,7 +13,7 @@ PLATFORM_MODULE = None
 
 
 def _get_platform(provider_name=None, platform_name=None,
-                  stdout=False, profile=None, **kwargs):
+                  stdout=False, cloud_profile=None, **kwargs):
     state = config.get_state()
     if not provider_name:
         provider_name = state.get(CLOUD_PROVIDER)
@@ -26,7 +26,7 @@ def _get_platform(provider_name=None, platform_name=None,
         # TODO: use platform_name
         PLATFORM_MODULE = _import_module("handoff.services.cloud."
                                          + provider_name)
-        response = PLATFORM_MODULE.login(profile)
+        response = PLATFORM_MODULE.login(cloud_profile)
         if stdout:
             sys.stdout.write(response)
     return PLATFORM_MODULE

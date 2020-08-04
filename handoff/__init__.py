@@ -278,12 +278,12 @@ handoff <command> -h for more help.\033[0m
 
     os.environ[CLOUD_PROVIDER] = args.cloud_provider
     os.environ[CLOUD_PLATFORM] = args.cloud_platform
-    os.environ[CONTAINER_PROVIDER] = args.cloud_platform
+    os.environ[CONTAINER_PROVIDER] = args.container_provider
 
     kwargs = dict()
     kwargs["show_help"] = args.help
     kwargs["push_artifacts"] = args.push_artifacts
-    kwargs["profile"] = args.profile
+    kwargs["cloud_profile"] = args.cloud_profile
     kwargs["allow_advanced_tier"] = args.allow_advanced_tier
 
     do(args.command, args.subcommand,

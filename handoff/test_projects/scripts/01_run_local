@@ -18,8 +18,7 @@ Welcome to module 01_run_local
 We will learn how to run handoff local test using a project 01_word_count
 "
 
-echo "Ready? (ctl-c to quit anytime)"
-
+echo "Ready? (Hit q at prompt to quit anytime. Any other key to proceed.)"
 Prompt
 
 echo Each project directory contains:

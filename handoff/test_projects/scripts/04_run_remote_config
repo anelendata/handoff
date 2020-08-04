@@ -78,7 +78,7 @@ So we will create a cloud data storage (S3 bucket) for that.
 
 Try running:
 "
-Command "handoff -p 03_exchange_rates provider create_bucket"
+Command "handoff -p 03_exchange_rates cloud create_bucket"
 
 echo "
 Wait for a minute and check here
@@ -104,7 +104,7 @@ TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
 echo "
 Check
 
-    $BUCKET_URL/$BUCKET/$TASK/last
+    $BUCKET_URL/$BUCKET/$TASK/last/
 
 to see the files directory is uploaded.
 "
@@ -138,7 +138,7 @@ We pushed the result to the bucket:
 
 Also note that artifacts are automatically archived at each run at
 
-    $BUCKET_URL/$BUCKET/$TASK/last/runs/
+    $BUCKET_URL/$BUCKET/$TASK/runs/
 "
 
 Prompt

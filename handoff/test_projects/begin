@@ -1,28 +1,19 @@
 #!/bin/bash
-
-echo Welcome to handoff tutorial
-
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+echo $PROJECT_DIR
+source $PROJECT_DIR/scripts/funcs
 
 if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
     echo The project does not exist
     exit 1
 fi
+echo "Welcome to handoff tutorial
+Each module is very short (5 ~ 10 minutes to complete)
+"
 
-IFS=$'\n' read -r -d '' -a COMMANDS < <( ls $PROJECT_DIR/scripts |grep -v colors && printf '\0' )
+CMD="ls $PROJECT_DIR/scripts | grep -v funcs && printf \0"
 
-echo "This tutorial has ${#COMMANDS[@]} short (< 5min each) parts:"
-i=1
-for s in `ls $PROJECT_DIR/scripts |grep -v colors`; do echo "- [$i] $s"; i=$((i+1)); done
+Choose "$CMD"
 
-read -p "Which one would you like to do? (ctl-c to exit) " -n 1
-while [[ ( "$REPLY" -lt 1 || "$REPLY" -gt ${#COMMANDS[@]} ) ]]
-do
-    echo Hmm...you did not enter the number expected. Plesae try again.
-    read -p "> "
-done
-
-echo
-
-c=$(($REPLY-1))
-$PROJECT_DIR/scripts/${COMMANDS[$c]}
+$PROJECT_DIR/scripts/${OPTIONS[$CHOICE]}

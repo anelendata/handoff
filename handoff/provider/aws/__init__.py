@@ -1,4 +1,7 @@
 import logging, os
+
+import botocore
+
 from handoff.provider.aws import (ecs, ecr, events, iam, s3, ssm, sts,
                                   cloudformation)
 from handoff.provider.aws import credentials as cred
@@ -68,16 +71,35 @@ def login(profile=None):
 def get_platform_auth_env(data):
     state = get_state()
     if not state.get("AWS_ACCESS_KEY_ID"):
-        role_arn = data.get("role_arn")
-        target_account_id = data.get("target_account_id")
-        external_id = data.get("external_id")
-        assume_role(role_arn, target_account_id, external_id)
+        try:
+            role_arn = data.get("role_arn")
+            target_account_id = data.get("target_account_id")
+            external_id = data.get("external_id")
+            assume_role(role_arn, target_account_id, external_id)
+        except botocore.exceptions.ClientError:
+            get_session()
     env = {"AWS_ACCESS_KEY_ID": state.get("AWS_ACCESS_KEY_ID"),
            "AWS_SECRET_ACCESS_KEY": state.get("AWS_SECRET_ACCESS_KEY"),
            "AWS_SESSION_TOKEN": state.get("AWS_SESSION_TOKEN"),
            "AWS_REGION": state.get("AWS_REGION")
            }
     return env
+
+
+def get_session():
+    state = get_state()
+    session = cred.get_session()
+    keys = session.get_credentials()
+    state.set_env("AWS_ACCESS_KEY_ID",
+                  keys.access_key,
+                  trust=True)
+    state.set_env("AWS_SECRET_ACCESS_KEY",
+                  keys.secret_key,
+                  trust=True)
+    if keys.token:
+        state.set_env("AWS_SESSION_TOKEN",
+                      keys.token,
+                      trust=True)
 
 
 def assume_role(role_arn=None, target_account_id=None,  external_id=None):
@@ -284,13 +306,18 @@ def create_bucket(template_file=None, update=False):
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
     parameters = [{"ParameterKey": "Bucket", "ParameterValue": bucket}]
 
-    if not update:
-        response = cloudformation.create_stack(stack_name, template_file, parameters)
+    try:
+        if not update:
+            response = cloudformation.create_stack(stack_name, template_file, parameters)
+        else:
+            response = cloudformation.update_stack(stack_name, template_file, parameters)
+    except botocore.exceptions.ClientError as e:
+        # Bucket already exists
+        LOGGER.error("Error creating/updating %s bucket: %s" %
+                     (bucket, str(e)))
     else:
-        response = cloudformation.update_stack(stack_name, template_file, parameters)
-
-    LOGGER.info(response)
-    _log_stack_info(response)
+        LOGGER.info(response)
+        _log_stack_info(response)
 
 
 def update_bucket(template_file=None):

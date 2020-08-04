@@ -1,5 +1,6 @@
 #!/bin/bash
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source $PROJECT_DIR/scripts/funcs
 
 if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
 echo "
@@ -11,7 +12,6 @@ in a new directory.
 fi
 
 cd $PROJECT_DIR
-source scripts/colors
 
 echo "
 Welcome to module 03_set_up_aws_account!
@@ -19,9 +19,9 @@ handoff helps you to deploy the task in the cloud computing services.
 In this tutorial series, our goal is to deploy the currency exchange
 rates task to AWS Fargate. https://aws.amazon.com/fargate/
 Before we can deploy, we need to set up the account and roles.
-" # echo
+"
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 Do I need a credit card to use AWS? How much does it cost?
@@ -32,7 +32,7 @@ charged for the eligible usage.
 Learn more about Free Tier: https://aws.amazon.com/free
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 Here is the complete list of the services we use:
@@ -48,16 +48,16 @@ Here is the complete list of the services we use:
     Pricing: https://aws.amazon.com/ecr/pricing/
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
-a=`cat ~/.aws/credentials | grep "\[default\]"`
+a=`cat ~/.aws/credentials`
 if [[ -f ~/.aws/credentials && ! -z "$a" ]]
 then
 echo "
 It looks like you already have AWS CLI set up. You may just scan through
 the rest of the tutorial.
 "
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 fi
 
 echo "
@@ -70,7 +70,7 @@ and complete the sign up process.
 The rest of the tutorial assumes that you have an active AWS account.
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 If you haven't, install AWS CLI (command line interface):
@@ -78,7 +78,7 @@ If you haven't, install AWS CLI (command line interface):
     https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 Also generate access key ID and secret access key by following:
@@ -94,7 +94,7 @@ The only time that you can view or download the secret access key is when you
 create the keys. You cannot recover them later. So keep a local copy.
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 Last step before going back to handoff. From the console, run:
@@ -126,42 +126,19 @@ Learn more about AWS profile here:
     https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo Great. This concludes this section of the tutorial.
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
-echo Thanks for completing this section of tutorial. Oh, before you go,
-echo do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
-echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
-echo    # (optional) move to a new line
-
-URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-open $URL
-else
-echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
-echo -e $GREEN$URL$RESET
-fi
-echo
+Thanks
 
 echo "
 Now that we have set up the AWS account, let's store the configurations
 in the cloud.
 "
 
-echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Nn]$ ]]
-then
-    echo "OK!"
-    echo "Remember that you can continue by"
-    echo -e $GREEN    $PROJECT_DIR/begin$RESET
-    echo
-    echo "bye!"
-    exit 0
-fi
+Continue
 
 $PROJECT_DIR/scripts/04_run_remote_config

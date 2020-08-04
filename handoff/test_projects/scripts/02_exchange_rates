@@ -1,5 +1,6 @@
 #!/bin/bash
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source $PROJECT_DIR/scripts/funcs
 
 if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
 echo "
@@ -11,7 +12,6 @@ in a new directory.
 fi
 
 cd $PROJECT_DIR
-source scripts/colors
 
 echo "
 Welcome to module 02_exchange_rates!
@@ -22,14 +22,14 @@ in Python vitual environment.
 
 echo "Ready? (ctl-c to quit anytime)"
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 We use 03_exchange_rates project. project.yml looks like:
 "
-cat 03_exchange_rates/project.yml
+Cat "03_exchange_rates/project.yml" $DIM
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo "
 ...which is shell equivalent to
@@ -37,11 +37,10 @@ echo "
     tap-exchangeratesapi | python files/stats_collector.py | target-csv
 "
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 rm -fr workspace_03
 
-CMD="handoff -p 03_exchange_rates -w workspace_03 workspace install"
 echo "
 Before we can run this, we need to install tap-exchangeratesapi and target-csv.
 The installation instructions are listed in install section of project.yml.
@@ -49,28 +48,13 @@ Notice venv entries for each command. handoff can create Python virtual envirome
 
 To install everything, run this command:
 "
+Command "handoff -p 03_exchange_rates -w workspace_03 workspace install"
 
-echo -e $GREEN    $CMD$RESET
-echo
-read -p "> "
-while [[ ! $REPLY = $CMD ]]
-do
-    echo Hmm...you did not enter correctly, try again.
-    read -p "> "
-done
-echo -e "$DIM"; $CMD; echo -e $RESET
 
-CMD="handoff -p 03_exchange_rates -w workspace_03 run local"
-echo Now let\'s run. Try entering this command below:
-echo -e $GREEN    $CMD$RESET
-echo
-read -p "> "
-while [[ ! $REPLY = $CMD ]]
-do
-    echo Hmm...you did not enter correctly, try again.
-    read -p "> "
-done
-echo -e $DIM; $CMD; echo -e $RESET
+echo "
+Now let's run. Try entering this command below:
+"
+Command "handoff -p 03_exchange_rates -w workspace_03 run local"
 
 echo This process should have created a CSV file in artifacts directory:
 
@@ -85,32 +69,13 @@ for f in $FILES; do head -n 3 workspace_03/artifacts/$f; done
 echo ...
 for f in $FILES; do tail -n 3 workspace_03/artifacts/$f; done
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
 echo Great. This concludes this section of the tutorial.
 
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+Prompt
 
-echo "
-Thanks for completing this section of tutorial. Oh, before you go,
-do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
-"
-
-echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
-echo    # (optional) move to a new line
-
-URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-open $URL
-else
-echo "
-OK! In case you change your mind, here is the link to auto-draft your tweets
-(you can edit before you tweet)
-"
-echo -e $GREEN$URL$RESET
-fi
-echo
+Thanks
 
 echo "
 Now that we know how to run locally, we will gradually thinking about how to deploy this in the cloud *severlessly*.
@@ -118,16 +83,6 @@ We will learn how to save and fetch the configurations to the remote storage.
 Before doing that, we will cover how to set up AWS Role with handoff in the next section.
 "
 
-echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Nn]$ ]]
-then
-    echo "OK!"
-    echo "Remember that you can continue by"
-    echo -e $GREEN    $PROJECT_DIR/begin$RESET
-    echo
-    echo "bye!"
-    exit 0
-fi
+Continue
 
-$PROJECT_DIR/scripts/03_create_role
+$PROJECT_DIR/scripts/03_set_up_aws_account

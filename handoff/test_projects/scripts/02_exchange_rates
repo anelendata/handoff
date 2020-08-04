@@ -20,7 +20,7 @@ We will install singer.io (https://singer.io), a data collection framework,
 in Python vitual environment.
 "
 
-echo "Ready? (ctl-c to quit anytime)"
+echo "Ready? (Hit q at prompt to quit anytime. Any other key to proceed.)"
 
 Prompt
 

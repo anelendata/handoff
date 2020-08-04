@@ -1,6 +1,8 @@
 import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
-from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, PROVIDER, PLATFORM,
+from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR,
+                            CLOUD_PROVIDER, CLOUD_PLATFORM,
+                            CONTAINER_PROVIDER,
                             BUCKET)
 
 TEST_PROJECTS_DIR = "./handoff/test_projects"
@@ -9,8 +11,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 def test_03_exchange_rates():
-    os.environ[PROVIDER] = os.environ.get(PROVIDER, "aws")
-    os.environ[PLATFORM] = os.environ.get(PLATFORM, "fargate")
+    os.environ[CLOUD_PROVIDER] = os.environ.get(CLOUD_PROVIDER, "aws")
+    os.environ[CLOUD_PLATFORM] = os.environ.get(CLOUD_PLATFORM, "fargate")
+    os.environ[CONTAINER_PROVIDER] = (
+        os.environ.get(CONTAINER_PROVIDER, "docker"))
 
     if (not os.environ.get("AWS_PROFILE") and
         not os.environ.get("AWS_ACCESS_KEY_ID")):

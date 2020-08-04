@@ -2,13 +2,16 @@ import argparse, datetime, json, logging, os, sys
 from lxml import html
 import requests
 
-from . import docker, plugins, provider
-from .config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
-                     BUCKET, DOCKER_IMAGE, RESOURCE_GROUP, TASK,
-                     IMAGE_VERSION, PROVIDER, PLATFORM,
-                     get_state)
-from .core import admin, task
-from .core.utils import bcolors, get_logger
+from handoff.config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
+                            BUCKET, RESOURCE_GROUP, TASK,
+                            DOCKER_IMAGE, IMAGE_VERSION,
+                            CLOUD_PROVIDER, CLOUD_PLATFORM,
+                            CONTAINER_PROVIDER,
+                            get_state)
+from handoff.core import admin, task
+from handoff.utils import bcolors, get_logger
+from handoff.services import cloud, container
+from handoff import plugins
 
 LOGGER = get_logger("handoff")
 
@@ -43,11 +46,6 @@ def _list_commands(module, split_first=False):
     return commands
 
 
-def _list_core_commands():
-    return str(list(_list_commands(admin, True).keys()) +
-               list(_list_commands(task, True).keys()))
-
-
 def _run_subcommand(module, command, project_dir, workspace_dir, data,
                     show_help, **kwargs):
     prev_wd = os.getcwd()
@@ -78,10 +76,6 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     state = get_state()
     prev_wd = os.getcwd()
     commands = _list_commands(task, True)
-    if command not in commands:
-        print("Invalid command: %s\nAvailable commands are %s" %
-              (command, _list_core_commands()))
-        return
 
     admin.workspace_init(project_dir, workspace_dir, data)
 
@@ -156,34 +150,31 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
         check_update()
         return
 
-    if top_command == "docker":
-        _run_subcommand(docker, sub_command, project_dir, workspace_dir, data,
+    if top_command == "container":
+        _run_subcommand(container, sub_command, project_dir, workspace_dir, data,
                         show_help, **kwargs)
-        check_update()
         return
 
-    if top_command == "provider":
+    if top_command == "cloud":
         if show_help:
-            _run_subcommand(provider, sub_command, project_dir, workspace_dir,
+            _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
                             data, show_help, **kwargs)
             return
 
         admin.config_get_local(project_dir, workspace_dir, data)
         if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
-            image_version = docker._get_latest_version(
+            image_version = container.get_latest_image_version(
                 project_dir, workspace_dir, data)
             if image_version:
                 state.set_env(IMAGE_VERSION, image_version)
 
-        _run_subcommand(provider, sub_command, project_dir, workspace_dir,
+        _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
                         data, show_help, **kwargs)
-        check_update()
         return
 
     if top_command in plugin_modules.keys():
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
                         workspace_dir, data, show_help, **kwargs)
-        check_update()
         return
 
     print("Unrecognized command %s. Run handoff -h for help." % command)
@@ -219,29 +210,37 @@ def main():
     parser = argparse.ArgumentParser(
         add_help=False,
         description=("Run parameterized Unix pipeline command."))
+
     parser.add_argument("command", type=str, help="command")
     parser.add_argument("subcommand", type=str, nargs="?", default="",
                         help="subcommand")
-    parser.add_argument("-l", "--log-level", type=str, default="info",
-                        help="Set log level (DEBUG, INFO, WARNING, ERROR," +
-                        "CRITICAL)")
-    parser.add_argument("-d", "--data", type=str, default="{}",
-                        help="Data required for the command as a JSON string")
+
     parser.add_argument("-p", "--project-dir", type=str, default=None,
                         help="Specify the location of project directory")
     parser.add_argument("-w", "--workspace-dir", type=str, default=None,
                         help="Location of workspace directory")
+    parser.add_argument("-d", "--data", type=str, default="{}",
+                        help="Data required for the command as a JSON string")
     parser.add_argument("-a", "--push-artifacts", action="store_true",
                         help="Push artifacts to remote at the end of the run")
-    parser.add_argument("-t", "--allow-advanced-tier", action="store_true",
-                        help="Allow AWS SSM Parameter Store Advanced tier")
-    parser.add_argument("--profile", type=str, default=None,
-                        help="Profile name for logging in to platform")
-    parser.add_argument("--provider", type=str, default="aws",
-                        help="Cloud provider name")
-    parser.add_argument("--platform", type=str, default="fargate",
-                        help="Cloud platform name")
+
     parser.add_argument("-h", "--help", action="store_true")
+    parser.add_argument("-l", "--log-level", type=str, default="info",
+                        help="Set log level (DEBUG, INFO, WARNING, ERROR," +
+                        "CRITICAL)")
+
+    parser.add_argument("--cloud-provider", type=str, default="aws",
+                        help="Cloud provider name")
+    parser.add_argument("--cloud-platform", type=str, default="fargate",
+                        help="Cloud platform name")
+    parser.add_argument("--cloud-profile", type=str, default=None,
+                        help="Profile name for logging in to platform")
+
+    parser.add_argument("--container-provider", type=str, default="docker",
+                        help="Container provider name")
+
+    parser.add_argument("--allow-advanced-tier", action="store_true",
+                        help="Allow AWS SSM Parameter Store Advanced tier")
 
     if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
@@ -257,11 +256,11 @@ Availabe run commands:
 - %s
 
 Available subcommands:
-- provider
+- cloud
 - docker
 - %s
 
-handoff <command> -h for more help.
+handoff <command> -h for more help.\033[0m
 """ % (admin_command_list, task_command_list, plugin_list))
 
         check_update()
@@ -277,19 +276,19 @@ handoff <command> -h for more help.
     except json.JSONDecodeError:
         data = json.loads(data_json[0:-1])
 
-    os.environ[PROVIDER] = args.provider
-    os.environ[PLATFORM] = args.platform
+    os.environ[CLOUD_PROVIDER] = args.cloud_provider
+    os.environ[CLOUD_PLATFORM] = args.cloud_platform
+    os.environ[CONTAINER_PROVIDER] = args.container_provider
 
     kwargs = dict()
-    kwargs["allow_advanced_tier"] = args.allow_advanced_tier
-    kwargs["profile"] = args.profile
-    kwargs["push_artifacts"] = args.push_artifacts
     kwargs["show_help"] = args.help
+    kwargs["push_artifacts"] = args.push_artifacts
+    kwargs["cloud_profile"] = args.cloud_profile
+    kwargs["allow_advanced_tier"] = args.allow_advanced_tier
 
     do(args.command, args.subcommand,
        args.project_dir, args.workspace_dir,
        data, **kwargs)
-
 
 if __name__ == "__main__":
     main()

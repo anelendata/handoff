@@ -1,6 +1,7 @@
 import datetime, json, logging, os, shlex, sys, venv
 import subprocess
-from . import utils
+
+from handoff import utils
 
 
 LOGGER = utils.get_logger(__name__)

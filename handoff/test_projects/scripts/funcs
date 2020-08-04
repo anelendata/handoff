@@ -10,6 +10,11 @@ export DIM="\033[2m"
 
 Prompt() {
 echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+if [[ $REPLY =~ ^[Qq]$ ]]
+then
+    echo "bye!"
+    exit 0
+fi
 }
 
 ListDir() {

@@ -16,8 +16,6 @@ Welcome to module 05_docker!
 
 We will continue using 03_exchange_rates example.
 Instead of running the task on the host machine, let's run on Docker.
-
-Ready? (ctl-c to quit anytime)
 "
 
 Prompt
@@ -44,15 +42,15 @@ fi
 echo "
 Let's build a Docker image.
 
-Try running the following command. Type y when prompted at the beginning.
+Try running the following command. Enter y when prompted at the beginning.
 The build may take 5~10 minutes.
 "
-Command "handoff -p 03_exchange_rates docker build"
+Command "handoff -p 03_exchange_rates container build"
 
 echo "
 Now let's run the code in the Docker container.
 "
-Command "handoff -p 03_exchange_rates docker run"
+Command "handoff -p 03_exchange_rates container run"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
 BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
@@ -70,7 +68,7 @@ echo "
 Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 "
-Command "handoff -p 03_exchange_rates docker push"
+Command "handoff -p 03_exchange_rates container push"
 
 REGION=`handoff -p 03_exchange_rates envs get -d '{"key":"AWS_REGION"}' -l critical`
 echo "

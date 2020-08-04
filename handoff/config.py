@@ -1,7 +1,7 @@
-VERSION = "0.1.1a0"
+VERSION = "0.1.2a0"
 
 import os, re
-from handoff.core import utils
+from handoff import utils
 
 LOGGER = utils.get_logger(__name__)
 
@@ -17,8 +17,10 @@ BUCKET_ARCHIVE_PREFIX = "runs"
 ENV_PREFIX = "HO_"
 
 # environment variable keys (not the values)
-PROVIDER = ENV_PREFIX + "PROVIDER"
-PLATFORM = ENV_PREFIX + "PLATFORM"
+CLOUD_PROVIDER = ENV_PREFIX + "CLOUD_PROVIDER"
+CLOUD_PLATFORM = ENV_PREFIX + "CLOUD_PLATFORM"
+
+CONTAINER_PROVIDER = ENV_PREFIX + "CONTAINER_PROVIDER"
 
 RESOURCE_GROUP = ENV_PREFIX + "RESOURCE_GROUP"
 TASK = ENV_PREFIX + "TASK"
@@ -50,9 +52,11 @@ ADMIN_ENVS = {
         "min": 4,
         "max": 63
     },
-    PROVIDER: {
+    CLOUD_PROVIDER: {
     },
-    PLATFORM: {
+    CLOUD_PLATFORM: {
+    },
+    CONTAINER_PROVIDER: {
     }
 }
 

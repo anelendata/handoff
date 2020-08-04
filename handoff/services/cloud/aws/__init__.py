@@ -2,12 +2,13 @@ import logging, os
 
 import botocore
 
-from handoff.provider.aws import (ecs, ecr, events, iam, s3, ssm, sts,
-                                  cloudformation)
-from handoff.provider.aws import credentials as cred
-from handoff.core import utils
+from handoff import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK, get_state)
+from handoff.services.cloud.aws import (ecs, ecr, events, iam, s3, ssm, sts,
+                                  cloudformation)
+from handoff.services.cloud.aws import credentials as cred
+
 
 NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
@@ -18,7 +19,6 @@ boto3_logger = logging.getLogger("boto3")
 boto3_logger.setLevel(LOGGER.level)
 botocore_logger = logging.getLogger("botocore")
 botocore_logger.setLevel(LOGGER.level)
-
 
 
 def _log_stack_info(response):

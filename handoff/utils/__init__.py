@@ -92,11 +92,12 @@ def get_time_window(data,
 
 
 def get_python_info(module=__file__):
-    lib_dir = os.path.dirname(os.path.realpath(attr.__file__))
     python_exec = sys.executable
+    lib_dir = os.path.dirname(os.path.realpath(attr.__file__))
     work_dir = os.getcwd()
     code_dir = os.path.dirname(os.path.realpath(module))
     python_info = {"python": python_exec,
+                   "python_lib_dir": lib_dir,
                    "work_dir": work_dir,
                    "code_dir": code_dir
                    }

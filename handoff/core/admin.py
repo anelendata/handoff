@@ -1,14 +1,14 @@
 import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
-from handoff import provider
+from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
                             RESOURCE_GROUP, PROJECT_FILE, TASK,
-                            PROVIDER, PLATFORM, get_state)
-from handoff.core import pyvenvx, utils
-
+                            CLOUD_PROVIDER, CLOUD_PLATFORM, get_state)
+from handoff import utils
+from handoff.utils import pyvenvx
 
 LOGGER = utils.get_logger(__name__)
 
@@ -62,7 +62,7 @@ def _set_env(config):
 
     if not state.get(BUCKET):
         try:
-            platform = provider._get_platform()
+            platform = cloud._get_platform()
             aws_account_id = platform.get_account_id()
         except Exception:
             pass
@@ -94,10 +94,10 @@ def _read_precompiled_config(precompiled_config_file=None):
             config = json.load(f)
     else:
         LOGGER.info("Reading precompiled config from remote.")
-        # TODO: Decide what to do with config_get (remote)
-        state.validate_env([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM])
-        platform = provider._get_platform(provider_name=state.get(PROVIDER),
-                                          platform_name=state.get(PLATFORM))
+        state.validate_env([RESOURCE_GROUP, TASK,
+                            CLOUD_PROVIDER, CLOUD_PLATFORM])
+        platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                       platform_name=state.get(CLOUD_PLATFORM))
         config = json.loads(platform.get_parameter("config"))
     return config
 
@@ -112,11 +112,11 @@ def _read_project(project_file):
     for key in deploy_env:
         state.set_env(ENV_PREFIX + key.upper(), deploy_env[key])
 
-    provider_name = project.get("deploy", dict()).get("provider")
-    platform_name = project.get("deploy", dict()).get("platform")
-    if provider_name and platform_name:
-        platform = provider._get_platform(provider_name=provider_name,
-                                          platform_name=platform_name)
+    cloud_provider_name = project.get("deploy", dict()).get("provider")
+    cloud_platform_name = project.get("deploy", dict()).get("platform")
+    if cloud_provider_name and cloud_platform_name:
+        platform = cloud._get_platform(provider_name=cloud_provider_name,
+                                       platform_name=cloud_platform_name)
         LOGGER.info("Platform: " + platform.NAME)
 
     return project
@@ -125,7 +125,7 @@ def _read_project(project_file):
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
     state.validate_env()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
@@ -133,7 +133,7 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
 
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     state.validate_env()
@@ -148,7 +148,7 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
 
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     state.validate_env()
@@ -160,7 +160,7 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     state.validate_env()
     LOGGER.info("Deleting artifacts from the remote storage " +
                 state.get(BUCKET))
@@ -174,13 +174,14 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
         raise Exception("Workspace directory is not set")
     if not state.get(BUCKET):
        config_get(project_dir, workspace_dir, data, **kwargs)
-    state.validate_env([RESOURCE_GROUP, TASK, PROVIDER, PLATFORM, BUCKET])
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
 
     LOGGER.info("Downloading config files from the remote storage " +
                 state.get(BUCKET))
 
-    platform = provider._get_platform(provider_name=state.get(PROVIDER),
-                                      platform_name=state.get(PLATFORM))
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
 
     _, _, files_dir = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
@@ -206,7 +207,7 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
 def files_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir/FILES_DIR to remote storage"""
     _ = config_get_local(project_dir, workspace_dir, data)
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.upload_dir(files_dir, prefix)
@@ -214,7 +215,7 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     state.validate_env()
     LOGGER.info("Deleting files from the remote storage " +
                 state.get(BUCKET))
@@ -302,13 +303,13 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(config_get_local(project_dir, workspace_dir, data))
 
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     platform.push_parameter("config", config, **kwargs)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     state.validate_env()
     platform.delete_parameter("config")
 

@@ -1,8 +1,8 @@
 import os, sys
-from handoff import provider
-from handoff import config
+from handoff import config, utils
+from handoff.services import cloud
 from handoff.config import DOCKER_IMAGE
-from handoff.core import admin, utils
+from handoff.core import admin
 from . import impl
 
 
@@ -11,7 +11,7 @@ LOGGER = utils.get_logger(__name__)
 
 def _envs(project_dir, workspace_dir, data, **kwargs):
     _ = admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     if not platform.login():
         raise Exception("Please set platform credentials")
     # Do this again to set DOCKER_IMAGE
@@ -30,8 +30,8 @@ def run(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
-    env = provider._get_platform_auth_env(project_dir, workspace_dir,
-                                          data, **kwargs)
+    env = cloud._get_platform_auth_env(project_dir, workspace_dir,
+                                       data, **kwargs)
     env.update(data)
     try:
         impl.run(extra_env=env)
@@ -45,7 +45,7 @@ def push(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
-    platform = provider._get_platform()
+    platform = cloud._get_platform()
     username, password, registry = platform.get_docker_registry_credentials()
     image_name = state.get(DOCKER_IMAGE)
     try:
@@ -62,7 +62,7 @@ def push(project_dir, workspace_dir, data, **kwargs):
     impl.push(username, password, registry)
 
 
-def _get_latest_version(project_dir, workspace_dir, data, **kwargs):
+def get_latest_image_version(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
     image_name = state.get(DOCKER_IMAGE)

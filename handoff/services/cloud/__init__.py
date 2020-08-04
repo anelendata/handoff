@@ -1,10 +1,10 @@
 import os, sys
 from importlib import import_module as _import_module
 from handoff.core import admin
-from handoff.core.utils import get_logger as _get_logger
+from handoff.utils import get_logger as _get_logger
 from handoff import config
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
-                            IMAGE_VERSION, PROVIDER, PLATFORM)
+                            IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM)
 
 LOGGER = _get_logger(__name__)
 
@@ -16,14 +16,16 @@ def _get_platform(provider_name=None, platform_name=None,
                   stdout=False, profile=None, **kwargs):
     state = config.get_state()
     if not provider_name:
-        provider_name = state.get(PROVIDER)
+        provider_name = state.get(CLOUD_PROVIDER)
     if not platform_name:
-        platform_name = state.get(PLATFORM)
+        platform_name = state.get(CLOUD_PLATFORM)
     global PLATFORM_MODULE
     if not PLATFORM_MODULE:
         if not provider_name or not platform_name:
             raise Exception("You need to set provider_name and platform_name")
-        PLATFORM_MODULE = _import_module("handoff.provider." + provider_name)
+        # TODO: use platform_name
+        PLATFORM_MODULE = _import_module("handoff.services.cloud."
+                                         + provider_name)
         response = PLATFORM_MODULE.login(profile)
         if stdout:
             sys.stdout.write(response)

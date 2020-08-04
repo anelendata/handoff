@@ -1,6 +1,8 @@
 import os
 from handoff.config import (RESOURCE_GROUP, TASK, DOCKER_IMAGE, BUCKET,
-                            CLOUD_PROVIDER, CLOUD_PLATFORM, get_state)
+                            CLOUD_PROVIDER, CLOUD_PLATFORM,
+                            CONTAINER_PROVIDER,
+                            get_state)
 
 
 state = get_state()
@@ -9,6 +11,7 @@ state = get_state()
 def test_valid():
     os.environ[CLOUD_PROVIDER] = "aws"
     os.environ[CLOUD_PLATFORM] = "fargate"
+    os.environ[CONTAINER_PROVIDER] = "docker"
     os.environ[RESOURCE_GROUP] = "test-resource-0123"
     os.environ[TASK] = "test-task-0123"
     os.environ[BUCKET] = "test-bucket.0123"

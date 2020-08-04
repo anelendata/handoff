@@ -30,7 +30,8 @@ def _make_venv(venv_path):
             path = "/".join(paths[0:i])
             if not os.path.exists(path):
                 os.mkdir(path)
-        builder = pyvenvx.ExtendedEnvBuilder()
+        # https://github.com/anelendata/handoff/issues/25#issuecomment-667945434
+        builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
 
 

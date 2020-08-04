@@ -1,10 +1,12 @@
 import os, shutil
-from handoff.core.utils import get_logger
+from handoff.core.utils import get_logger as _get_logger
 
-LOGGER = get_logger(__name__)
+LOGGER = _get_logger(__name__)
 
 
 def start(project_dir, workspace_dir, data, **kwargs):
+    """Copy the test projects to the test_projects under the current directory
+    """
     d, f = os.path.split(__file__)
     try:
         shutil.copytree(os.path.join(d, "../..",  "test_projects"),
@@ -13,8 +15,6 @@ def start(project_dir, workspace_dir, data, **kwargs):
         print("It looks like you already copied the test projects to ./projects")
     else:
         print("Copied the test projects to ./projects")
-    print("Try running:")
-    print("    handoff --project ./projects/01_word_count --workspace ./workspace run local")
-    print("Then:")
-    print("    cat ./workspace/artifacts/state")
-    print("Then, continue on https://dev.handoff.cloud")
+    print("Now just enter:")
+    print("    ./projects/begin")
+    print("to start the even-monkeys-can-follow tutorial.")

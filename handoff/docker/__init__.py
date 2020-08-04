@@ -1,6 +1,7 @@
 import os, sys
 from handoff import provider
-from handoff.config import DOCKER_IMAGE, get_state
+from handoff import config
+from handoff.config import DOCKER_IMAGE
 from handoff.core import admin, utils
 from . import impl
 
@@ -19,18 +20,18 @@ def _envs(project_dir, workspace_dir, data, **kwargs):
 
 def build(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    state = get_state()
+    state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
     impl.build(project_dir)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    state = get_state()
+    state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
-    env = provider.get_platform_auth_env(project_dir, workspace_dir,
-                                         data, **kwargs)
+    env = provider._get_platform_auth_env(project_dir, workspace_dir,
+                                          data, **kwargs)
     env.update(data)
     try:
         impl.run(extra_env=env)
@@ -41,7 +42,7 @@ def run(project_dir, workspace_dir, data, **kwargs):
 
 def push(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
-    state = get_state()
+    state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
     platform = provider._get_platform()
@@ -61,8 +62,8 @@ def push(project_dir, workspace_dir, data, **kwargs):
     impl.push(username, password, registry)
 
 
-def get_latest_version(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+def _get_latest_version(project_dir, workspace_dir, data, **kwargs):
+    state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
     image_name = state.get(DOCKER_IMAGE)
     return impl.get_latest_version(image_name)

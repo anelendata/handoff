@@ -1,0 +1,19 @@
+#!/bin/bash
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+echo $PROJECT_DIR
+source $PROJECT_DIR/scripts/funcs
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+    echo The project does not exist
+    exit 1
+fi
+echo "Welcome to handoff tutorial
+Each module is very short (5 ~ 10 minutes to complete)
+"
+
+CMD="ls $PROJECT_DIR/scripts | grep -v funcs && printf \0"
+
+Choose "$CMD"
+
+$PROJECT_DIR/scripts/${OPTIONS[$CHOICE]}

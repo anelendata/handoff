@@ -1,0 +1,88 @@
+#!/bin/bash
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source $PROJECT_DIR/scripts/funcs
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+echo "
+The project does not exist...try running
+    handoff quick_start start
+in a new directory.
+"
+    exit 1
+fi
+
+cd $PROJECT_DIR
+
+echo "
+Welcome to module 02_exchange_rates!
+We will retrieve currency exchange rates and write out to CSV file.
+We will install singer.io (https://singer.io), a data collection framework,
+in Python vitual environment.
+"
+
+echo "Ready? (ctl-c to quit anytime)"
+
+Prompt
+
+echo "
+We use 03_exchange_rates project. project.yml looks like:
+"
+Cat "03_exchange_rates/project.yml" $DIM
+
+Prompt
+
+echo "
+...which is shell equivalent to
+
+    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+"
+
+Prompt
+
+rm -fr workspace_03
+
+echo "
+Before we can run this, we need to install tap-exchangeratesapi and target-csv.
+The installation instructions are listed in install section of project.yml.
+Notice venv entries for each command. handoff can create Python virtual enviroment for each command to avoid conflicting dependencies between the commands.
+
+To install everything, run this command:
+"
+Command "handoff -p 03_exchange_rates -w workspace_03 workspace install"
+
+
+echo "
+Now let's run. Try entering this command below:
+"
+Command "handoff -p 03_exchange_rates -w workspace_03 run local"
+
+echo This process should have created a CSV file in artifacts directory:
+
+FILES=`ls workspace_03/artifacts | grep csv`
+echo $FILES
+
+echo
+
+echo ...which looks like:
+
+for f in $FILES; do head -n 3 workspace_03/artifacts/$f; done
+echo ...
+for f in $FILES; do tail -n 3 workspace_03/artifacts/$f; done
+
+Prompt
+
+echo Great. This concludes this section of the tutorial.
+
+Prompt
+
+Thanks
+
+echo "
+Now that we know how to run locally, we will gradually thinking about how to deploy this in the cloud *severlessly*.
+We will learn how to save and fetch the configurations to the remote storage.
+Before doing that, we will cover how to set up AWS Role with handoff in the next section.
+"
+
+Continue
+
+$PROJECT_DIR/scripts/03_set_up_aws_account

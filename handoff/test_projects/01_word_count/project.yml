@@ -3,8 +3,6 @@ commands:
     args: "./files/the_great_dictator_speech.txt"
   - command: wc
     args: "-w"
-  - command: sed
-    args: "'s/\\([0-9]*\\)/We just counted \\1 words in the final speech of the movie the Great Dictator. The file is in workspace\\/files which was copied from test_projects\\/01_word_count/'"
 envs:
   - key: title
     value: The Great Dictator

@@ -1,0 +1,97 @@
+#!/bin/bash
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source $PROJECT_DIR/scripts/funcs
+
+if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
+    echo The project does not exist...try running
+    echo "    handoff quick_start start"
+    echo in a new directory.
+    exit 1
+fi
+
+cd $PROJECT_DIR
+
+echo "
+Welcome to module 05_docker!
+
+We will continue using 03_exchange_rates example.
+Instead of running the task on the host machine, let's run on Docker.
+
+Ready? (ctl-c to quit anytime)
+"
+
+Prompt
+
+d=`which docker`
+if [[ -z "$d" ]]
+then
+echo "
+Looks like you don't have Docker installed.
+Please follow this web page to install Docker:
+
+    https://docs.docker.com/get-docker/
+"
+Prompt
+fi
+
+CheckAws
+
+if [[ -z "$AWS_PROFILE" ]]
+then
+ChooseAwsProfile
+fi
+
+echo "
+Let's build a Docker image.
+
+Try running the following command. Type y when prompted at the beginning.
+The build may take 5~10 minutes.
+"
+Command "handoff -p 03_exchange_rates docker build"
+
+echo "
+Now let's run the code in the Docker container.
+"
+Command "handoff -p 03_exchange_rates docker run"
+
+BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
+BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+
+echo "
+Confirm the run by checking the logs. Also check the artifacts on S3:
+
+    $BUCKET_URL/$BUCKET/$TASK/last/artifacts/
+"
+
+Prompt
+
+echo "
+Now that we know the Docker container runs fine, let's push it to
+AWS Elastic Container Registry. This may take a few minutes.
+"
+Command "handoff -p 03_exchange_rates docker push"
+
+REGION=`handoff -p 03_exchange_rates envs get -d '{"key":"AWS_REGION"}' -l critical`
+echo "
+Confirm that the Docker image has been uploaded to:
+
+https://console.aws.amazon.com/ecr/repositories?region=$REGION
+"
+
+Prompt
+
+echo Great. This concludes this section of the tutorial.
+
+Prompt
+
+Thanks
+
+echo "
+Now that the Docker image is prepared, we will finally deploy the task on
+AWS Fargate in the next tutorial.
+"
+
+Continue
+
+$PROJECT_DIR/scripts/06_fargate

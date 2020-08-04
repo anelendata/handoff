@@ -27,8 +27,8 @@ def set_container_credentials():
                 "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
 
 
-def get_session(aws_access_key_id, aws_secret_access_key,
-                aws_session_token, aws_region):
+def get_session(aws_access_key_id=None, aws_secret_access_key=None,
+                aws_session_token=None, aws_region=None):
     session = boto3.session.Session(
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key,

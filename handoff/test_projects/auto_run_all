@@ -1,0 +1,10 @@
+#!/bin/bash
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source scripts/funcs
+
+for i in `ls scripts/aws_get_started | grep -v funcs | grep -v cleanup`;
+do
+export SCRIPT=$i
+./auto_run auto 10
+done

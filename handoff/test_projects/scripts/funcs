@@ -8,23 +8,82 @@ export YELLOW="\033[33m"
 export BLINK="\033[5m"
 export DIM="\033[2m"
 
+QUOTE='```'
+PROMPT_STYLE="$GREEN $BLINK"
+PROMPT_CHAR="> "
+
+ListDir() {
+if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+echo "> ls -l $1"
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+echo
+for i in `ls $1`; do echo " $i"; done
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+}
+
+Cat() {
+if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+echo "> cat $1"
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+echo
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+cat $1
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+}
+
+Run() {
+if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
+if [[ ! -z $3 ]];then h=$3; else if [[ ! -z $HEADTAIL_LIMIT ]]; then h=$HEADTAIL_LIMIT; else h=0; fi; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; echo; fi
+if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+}
+
+Command() {
+if [[ ! $MODE = "auto" ]]; then
+  echo -e $GREEN    $1$RESET
+  echo '    Hint: type "skip" to skip. "lazy" to run it without typing the command. type "quit" exit this tutorial.'
+  echo
+  read -p "> "
+  while [[ ! $REPLY = $1 && ! $REPLY = "skip" && ! $REPLY = "lazy" && ! $REPLY = "quit" ]]
+  do
+    echo Hmm...you did not enter correctly, try again.
+    read -p "> "
+  done
+fi
+if [[ $REPLY = "quit" ]]; then
+  echo "bye!"
+  exit 0
+fi
+if [[ $MODE = "auto" || $REPLY = $1 || $REPLY = "lazy" ]]; then
+  echo $QUOTE
+  echo "> $1"
+  echo $QUOTE
+  Run "$1" "$2" "$3"
+fi
+}
+
+Code() {
+if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+echo -e $1
+if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
+}
+
 Prompt() {
-echo -e $GREEN $BLINK; read -p "> " -n 1 -r; echo -e $RESET  # Prompt
+if [[ ! $MODE = "auto" ]]; then
+echo -e $1$PROMPT_STYLE; read -p $PROMPT_CHAR -n 1 -r; echo -e $RESET
 if [[ $REPLY =~ ^[Qq]$ ]]
 then
     echo "bye!"
     exit 0
 fi
-}
-
-ListDir() {
-echo -e $2
-for i in `ls $1`; do echo - $i; done
-echo -e $RESET
-}
-
-Cat() {
-echo -e $2; cat $1; echo -e $RESET
+else
+echo
+fi
 }
 
 Choose() {
@@ -42,18 +101,6 @@ do
 done
 echo
 CHOICE=$(($REPLY-1))
-}
-
-Command() {
-echo -e $GREEN    $1$RESET
-echo
-read -p "> "
-while [[ ! $REPLY = $1 ]]
-do
-    echo Hmm...you did not enter correctly, try again.
-    read -p "> "
-done
-echo -e $DIM; $1; echo -e $RESET
 }
 
 CheckAws() {
@@ -91,7 +138,10 @@ fi
 }
 
 Thanks() {
+if [[ ! $MODE = "auto" ]]; then
 echo "
+Great! This concludes this section of the tutorial.
+
 Thanks for completing this section of tutorial. Oh, before you go,
 do you use Twitter? Can you do me a favor and let your fellow engineers know about handoff?
 "
@@ -107,9 +157,11 @@ else
 echo "OK! In case you change your mind, here is the link to auto-draft your tweets (you can edit before you tweet)"
 echo -e $GREEN$URL$RESET
 fi
+fi
 }
 
 Continue () {
+if [[ ! $MODE = "auto" ]]; then
 echo -e $GREEN; read -p "Continue? (Y/n) " -n 1 -r; echo -e $RESET  # Prompt
 echo    # (optional) move to a new line
 if [[ $REPLY =~ ^[Nn]$ ]]
@@ -120,5 +172,8 @@ then
     echo
     echo "bye!"
     exit 0
+else
+$1
+fi
 fi
 }

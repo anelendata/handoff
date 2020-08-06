@@ -4,5 +4,5 @@ commands:
   - command: wc
     args: "-w"
 envs:
-  - key: title
-    value: The Great Dictator
+  - key: TITLE
+    value: "The Great Dictator"

@@ -130,17 +130,31 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None):
 
 
 def get_parameter(key):
-    state = get_state()
-    return ssm.get_parameter(state.get(RESOURCE_GROUP) + "-" +
-                             state.get(TASK), key)
+    try:
+        state = get_state()
+        prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+        prefix_key = prefix + "-" + key
+        value = ssm.get_parameter(prefix_key)
+    except Exception as e:
+        LOGGER.error("Cannot get %s - %s" % (prefix_key, str(e)))
+        LOGGER.error("See the parameters at https://console.aws.amazon.com/" +
+                     "systems-manager/parameters/?region=" +
+                     state.get("AWS_REGION") +
+                     "&tab=Table#list_parameter_filters=Name:Contains:" +
+                     prefix_key)
+    return value
 
 
 def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, "AWS_REGION"])
 
+    prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+    prefix_key = prefix + "-" + key
+
     if allow_advanced_tier:
-        LOGGER.info("Allowing AWS SSM Parameter Store to store with Advanced tier (max 8KB)")
+        LOGGER.info("Allowing AWS SSM Parameter Store to store with " +
+                    "Advanced tier (max 8KB)")
     tier = "Standard"
     if len(value) > 8192:
         raise Exception("Parameter string must be less than 8192kb!")
@@ -148,21 +162,23 @@ def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
         if allow_advanced_tier:
             tier = "Advanced"
         else:
-            raise Exception("Parameter string is %s > 4096 byte and allow_advanced_tier=False" % len(value))
-    LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" % tier)
-    ssm.put_parameter(state.get(RESOURCE_GROUP) + "-" +
-                      state.get(TASK),
-                      key, value, tier=tier)
+            raise Exception(("Parameter string is %s > 4096 byte and " +
+                             "allow_advanced_tier=False") % len(value))
+    LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" %
+                tier)
+    ssm.put_parameter(prefix_key, value, tier=tier)
     LOGGER.info("See the parameters at https://console.aws.amazon.com/" +
                 "systems-manager/parameters/?region=" +
                 state.get("AWS_REGION") +
-                "&tab=Table")
+                "&tab=Table#list_parameter_filters=Name:Contains:" +
+                prefix_key)
+
 
 def delete_parameter(key):
     state = get_state()
-    ssm.delete_parameter(state.get(RESOURCE_GROUP) + "-" +
-                      state.get(TASK),
-                      key)
+    prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+    prefix_key = prefix + "-" + key
+    ssm.delete_parameter(prefix_key)
 
 
 def set_env_var_from_ssm(project, name):
@@ -184,7 +200,10 @@ def upload_dir(src_dir_name, dest_prefix):
     state = get_state()
     state.validate_env([BUCKET, "AWS_REGION"])
     dest_prefix = os.path.join(state.get(TASK), dest_prefix)
-    s3.upload_dir(src_dir_name, dest_prefix, state.get(BUCKET))
+    bucket = state.get(BUCKET)
+    s3.upload_dir(src_dir_name, dest_prefix, bucket)
+    LOGGER.info(("See the files at https://s3.console.aws.amazon.com/s3/" +
+                 "buckets/%s/%s/") % (bucket, dest_prefix))
 
 
 def delete_dir(remote_dir):
@@ -440,15 +459,21 @@ def schedule_task(target_id, cronexp, role_arn=None):
     if not role_arn:
         roles = iam.list_roles()
         for r in roles:
-            print(r["RoleName"])
             if r["RoleName"] == role_name:
                 role_arn = r["Arn"]
                 break
     if not role_arn:
         raise Exception("Role %s not found" % role_name)
 
-    response = events.schedule_task(task_stack, resource_group_stack, region,
-                                    target_id, cronexp, role_arn)
+    try:
+        response = events.schedule_task(task_stack, resource_group_stack, region,
+                                        target_id, cronexp, role_arn)
+    except Exception as e:
+        LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
+                     (task_stack, target_id, cronexp))
+        LOGGER.critical(str(e))
+        return
+
     LOGGER.info(response)
     params = {
         "region": state.get("AWS_REGION"),

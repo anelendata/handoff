@@ -1,0 +1,17 @@
+#!/bin/bash
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source scripts/funcs
+
+echo "Automatically run and generate docs"
+
+if [[ -z "$SCRIPT" ]]; then
+CMD="ls scripts/aws_get_started | grep -v funcs | grep -v role"
+Choose "$CMD"
+SCRIPT=${OPTIONS[$CHOICE]}
+fi
+
+rm -fr ./workspace*
+yes | ./scripts/aws_get_started/$SCRIPT auto 10 | sed 's/[0-9]\{12\}/xxxxxxxxxxxx/g' | sed 's/[a-z0-9-]\{28\}/xxxxxxxx/g' > ../../docs/$SCRIPT.md
+
+echo See the doc at ../../docs/$SCRIPT.md

@@ -1,0 +1,74 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
+
+echo "## Cleaning up
+
+Let's clean everything up so we won't pay a fraction of penny after forgeting about this exercise.
+
+First unschedule the task:
+"
+
+Command "handoff -l warning -p 03_exchange_rates cloud unschedule -d '{\"target_id\": 1}'"
+
+echo "
+Then delete the task:
+"
+
+Command "handoff -l warning -p 03_exchange_rates cloud delete_task"
+
+echo "
+If there is no other task in the same resource group, we can delete it:
+"
+
+Command "handoff -l warning -p 03_exchange_rates cloud delete_resources"
+
+echo "
+Here is how to delete the configurations from SSM Parameter Store:
+"
+
+Command "handoff -p 03_exchange_rates config delete"
+
+
+echo "
+Here is how to delete the files from S3 bucket:
+"
+
+Command "handoff -p 03_exchange_rates files delete"
+
+echo "
+If there is no other task in the same resource group, we can delete the bucket, too:
+"
+
+Command "handoff -l warning -p 03_exchange_rates cloud delete_bucket"
+
+BUCKET=s3://`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
+
+echo "
+The previous command only deleted the CloudFormation stack, but not the bucket itself.
+Here is how to delete all the files in $BUCKET bucket. This cannot be reversed:
+"
+
+Command "aws s3 rm --recursive $BUCKET/"
+
+echo "
+Here is how to delete $BUCKET bucket. The bucket must be empty. This cannot be reversed:
+"
+
+Command "aws s3 rb $BUCKET"
+
+REPO=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_DOCKER_IMAGE"}' -l critical`
+echo "
+Now delete $REPO repository from ECR. This cannot be reversed.
+--force option will ignore that we still have images in the repository.
+"
+
+Command "aws ecr delete-repository --repository-name $REPO --force"
+
+Command "handoff -l warning -p 03_exchange_rates cloud delete_role"
+
+echo "
+That's all.
+"

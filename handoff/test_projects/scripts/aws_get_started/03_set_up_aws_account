@@ -1,35 +1,29 @@
 #!/bin/bash
-PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source $PROJECT_DIR/scripts/funcs
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
-if [ ! -d $PROJECT_DIR/03_exchange_rates ]; then
-echo "
-The project does not exist...try running
-    handoff quick_start start
-in a new directory.
-" # echo
-    exit 1
-fi
+echo "## Setting up an AWS account and profile
 
-cd $PROJECT_DIR
-
-echo "
-Welcome to module 03_set_up_aws_account!
 handoff helps you to deploy the task in the cloud computing services.
-In this tutorial series, our goal is to deploy the currency exchange
-rates task to AWS Fargate. https://aws.amazon.com/fargate/
-Before we can deploy, we need to set up the account and roles.
+Our goal in this tutorial is to deploy the currency exchange
+rates task to [AWS Fargate](https://aws.amazon.com/fargate/).
+
+Before we can deploy, we need to set up the AWS account.
 "
 
 Prompt
 
 echo "
-Do I need a credit card to use AWS? How much does it cost?
-Yes, you need a credit card. But it won\'t cost a cup of coffee for this tutorial.
-Some of the AWS services we use comes with a Free Tier and you won\'t be
+**Do I need a credit card to use AWS? How much does it cost?**
+
+Yes, you need a credit card. But it won't cost a cup of coffee for this tutorial.
+(Probably not even a dollar.)
+Some of the AWS services we use comes with a Free Tier and you won't be
 charged for the eligible usage.
 
-Learn more about Free Tier: https://aws.amazon.com/free
+Learn more about [Free Tier](https://aws.amazon.com/free).
 "
 
 Prompt
@@ -50,8 +44,7 @@ Here is the complete list of the services we use:
 
 Prompt
 
-a=`cat ~/.aws/credentials`
-if [[ -f ~/.aws/credentials && ! -z "$a" ]]
+if [[ ! $MODE="auto" && -f ~/.aws/credentials ]]
 then
 echo "
 It looks like you already have AWS CLI set up. You may just scan through
@@ -105,30 +98,14 @@ Enter Access key ID and Secret access key you created in the last step.
 
 For region, use one of these keys (for USA users, us-east-1 would do):
 
-- ap-northeast-1
-- ap-northeast-2
-- ap-south-1
-- ap-southeast-1
-- ap-southeast-2
-- ca-central-1
-- eu-central-1
-- eu-north-1
-- eu-west-1
-- eu-west-2
-- eu-west-3
-- sa-east-1
-- us-east-1
-- us-east-2
-- us-west-1
-- us-west-2
-
-Learn more about AWS profile here:
-    https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 "
 
-Prompt
+Run 'for i in `aws ec2 describe-regions --output text | cut -f 4 | sort`; do echo "$i"; done' $RESET 0
 
-echo Great. This concludes this section of the tutorial.
+echo "
+Learn more about AWS profile
+[here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
+"
 
 Prompt
 
@@ -136,9 +113,7 @@ Thanks
 
 echo "
 Now that we have set up the AWS account, let's store the configurations
-in the cloud.
+in the cloud in the next section.
 "
 
-Continue
-
-$PROJECT_DIR/scripts/04_run_remote_config
+Continue scripts/aws_get_started/04_run_remote_config

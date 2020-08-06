@@ -9,10 +9,10 @@ To schedule a task, use schedule command with target_id and
 We pass those values to handoff with `--data` (`-d` for short) option:
 
 
-```
+```shell
 > handoff -p 03_exchange_rates cloud schedule --data '{"target_id": "1", "cron": "55 03 * * ? *"}'
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:50:50,489 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:50:50,570 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -36,7 +36,7 @@ INFO - 2020-08-06 03:50:52,745 - handoff.config - Check the status at https://co
 
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/...
 

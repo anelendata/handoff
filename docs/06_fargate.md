@@ -11,10 +11,10 @@ We will first need to create a cluster.
 
 To make this process easy, handoff packed everything up in a command:
 
-```
+```shell
 > handoff -p 03_exchange_rates cloud create_resources
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:44:42,787 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:44:42,867 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -36,7 +36,7 @@ INFO - 2020-08-06 03:44:45,270 - handoff.config - Check the progress at https://
 
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
 
@@ -51,10 +51,10 @@ Wait until it says "CREATE_COMPLETE"
 
 Now it's time to deploy the task and here is the command:
 
-```
+```shell
 > handoff -p 03_exchange_rates cloud create_task
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:47:45,531 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:47:45,610 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -77,7 +77,7 @@ INFO - 2020-08-06 03:47:47,363 - handoff.config - Check the progress at https://
 
 Here again, at the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
 
@@ -92,10 +92,10 @@ Wait until it says "CREATE_COMPLETE"
 Once the task is created, try running on Fargate.
 To do so, run this command:
 
-```
+```shell
 > handoff -p 03_exchange_rates cloud run
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:50:47,634 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:50:47,713 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -117,7 +117,7 @@ INFO - 2020-08-06 03:50:50,202 - handoff.config - Check the task at https://us-e
 
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=xxxx
 

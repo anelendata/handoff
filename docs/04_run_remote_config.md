@@ -7,10 +7,10 @@ store the configurations to the remote data store.
 
 Let's review how 03_exchange_rates project directory is structured:
 
-```
+```shell
 > ls -l 03_exchange_rates
 ```
-```
+```shell
 
  config
  files
@@ -20,10 +20,10 @@ Let's review how 03_exchange_rates project directory is structured:
 
 In the config directory, we have a couple of configuration files:
 
-```
+```shell
 > ls -l 03_exchange_rates/config
 ```
-```
+```shell
 
  tap-config.json
  target-config.json
@@ -32,18 +32,18 @@ In the config directory, we have a couple of configuration files:
 
 ...which look like:
 
-```
+```shell
 > cat 03_exchange_rates/config/tap-config.json
 ```
 
-```
+```shell
 { "base": "JPY", "start_date": "2020-07-10" }
 ```
-```
+```shell
 > cat 03_exchange_rates/config/target-config.json
 ```
 
-```
+```shell
 {
     "delimiter": ",",
     "quotechar": "'",
@@ -60,10 +60,10 @@ key-value storage.
 
 Try running:
 
-```
+```shell
 > handoff -p 03_exchange_rates config push
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:35,362 - handoff.config - Compiling config from 03_exchange_rates
 INFO - 2020-08-06 03:35:35,362 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
@@ -79,7 +79,7 @@ INFO - 2020-08-06 03:35:36,184 - handoff.config - See the parameters at https://
 
 Look at the end of the log that says,
 
-```
+```shell
     See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=...
 ```
 
@@ -90,10 +90,10 @@ the parameters are uploaded.
 
 We also have some files needed for the task execution:
 
-```
+```shell
 > ls -l 03_exchange_rates/files
 ```
-```
+```shell
 
  stats_collector.py
 ```
@@ -103,10 +103,10 @@ So we will create a cloud data storage (S3 bucket) for that.
 
 Try running:
 
-```
+```shell
 > handoff -p 03_exchange_rates cloud create_bucket
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:36,484 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:35:36,567 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -127,7 +127,7 @@ INFO - 2020-08-06 03:35:37,815 - handoff.config - Check the progress at https://
 
 Wait for a minute and check here
 
-```
+```shell
     https://s3.console.aws.amazon.com
 ```
 
@@ -139,10 +139,10 @@ Now it's time to push the files to the bucket.
 
 Try running:
 
-```
+```shell
 > handoff -p 03_exchange_rates files push
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:38:38,087 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:38:38,168 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -163,7 +163,7 @@ INFO - 2020-08-06 03:38:39,279 - handoff.config - See the files at https://s3.co
 
 Look at the end of the log that says,
 
-```
+```shell
     See the files at https://s3.console.aws.amazon.com/s3/...
 ```
 
@@ -174,10 +174,10 @@ directory is uploaded.
 
 Install the workspace:
 
-```
+```shell
 > handoff -p 03_exchange_rates -w workspace workspace install
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:38:39,718 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:38:39,799 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -208,10 +208,10 @@ Now let's run the command by pulling the configurations and files from remote.
 
 Try running:
 
-```
+```shell
 > handoff -p 03_exchange_rates -w workspace run remote_config --push-artifacts
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:38:53,883 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:38:53,963 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -241,7 +241,7 @@ INFO - 2020-08-06 03:38:58,988 - handoff.services.cloud.aws.s3 - Copied s3://xxx
 Notice that we used --push-artifacts option in the last command.
 With this option, we pushed the result to the bucket under
 
-```
+```shell
     /last/artifacts
 
 ```
@@ -251,10 +251,10 @@ directory.
 
 Also note that artifacts are automatically archived at each run at
 
-```
+```shell
 
 
-    //runs/
+    /runs/
 
 
 ```

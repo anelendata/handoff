@@ -7,10 +7,10 @@ using project 01_word_count.
 
 Each project directory contains:
 
-```
+```shell
 > ls -l 01_word_count
 ```
-```
+```shell
 
  files
  project.yml
@@ -19,11 +19,11 @@ Each project directory contains:
 
 project.yml looks like:
 
-```
+```shell
 > cat 01_word_count/project.yml
 ```
 
-```
+```shell
 commands:
   - command: cat
     args: "./files/the_great_dictator_speech.txt"
@@ -43,16 +43,16 @@ Here,
 
 The example from 01_word_count runs a command line equivalent of:
 
-```
+```shell
 cat ./files/the_great_dictator_speech.txt | wc -w
 ```
 
 Now let's run. Try entering this command below:
 
-```
+```shell
 > handoff --project 01_word_count --workspace workspace run local
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:12,691 - handoff.config - Reading configurations from 01_word_count/project.yml
 INFO - 2020-08-06 03:35:12,693 - handoff.config - Setting environment variables from config.
@@ -69,7 +69,7 @@ INFO - 2020-08-06 03:35:13,130 - handoff.config - Job ended at 2020-08-06 03:35:
 
 If you see the output that looks like:
 
-```
+```shell
 
  INFO - 2020-08-03 04:51:01,971 - handoff.config - Reading configurations from 01_word_count/project.yml
  ...
@@ -81,10 +81,10 @@ If you see the output that looks like:
 Then great! You just ran the first local test. It created a workspace
 directory that looks like:
 
-```
+```shell
 > ls -l workspace
 ```
-```
+```shell
 
  artifacts
  config
@@ -93,11 +93,11 @@ directory that looks like:
 
 And the word count is stored at workspace/artifacts/state. Here is the content:
 
-```
+```shell
 > cat  workspace/artifacts/state
 ```
 
-```
+```shell
 644
 ```
 
@@ -112,7 +112,7 @@ Check out on YouTube: https://www.youtube.com/watch?v=J7GY1Xg6X20
 
 And here is the first few paragraphs of the text:
 
-```
+```shell
 
 I’m sorry, but I don’t want to be an emperor. That’s not my business. I don’t want to rule or conquer anyone. I should like to help everyone - if possible - Jew, Gentile - black man - white. We all want to help one another. Human beings are like that. We want to live by each other’s happiness - not by each other’s misery. We don’t want to hate and despise one another. In this world there is room for everyone. And the good earth is rich and can provide for everyone. The way of life can be free and beautiful, but we have lost the way.
 
@@ -123,11 +123,11 @@ Greed has poisoned men’s souls, has barricaded the world with hate, has goose-
 
 Now to the second example. This time project.yml looks like:
 
-```
+```shell
 > cat 02_collect_stats/project.yml
 ```
 
-```
+```shell
 commands:
   - command: cat
     args: ./files/the_great_dictator_speech.txt
@@ -139,7 +139,7 @@ commands:
 
 ...which is shell equivalent to
 
-```
+```shell
 cat ./files/the_great_dictator_speech.txt | python ./files/stats_collector.py | wc -w
 ```
 
@@ -147,11 +147,11 @@ The script for the second command stats_collector.py can be found in
 02_collect_stats/files directory and it is a Python script that looks like:
 
 
-```
+```shell
 > cat 02_collect_stats/files/stats_collector.py
 ```
 
-```
+```python
 #!/usr/bin/python
 import io, json, logging, sys, os
 
@@ -188,10 +188,10 @@ The raw text is then processed by the third command (wc -w) and it conts the num
 
 Now let's run. Try entering this command below:
 
-```
+```shell
 > handoff --project 02_collect_stats --workspace workspace run local
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:13,401 - handoff.config - Reading configurations from 02_collect_stats/project.yml
 INFO - 2020-08-06 03:35:13,402 - handoff.config - Setting environment variables from config.
@@ -209,11 +209,11 @@ INFO - 2020-08-06 03:35:13,881 - handoff.config - Processed in 0:00:00.049824
 Let's check out the contents of the second command:
 
 
-```
+```shell
 > cat workspace/artifacts/collect_stats.json
 ```
 
-```
+```shell
 {"rows_read": 15}
 ```
 

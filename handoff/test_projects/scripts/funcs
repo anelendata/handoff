@@ -39,7 +39,8 @@ Run() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
 if [[ ! -z $3 ]];then h=$3; else if [[ ! -z $HEADTAIL_LIMIT ]]; then h=$HEADTAIL_LIMIT; else h=0; fi; fi
 if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; echo; fi
-if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
+if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (head -n ${h}; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
+# if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }
 
@@ -90,7 +91,6 @@ fi
 Choose() {
 echo $1
 IFS=$'\n' read -r -d '' -a OPTIONS < <( eval $1 )
-# IFS=$'\n' read -r -d '' -a OPTIONS < <( ls $PROJECT_DIR/scripts | grep -v funcs && printf '\0' )
 i=1
 for s in ${OPTIONS[@]}; do echo "- [$i] $s"; i=$((i+1)); done
 
@@ -118,7 +118,7 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]
 then
     echo "OK!"
     echo
-    $PROJECT_DIR/scripts/03_set_up_aws_account
+    scripts/aws_get_started/03_set_up_aws_account
     exit 0
 fi
 fi
@@ -169,7 +169,7 @@ if [[ $REPLY =~ ^[Nn]$ ]]
 then
     echo "OK!"
     echo "Remember that you can continue by"
-    echo -e $GREEN    $PROJECT_DIR/begin$RESET
+    echo -e $GREEN    ./projects/start$RESET
     echo
     echo "bye!"
     exit 0

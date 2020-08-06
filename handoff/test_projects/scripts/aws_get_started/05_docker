@@ -52,7 +52,7 @@ TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
 
 echo '
 Confirm the run by checking the logs. Also check the artifacts on S3:
-```
+```shell
 '
 
 echo "

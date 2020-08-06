@@ -34,7 +34,7 @@ echo '
 
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/...
 

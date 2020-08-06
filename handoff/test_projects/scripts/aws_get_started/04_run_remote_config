@@ -55,7 +55,7 @@ Command "handoff -p 03_exchange_rates config push"
 echo '
 Look at the end of the log that says,
 
-```
+```shell
     See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=...
 ```
 
@@ -83,7 +83,7 @@ Command "handoff -p 03_exchange_rates cloud create_bucket"
 echo '
 Wait for a minute and check here
 
-```
+```shell
     https://s3.console.aws.amazon.com
 ```
 
@@ -105,7 +105,7 @@ Command "handoff -p 03_exchange_rates files push"
 echo '
 Look at the end of the log that says,
 
-```
+```shell
     See the files at https://s3.console.aws.amazon.com/s3/...
 ```
 
@@ -132,7 +132,7 @@ echo '
 Notice that we used --push-artifacts option in the last command.
 With this option, we pushed the result to the bucket under
 
-```'
+```shell'
 
 echo "    $TASK/last/artifacts"
 
@@ -145,7 +145,7 @@ directory.
 echo '
 Also note that artifacts are automatically archived at each run at
 
-```
+```shell
 '
 
 echo "

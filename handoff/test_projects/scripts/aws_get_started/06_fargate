@@ -32,7 +32,7 @@ echo '
 
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
 
@@ -58,7 +58,7 @@ echo '
 
 Here again, at the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
 
@@ -83,7 +83,7 @@ Command "handoff -p 03_exchange_rates cloud run"
 echo '
 At the end of the log, you should see a line like:
 
-```
+```shell
 
     Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=xxxx
 

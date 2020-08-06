@@ -8,16 +8,17 @@ export YELLOW="\033[33m"
 export BLINK="\033[5m"
 export DIM="\033[2m"
 
+BEGINQUOTE='```shell'
 QUOTE='```'
 PROMPT_STYLE="$GREEN $BLINK"
 PROMPT_CHAR="> "
 
 ListDir() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 echo "> ls -l $1"
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 echo
 for i in `ls $1`; do echo " $i"; done
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
@@ -25,11 +26,11 @@ if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 
 Cat() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 echo "> cat $1"
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 echo
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 cat $1
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }
@@ -37,7 +38,7 @@ if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 Run() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
 if [[ ! -z $3 ]];then h=$3; else if [[ ! -z $HEADTAIL_LIMIT ]]; then h=$HEADTAIL_LIMIT; else h=0; fi; fi
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; echo; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; echo; fi
 if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }
@@ -59,16 +60,16 @@ if [[ $REPLY = "quit" ]]; then
   exit 0
 fi
 if [[ $MODE = "auto" || $REPLY = $1 || $REPLY = "lazy" ]]; then
-  echo $QUOTE
+  if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
   echo "> $1"
-  echo $QUOTE
+  if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
   Run "$1" "$2" "$3"
 fi
 }
 
 Code() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
-if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $QUOTE; fi
+if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 echo -e $1
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }

@@ -1,6 +1,6 @@
 ## History
 
-### 0.2.0-b0 (2020-08-05)
+### 0.2.0b0 (2020-08-05)
 
 - Beta
 - Covers entire workflow from the local test to Fargate deployment

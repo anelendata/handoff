@@ -67,9 +67,9 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
 
     with tempfile.TemporaryDirectory() as build_dir:
         cwd, _ = os.path.split(__file__)
-        pos = cwd.find("handoff")
-        if pos >= 0:
-            handoff_dir = os.path.join(cwd[:pos], "handoff")
+        handoff_dir = os.path.join(cwd, "../../../../../")
+        if os.path.isfile(os.path.join(handoff_dir, "setup.py")):
+            logger.info("Found handoff. Copying to the build directory")
             shutil.copytree(handoff_dir, os.path.join(build_dir, "handoff"))
 
         shutil.copytree(project_dir, os.path.join(build_dir, "project"),

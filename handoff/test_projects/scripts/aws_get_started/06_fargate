@@ -41,7 +41,7 @@ At the end of the log, you should see a line like:
 Grab the entire link and open in a browser (you need to login in to AWS) to see
 the progress of the resource creation.
 
-Wait until it says \"CREATE_COMPLETE\"
+Wait until it says "CREATE_COMPLETE"
 '
 
 if [[ $MODE = "auto" ]]; then sleep 3m; fi

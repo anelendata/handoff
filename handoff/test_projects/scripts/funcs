@@ -150,7 +150,7 @@ do you use Twitter? Can you do me a favor and let your fellow engineers know abo
 echo -e $GREEN; read -p "Open your browser to auto-draft your tweet? (y/N) " -n 1 -r; echo -e $RESET  # Prompt
 echo    # (optional) move to a new line
 
-URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20start%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
+URL="https://twitter.com/intent/tweet?text=Engineers%21%20This%20is%20awesome.%20Just%20do%0Apip%20install%20handoff%0Aand%0Ahandoff%20quick_start%20make%0AAnd%20see%20what%20happens.%20https%3A%2F%2Fdev.handoff.cloud"
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
 open $URL

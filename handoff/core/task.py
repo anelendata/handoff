@@ -103,7 +103,7 @@ def run(config, data):
     for i in range(0, len(commands) - 1):
         procs[i].wait()
 
-    state = (procs[-1].communicate()[0]).decode("utf-8")
+    state = (procs[-1].communicate()[0]).decode("utf-8").strip("\n").strip(" ")
 
     LOGGER.debug("State after the execution: %s" % state)
 

@@ -39,7 +39,8 @@ Run() {
 if [[ -z $2 ]]; then STYLE=$DIM; else STYLE=$2; fi
 if [[ ! -z $3 ]];then h=$3; else if [[ ! -z $HEADTAIL_LIMIT ]]; then h=$HEADTAIL_LIMIT; else h=0; fi; fi
 if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; echo; fi
-if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
+if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (head -n ${h}; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
+# if [[ $h -lt 1 ]]; then eval "$1"; else eval "$1" | (sed -u ${h}q; t=`tail -n $h`; if [[ `echo "$t" | wc -l` -gt 1 ]]; then echo .; echo .; echo .; echo "$t"; fi); fi
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }
 

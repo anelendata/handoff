@@ -1,0 +1,140 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source funcs
+
+echo "## Deploying on AWS Fargate
+
+We will finally deploy the task to AWS Fargate so we can automate the
+recurring task.
+"
+
+CheckAws
+
+if [[ -z "$AWS_PROFILE" ]]
+then
+ChooseAwsProfile
+fi
+
+echo "
+Fargate is part of AWS Elastic Container Service (ECS).
+The Fargate task run on the ECS cluster.
+We will first need to create a cluster.
+(You will only be charged for the usage.)
+
+To make this process easy, handoff packed everything up in a command:
+"
+
+Command "handoff -p 03_exchange_rates cloud create_resources"
+
+echo '
+
+At the end of the log, you should see a line like:
+
+```
+
+    Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
+
+```
+
+Grab the entire link and open in a browser (you need to login in to AWS) to see
+the progress of the resource creation.
+
+Wait until it says \"CREATE_COMPLETE\"
+'
+
+if [[ $MODE = "auto" ]]; then sleep 3m; fi
+
+Prompt
+
+echo "
+Now it's time to deploy the task and here is the command:
+"
+
+Command "handoff -p 03_exchange_rates cloud create_task"
+
+echo '
+
+Here again, at the end of the log, you should see a line like:
+
+```
+
+    Check the progress at https://console.aws.amazon.com/cloudformation/home?region=xxxx
+
+```
+
+Grab the entire link and open in a browser.
+
+Wait until it says "CREATE_COMPLETE"
+'
+
+if [[ $MODE = "auto" ]]; then sleep 3m; fi
+
+Prompt
+
+echo "
+Once the task is created, try running on Fargate.
+To do so, run this command:
+"
+
+Command "handoff -p 03_exchange_rates cloud run"
+
+echo '
+At the end of the log, you should see a line like:
+
+```
+
+    Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=xxxx
+
+```
+
+Grab the entire link and open in a browser.
+
+At the top you see:
+    Task : 5a232313-e390....
+
+In Details tab,
+
+Cluster handoff-test-test-03-exchange-rates
+Launch type FARGATE
+...
+Last status    PROVISIONING
+Desired status RUNNING
+'
+
+Prompt
+
+echo '
+At the bottom of the page, you see:
+
+| Name              | Container Runtime ID | Status       | Image | ..... |
+| :---------------- | :------------------- | :----------- | :---- | :---- |
+| singer_excha... | 1371....             | PROVISIONING | xxxxx | ..... |
+
+Expand the section by clicking on a dark side-way trible ">" by the  Task name.
+
+The status should change in this order:
+
+1. PROVIONING
+2. RUNNING
+3. STOPPED
+
+Once the status becomes RUNNING or STOPPED, you should be able to see
+the execution log by clicking "View logs in CloudWatch" link at the bottom
+of the section.
+
+The log should be similar to the output from the local execution.
+'
+
+Prompt
+
+Thanks
+
+echo "
+We confirmed that the task run in the same way as local execution.
+Now let's go to the next section to learn how to schedule the task
+so it runs periodically.
+"
+
+Continue aws_get_started/07_schedule

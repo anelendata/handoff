@@ -22,42 +22,34 @@ source venv/bin/activate
 pip install handoff
 ```
 
-The rest of the instruction uses the test project definitions in the repository.
-Clone [repo](https://github.com/anelendata/handoff) & initialize the submodules:
-```
-git clone https://github.com/anelendata/handoff.git
-git submodule init
-git submodule update
-```
-
-Note: Instead of installing from Python Package Index with `pip` command, you can
-also install handoff from the repository. This is good for the people who
-wants to try the unreleased version or wants to improve the project:
-```
-python -m venv ./venv
-source venv/bin/activate
-python setup.py install
-```
-
 ## A Super Quick Example
 
-There is a `project.yml` file in `test_projects/01_word_count` directory at
-the root of the repository ([here](https://github.com/anelendata/handoff/blob/master/test_projects/01_word_count/project.yml)).
-The project file defines the commands to be executed as a pipeline, for example:
+Run this command to create a few example project under the current directory:
+
 ```
+handoff quick_start make
+```
+
+You will find `project.yml` file in `projects/01_word_count` directory.
+
+The project file defines the commands to be executed as a pipeline:
+
+```
+> cat projects/project.yml
+
 commands:
   - command: cat
-    args: "../../README.md"
+    args: "./files/the_great_dictator_speech.txt"
   - command: wc
-    args: "-l"
+    args: "-w"
 ```
 
 This project file defines a shell-script equivalent of
-`cat ../../README.md | wc -l`.
+`cat  ./files/the_great_dictator_speech.txt | wc -w`.
 
 Try runing:
 ```
-handoff run_local -p test_projects/01_word_count -w test_workspaces/01_word_count
+handoff -p projects/01_word_count -w workspace run local
 ```
 
 You get console outputs like this:
@@ -68,14 +60,27 @@ INFO - 2020-07-16 22:04:34,010 - handoff: Job ended at 2020-07-16 22:04:34.01002
 INFO - 2020-07-16 22:04:34,010 - handoff: Processed in 0:00:00.005556
 ```
 
-It creates `test_workspaces/01_word_count/artifacts/state` whose content:
+It will create `workspace/artifacts/state` whose content looks like:
 ```
-42
+644
 ```
 ...which is the equivalent of running:
 ```
-cat ./README.md | wc -l
+cat  ./files/the_great_dictator_speech.txt | wc -w
 ```
-from the repository's root directory.
+It counted the word in the file.
 
-Next: [Try fetching currency exchange rates](venv_config)
+## A Guided Tour
+
+The project files you just created with `handoff quick_start make` has an
+interactive command-line tutorial. Each section is very short (5~10 minutes
+to complete.) To start the interactive tutorial, enter:
+
+```
+cd projects
+./start
+```
+
+Otherwise, you can browse the same content from the next page:
+
+Next: [Essential Commands at a Glance](./essential_commands)

@@ -1,0 +1,15 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source scripts/funcs
+
+echo "Welcome to handoff tutorial
+Each module is very short (5 ~ 10 minutes to complete)
+"
+
+CMD="ls scripts/aws_get_started | grep -v funcs | grep -v role"
+
+Choose "$CMD"
+
+scripts/aws_get_started/${OPTIONS[$CHOICE]}

@@ -32,9 +32,12 @@ def test_03_exchange_rates():
     with tempfile.TemporaryDirectory() as root_dir:
         project_dir = os.path.join(root_dir, "project")
         shutil.copytree(orig_project_dir, project_dir)
-        with open(os.path.join(project_dir, CONFIG_DIR, "tap-config.json"), "w") as f:
+        with open(os.path.join(project_dir, CONFIG_DIR, "tap-config.json"),
+                  "w") as f:
             config = {"base": "JPY",
-                      "start_date": (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()[:10]}
+                      "start_date": (datetime.datetime.now() -
+                                     datetime.timedelta(days=7)
+                                     ).isoformat()[:10]}
             json.dump(config, f)
 
         workspace_dir = os.path.join(root_dir, "workspace")
@@ -51,11 +54,11 @@ def test_03_exchange_rates():
         handoff.do("run", "remote_config", None, workspace_dir, data,
                    push_artifacts=True)
 
-        handoff.do("files", "delete", None, workspace_dir, data,
+        handoff.do("files", "delete", project_dir, None, data,
                    push_artifacts=False)
-        handoff.do("artifacts", "delete", None, workspace_dir, data,
+        handoff.do("artifacts", "delete", project_dir, None, data,
                    push_artifacts=False)
-        handoff.do("config", "delete", None, workspace_dir, data,
+        handoff.do("config", "delete", project_dir, None, data,
                    push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
@@ -64,12 +67,14 @@ def test_03_exchange_rates():
             if fn[:len("exchange_rate-")] == "exchange_rate-":
                 rate_file = fn
                 break
-        with open(os.path.join(workspace_dir, ARTIFACTS_DIR, rate_file), "r") as f:
+        with open(os.path.join(workspace_dir, ARTIFACTS_DIR, rate_file),
+                  "r") as f:
             rows = csv.DictReader(f)
             for row in rows:
-                jpy =  row["JPY"]
-                assert(float(jpy)==1.0)
+                jpy = row["JPY"]
+                assert(float(jpy) == 1.0)
 
-        with open(os.path.join(workspace_dir, ARTIFACTS_DIR, "collect_stats.json"), "r") as f:
+        with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
+                               "collect_stats.json"), "r") as f:
             stats = json.load(f)
             assert(stats.get("rows_read") is not None)

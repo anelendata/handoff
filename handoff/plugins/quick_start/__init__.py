@@ -4,7 +4,7 @@ from handoff.utils import get_logger as _get_logger
 LOGGER = _get_logger(__name__)
 
 
-def start(project_dir, workspace_dir, data, **kwargs):
+def make(project_dir, workspace_dir, data, **kwargs):
     """Copy the test projects to the test_projects under the current directory
     """
     d, f = os.path.split(__file__)
@@ -15,6 +15,6 @@ def start(project_dir, workspace_dir, data, **kwargs):
         print("It looks like you already copied the test projects to ./projects")
     else:
         print("Copied the test projects to ./projects")
-    print("Now just enter:")
-    print("    ./projects/begin")
+    print("Now just do:")
+    print("    ./projects/start")
     print("to start the even-monkeys-can-follow tutorial.")

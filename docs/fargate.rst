@@ -1,8 +1,5 @@
-Fargate deployment
-==================
+..  _fargate:
 
-Now that the Docker image was built and pushed to the remote repository,
-it's time to deploy the task on Fargate. Follow these commands under
-:code:`./deploy/fargate`.
+.. mdinclude:: ./06_fargate.md
 
-.. mdinclude:: ../deploy/fargate/deploy.md
+Next: :doc:`schedule`

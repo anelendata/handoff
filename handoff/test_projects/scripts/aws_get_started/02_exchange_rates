@@ -1,0 +1,75 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source funcs
+
+echo "## Virtual environment and install
+
+In this section, we will retrieve currency exchange rates and write out to CSV
+file.
+
+We will install singer.io (https://singer.io), a data collection framework,
+in Python vitual environment.
+"
+
+Prompt "Ready? (Hit q at prompt to quit anytime. Any other key to proceed.)"
+
+echo "
+We will use 03_exchange_rates project. project.yml looks like:
+"
+
+Cat "03_exchange_rates/project.yml" $DIM 0
+
+Prompt
+
+echo "
+...which is shell equivalent to
+
+    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+"
+
+Prompt
+
+echo '
+Before we can run this, we need to install tap-exchangeratesapi and target-csv.
+The instructions for the install are listed in install section of project.yml.
+
+Notice `venv` entries for each command. handoff can create Python virtual
+enviroment for each command to avoid conflicting dependencies among the
+commands.
+
+To install everything, run this command:
+'
+
+Command "handoff -p 03_exchange_rates -w workspace_03 workspace install"
+
+echo "
+Now let's run the task. Try entering this command below:
+"
+
+Command "handoff -p 03_exchange_rates -w workspace_03 run local"
+
+echo "
+This process should have created a CSV file in artifacts directory:
+"
+
+Run "ls workspace_03/artifacts | grep csv" $DIM 0
+
+echo "
+...which looks like:
+"
+
+Run 'for f in `ls workspace_03/artifacts | grep csv`; do head -n 3 workspace_03/artifacts/$f; done' $DIM 3
+
+Prompt
+
+Thanks
+
+echo "
+Now that we know how to run locally, we will gradually thinking about how to deploy this in the cloud *severlessly*.
+We will learn how to save and fetch the configurations to the remote storage.
+Before doing that, we will cover how to set up AWS account and profile in the next section.
+"
+
+Continue aws_get_started/03_set_up_aws_account

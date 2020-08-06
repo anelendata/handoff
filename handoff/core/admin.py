@@ -214,11 +214,10 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
-    state.validate_env()
-    LOGGER.info("Deleting files from the remote storage " +
-                state.get(BUCKET))
+    files_dir = os.path.join(project_dir, FILES_DIR)
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
 
@@ -308,9 +307,8 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
-    state = get_state()
+    _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
-    state.validate_env()
     platform.delete_parameter("config")
 
 

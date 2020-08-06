@@ -12,14 +12,14 @@ def get_client():
     return cred.get_client("ssm")
 
 
-def get_parameter(project, name):
+def get_parameter(key):
     client = get_client()
-    param = client.get_parameter(Name=project + "_" + name, WithDecryption=True)
+    param = client.get_parameter(Name=key, WithDecryption=True)
     value = param["Parameter"]["Value"]
     return value
 
 
-def put_parameter(project, key, value,
+def put_parameter(key, value,
                   description="",
                   type_="SecureString",
                   key_id=None,
@@ -35,7 +35,7 @@ def put_parameter(project, key, value,
     """
     client = get_client()
 
-    kwargs = {"Name": project + "_" + key,
+    kwargs = {"Name": key,
               "Value": value,
               "Type": type_,
               "Overwrite": overwrite,
@@ -55,8 +55,8 @@ def put_parameter(project, key, value,
     return response
 
 
-def delete_parameter(project, key):
+def delete_parameter(key):
     client = get_client()
-    kwargs = {"Name": project + "_" + key}
+    kwargs = {"Name": key}
     response = client.delete_parameter(**kwargs)
     return response

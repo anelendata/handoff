@@ -1,0 +1,60 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
+source funcs
+
+echo "## Scheduling a task on Fargate
+
+In this section, we will learn how to schedule a task so it runs automatically.
+"
+
+CheckAws
+
+if [[ -z "$AWS_PROFILE" ]]
+then
+ChooseAwsProfile
+fi
+
+echo '
+To schedule a task, use schedule command with target_id and
+[CRON format]://en.wikipedia.org/wiki/Cron).
+
+We pass those values to handoff with `--data` (`-d` for short) option:
+'
+
+Prompt "The following command is set to trigger the task 5 minutes later from now:"
+
+hour=`date +"%H"`
+min=`date +"%M"`
+min=$(($min + 5))
+Command "handoff -p 03_exchange_rates cloud schedule --data '{\"target_id\": \"1\", \"cron\": \"$min $hour * * ? *\"}'"
+
+echo '
+
+At the end of the log, you should see a line like:
+
+```
+
+    Check the progress at Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/...
+
+```
+'
+
+echo "
+Grab the entire link and open in a browser (you need to login in to AWS) to see
+it's scheduled.
+"
+
+
+Prompt
+
+Thanks
+
+echo "
+We confirmed that the task run in the same way as local execution.
+Now let's go to the next module to learn how to schedule the task
+so it runs periodically.
+"
+
+Continue aws_get_started/08_cleanup

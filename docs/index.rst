@@ -15,12 +15,8 @@ Contents
    :maxdepth: 2
 
    quick_example
-   venv_config
-   envvar_outputs
-   role
-   remote_config
-   docker
-   fargate
+   essential_commands
+   guided_tour
    faq
    contributing
    code_of_conduct

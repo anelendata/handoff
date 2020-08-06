@@ -66,7 +66,7 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
     logger.info("Building %s:%s" % (image_name, new_version))
 
     with tempfile.TemporaryDirectory() as build_dir:
-        cwd = os.getcwd()
+        cwd, _ = os.path.split(__file__)
         pos = cwd.find("handoff")
         if pos >= 0:
             handoff_dir = os.path.join(cwd[:pos], "handoff")

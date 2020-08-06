@@ -1,8 +1,8 @@
 #!/bin/bash
 MODE=$1
 if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source funcs
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
 echo "## Virtual environment and install
 
@@ -72,4 +72,4 @@ We will learn how to save and fetch the configurations to the remote storage.
 Before doing that, we will cover how to set up AWS account and profile in the next section.
 "
 
-Continue aws_get_started/03_set_up_aws_account
+Continue scripts/aws_get_started/03_set_up_aws_account

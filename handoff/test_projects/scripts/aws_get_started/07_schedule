@@ -1,8 +1,8 @@
 #!/bin/bash
 MODE=$1
 if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source funcs
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
 echo "## Scheduling a task on Fargate
 
@@ -25,8 +25,8 @@ We pass those values to handoff with `--data` (`-d` for short) option:
 
 Prompt "The following command is set to trigger the task 5 minutes later from now:"
 
-hour=`date +"%H"`
-min=`date +"%M"`
+hour=`date -u +"%H"`
+min=`date -u +"%M"`
 min=$(($min + 5))
 Command "handoff -p 03_exchange_rates cloud schedule --data '{\"target_id\": \"1\", \"cron\": \"$min $hour * * ? *\"}'"
 
@@ -57,4 +57,4 @@ Now let's go to the next module to learn how to schedule the task
 so it runs periodically.
 "
 
-Continue aws_get_started/08_cleanup
+Continue scripts/aws_get_started/08_cleanup

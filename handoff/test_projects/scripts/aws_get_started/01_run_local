@@ -1,8 +1,8 @@
 #!/bin/bash
 MODE=$1
 if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source funcs
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
 echo "## Running a task locally
 
@@ -148,4 +148,4 @@ You will also learn how to create Python virtual enviroments for each command
 and pip-install commands.
 "
 
-Continue aws_get_started/02_exchange_rates
+Continue scripts/aws_get_started/02_exchange_rates

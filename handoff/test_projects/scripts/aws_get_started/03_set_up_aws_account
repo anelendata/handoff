@@ -1,8 +1,8 @@
 #!/bin/bash
 MODE=$1
 if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source funcs
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
 echo "## Setting up an AWS account and profile
 
@@ -116,4 +116,4 @@ Now that we have set up the AWS account, let's store the configurations
 in the cloud in the next section.
 "
 
-Continue aws_get_started/04_run_remote_config
+Continue scripts/aws_get_started/04_run_remote_config

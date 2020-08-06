@@ -1,8 +1,8 @@
 #!/bin/bash
 MODE=$1
 if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
-cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
-source funcs
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
 
 echo "## Deploying on AWS Fargate
 
@@ -137,4 +137,4 @@ Now let's go to the next section to learn how to schedule the task
 so it runs periodically.
 "
 
-Continue aws_get_started/07_schedule
+Continue scripts/aws_get_started/07_schedule

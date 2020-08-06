@@ -76,7 +76,7 @@ The previous command only deleted the CloudFormation stack, but not the bucket i
 Here is how to delete all the files in s3://xxxxxxxxxxxx-handoff-test bucket. This cannot be reversed:
 
 ```
-> aws s3 rm --recursive s3://xxxxxxxxxxxx-handoff-test\/
+> aws s3 rm --recursive s3://xxxxxxxxxxxx-handoff-test/
 ```
 ```
 

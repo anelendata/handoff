@@ -1,5 +1,9 @@
 ## History
 
+### 0.2.0b2 (2020-08-06)
+
+- Fix the issue of inconsistent state file among OS (trailing spaces)
+
 ### 0.2.0b1 (2020-08-05)
 
 - Mac OS: fix a bug in parsing Docker build JSON log

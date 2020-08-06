@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-VERSION="0.1.2-alpha"
+VERSION="0.2.0-b0"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -16,7 +16,7 @@ setup(
     author="Daigo Tanaka, Anelen Co., LLC",
     url="http://dev.handoff.cloud",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
 
         "Operating System :: MacOS :: MacOS X",

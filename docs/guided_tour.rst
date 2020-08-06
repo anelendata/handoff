@@ -8,8 +8,6 @@ This page is the web version of the interactive commandline tutorial.
 The best way of getting started with handoff is to go through interactively.
 You should be able to finish it in 30 minutes to an hour.
 
-.. code-block:: shell
-
     handoff quick_start make
     ./projects/start
 

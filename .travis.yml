@@ -24,4 +24,4 @@ script:
   - pytest -s tests/unit
   - pytest -s tests/local_run_no_install
   - pytest -s tests/local_run_install
-  - tests/install_test.sh
+    #  - tests/install_test.sh

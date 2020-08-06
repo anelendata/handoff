@@ -90,7 +90,6 @@ fi
 Choose() {
 echo $1
 IFS=$'\n' read -r -d '' -a OPTIONS < <( eval $1 )
-# IFS=$'\n' read -r -d '' -a OPTIONS < <( ls $PROJECT_DIR/scripts | grep -v funcs && printf '\0' )
 i=1
 for s in ${OPTIONS[@]}; do echo "- [$i] $s"; i=$((i+1)); done
 
@@ -118,7 +117,7 @@ if [[ ! $REPLY =~ ^[Nn]$ ]]
 then
     echo "OK!"
     echo
-    $PROJECT_DIR/scripts/03_set_up_aws_account
+    scripts/aws_get_started/03_set_up_aws_account
     exit 0
 fi
 fi
@@ -169,7 +168,7 @@ if [[ $REPLY =~ ^[Nn]$ ]]
 then
     echo "OK!"
     echo "Remember that you can continue by"
-    echo -e $GREEN    $PROJECT_DIR/begin$RESET
+    echo -e $GREEN    ./projects/start$RESET
     echo
     echo "bye!"
     exit 0

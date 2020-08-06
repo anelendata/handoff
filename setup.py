@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-VERSION="0.1.2-alpha"
+VERSION="0.2.0b0"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -16,7 +16,7 @@ setup(
     author="Daigo Tanaka, Anelen Co., LLC",
     url="http://dev.handoff.cloud",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
 
         "Operating System :: MacOS :: MacOS X",
@@ -27,15 +27,15 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     install_requires=[
-        "attr==0.3.1",
-        "boto3==1.10.0",
-        "botocore==1.13.0",
-        "docker==4.2.2",
+        "attr>=0.3.1",
+        "boto3>=1.10.0",
+        "botocore>=1.13.0",
+        "docker>=4.0.0",
         "lxml>=4.2.0",
-        "python-dateutil==2.8.0",
-        "pyyaml==5.3.1",
+        "python-dateutil>=2.8.0",
+        "pyyaml>=5.1",
         "requests>=2.19.0",
-        "s3transfer==0.2.1",
+        "s3transfer>=0.2.0",
     ],
     entry_points="""
     [console_scripts]

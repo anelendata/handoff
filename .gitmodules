@@ -1,3 +1,0 @@
-[submodule "deploy/fargate"]
-	path = deploy/fargate
-    url = https://github.com/anelendata/fgops.git

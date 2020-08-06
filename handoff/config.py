@@ -1,4 +1,4 @@
-VERSION = "0.1.2a0"
+VERSION = "0.2.0b0"
 
 import os, re
 from handoff import utils

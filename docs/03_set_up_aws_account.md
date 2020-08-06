@@ -72,7 +72,7 @@ Enter Access key ID and Secret access key you created in the last step.
 For region, use one of these keys (for USA users, us-east-1 would do):
 
 
-```
+```shell
 
 ap-northeast-1
 ap-northeast-2

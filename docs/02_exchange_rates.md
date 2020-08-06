@@ -10,11 +10,11 @@ in Python vitual environment.
 
 We will use 03_exchange_rates project. project.yml looks like:
 
-```
+```shell
 > cat 03_exchange_rates/project.yml
 ```
 
-```
+```shell
 commands:
   - command: "tap-exchangeratesapi"
     args: "--config config/tap-config.json"
@@ -40,8 +40,9 @@ deploy:
 
 ...which is shell equivalent to
 
+```shell
     tap-exchangeratesapi | python files/stats_collector.py | target-csv
-
+```
 
 
 Before we can run this, we need to install tap-exchangeratesapi and target-csv.
@@ -53,10 +54,10 @@ commands.
 
 To install everything, run this command:
 
-```
+```shell
 > handoff -p 03_exchange_rates -w workspace_03 workspace install
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:14,158 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:35:14,240 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -85,10 +86,10 @@ Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pyt
 
 Now let's run the task. Try entering this command below:
 
-```
+```shell
 > handoff -p 03_exchange_rates -w workspace_03 run local
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:35:29,258 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:35:29,339 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -109,14 +110,14 @@ INFO - 2020-08-06 03:35:33,964 - handoff.config - Processed in 0:00:04.268474
 
 This process should have created a CSV file in artifacts directory:
 
-```
+```shell
 
 exchange_rate-20200806T033530.csv
 ```
 
 ...which looks like:
 
-```
+```shell
 
 CAD,HKD,ISK,PHP,DKK,HUF,CZK,GBP,RON,SEK,IDR,INR,BRL,RUB,HRK,JPY,THB,CHF,EUR,MYR,BGN,TRY,CNY,NOK,NZD,ZAR,USD,MXN,SGD,AUD,ILS,KRW,PLN,date
 0.0127290837,0.0725398406,1.3197211155,0.4630976096,0.0618218792,2.9357569721,0.2215388446,0.007434429,0.0401958831,0.0863047809,135.1005146082,0.7041915671,0.050374336,0.6657569721,0.0625373506,1.0,0.29312749,0.0088188911,0.0083001328,0.0399311089,0.0162333997,0.0642571381,0.0655312085,0.0889467131,0.0142670983,0.158440405,0.0093592297,0.2132744024,0.0130336985,0.0134852258,0.032375498,11.244189907,0.0371372842,2020-07-10T00:00:00Z

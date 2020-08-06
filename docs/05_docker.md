@@ -10,10 +10,10 @@ Let's build a Docker image.
 Try running the following command. Enter y when prompted at the beginning.
 The build may take 5~10 minutes.
 
-```
+```shell
 > handoff -p 03_exchange_rates container build
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:38:59,397 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:38:59,478 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -41,10 +41,10 @@ INFO - 2020-08-06 03:41:41,652 - handoff.config - Successfully tagged singer_exc
 
 Now let's run the code in the Docker container.
 
-```
+```shell
 > handoff -p 03_exchange_rates container run
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:41:45,336 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:41:45,509 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
@@ -71,7 +71,7 @@ INFO - 2020-08-06 03:41:55,342 - handoff.services.cloud.aws.s3 - Copied s3://xxx
 ```
 
 Confirm the run by checking the logs. Also check the artifacts on S3:
-```
+```shell
 
 
     xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/
@@ -86,10 +86,10 @@ directory.
 Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 
-```
+```shell
 > handoff -p 03_exchange_rates container push
 ```
-```
+```shell
 
 INFO - 2020-08-06 03:41:57,295 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
 INFO - 2020-08-06 03:41:57,378 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials

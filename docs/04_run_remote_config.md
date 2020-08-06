@@ -242,7 +242,7 @@ Notice that we used --push-artifacts option in the last command.
 With this option, we pushed the result to the bucket under
 
 ```shell
-    /last/artifacts
+    test-03-exchange-rates/last/artifacts
 
 ```
 
@@ -254,7 +254,7 @@ Also note that artifacts are automatically archived at each run at
 ```shell
 
 
-    /runs/
+    test-03-exchange-rates/runs/
 
 
 ```

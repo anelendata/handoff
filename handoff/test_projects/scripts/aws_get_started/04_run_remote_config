@@ -132,7 +132,10 @@ echo '
 Notice that we used --push-artifacts option in the last command.
 With this option, we pushed the result to the bucket under
 
+
 ```shell'
+
+TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
 
 echo "    $TASK/last/artifacts"
 
@@ -149,7 +152,7 @@ Also note that artifacts are automatically archived at each run at
 '
 
 echo "
-    $BUCKET/$TASK/runs/
+    $TASK/runs/
 "
 
 echo '

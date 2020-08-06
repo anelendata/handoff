@@ -40,8 +40,9 @@ deploy:
 
 ...which is shell equivalent to
 
+```shell
     tap-exchangeratesapi | python files/stats_collector.py | target-csv
-
+```
 
 
 Before we can run this, we need to install tap-exchangeratesapi and target-csv.

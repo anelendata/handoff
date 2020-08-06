@@ -1,5 +1,11 @@
 ## History
 
+### 0.2.0b1 (2020-08-05)
+
+- Mac OS: fix a bug in parsing Docker build JSON log
+- Mac OS: fix sed -u issue
+- Fix typos in tutorial
+
 ### 0.2.0b0 (2020-08-05)
 
 - Beta

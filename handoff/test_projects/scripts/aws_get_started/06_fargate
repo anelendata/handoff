@@ -110,7 +110,7 @@ At the bottom of the page, you see:
 
 | Name              | Container Runtime ID | Status       | Image | ..... |
 | :---------------- | :------------------- | :----------- | :---- | :---- |
-| singer_excha... | 1371....             | PROVISIONING | xxxxx | ..... |
+| singer_excha...   | 1371....             | PROVISIONING | xxxxx | ..... |
 
 Expand the section by clicking on a dark side-way trible ">" by the  Task name.
 

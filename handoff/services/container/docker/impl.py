@@ -81,9 +81,13 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
         for line in cli.build(path=build_dir,
                               tag=image_name + ":" + new_version,
                               nocache=nocache):
-            msg = json.loads(line.decode("utf-8"))
-            if msg.get("stream") and msg["stream"] != "\n":
-                logger.info(msg["stream"])
+            for subline in line.decode("utf-8").split("\n"):
+                try:
+                    msg = json.loads(subline)
+                except json.decoder.JSONDecodeError:
+                    continue
+                if msg.get("stream") and msg["stream"] != "\n":
+                    logger.info(msg["stream"])
 
 
 def run(version=None, extra_env=dict()):
@@ -138,7 +142,7 @@ def push(username, password, registry, version=None):
                                    version, stream=True):
         try:
             msg = json.loads(line.decode("utf-8"))
-        except Exception:
+        except json.decoder.JSONDecodeError:
             continue
         total = 0
         current = 0

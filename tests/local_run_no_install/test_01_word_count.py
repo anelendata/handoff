@@ -18,4 +18,4 @@ def test_01_word_count():
         handoff.do("run", "local", project_dir, workspace_dir, data, push_artifacts=False)
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR, "state")) as f:
             state = f.read()
-            assert(state == "644\n")
+            assert(state == "644")

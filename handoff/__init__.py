@@ -86,6 +86,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
             admin.config_get_local(project_dir, workspace_dir, data)
         config = admin.config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
+        admin.artifacts_get(project_dir, workspace_dir, data)
     elif command in local_ops:
         config = admin.config_get_local(project_dir, workspace_dir, data)
         admin.files_get_local(project_dir, workspace_dir, data)
@@ -145,6 +146,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                   "No help doc available for " + command)
             os.chdir(prev_wd)
             return
+
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         os.chdir(prev_wd)
         check_update()

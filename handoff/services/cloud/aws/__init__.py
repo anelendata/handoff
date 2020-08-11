@@ -162,8 +162,8 @@ def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
         if allow_advanced_tier:
             tier = "Advanced"
         else:
-            raise Exception(("Parameter string is %s > 4096 byte and " +
-                             "allow_advanced_tier=False") % len(value))
+            raise Exception(("Parameter string is %s > 4096 byte. " +
+                             "You must use --allow-advanced-tier option.") % len(value))
     LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" %
                 tier)
     ssm.put_parameter(prefix_key, value, tier=tier)

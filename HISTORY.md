@@ -1,5 +1,12 @@
 ## History
 
+### 0.2.0b3 (2020-08-10)
+
+- Fix the issue of not downloading artifacts from remote storage.
+    - Fix artifacts archive/get/push/delete commands
+    - Fix files get/push/delete commands
+- Add USGS Earthquake events data example
+
 ### 0.2.0b2 (2020-08-06)
 
 - Fix the issue of inconsistent state file among OS (trailing spaces)

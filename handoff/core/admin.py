@@ -123,35 +123,68 @@ def _read_project(project_file):
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
+    """Archive: Copy the artifacts directory from last to run in the remote
+    """
     state = get_state()
-    state.validate_env()
-    platform = cloud._get_platform()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
+    LOGGER.info("Copying the remote artifacts from last to runs " +
+                state.get(BUCKET))
+
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
 
 
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
+    """Download artifacts from the remote storage to <workspace_dir>
+    """
     state = get_state()
-    platform = cloud._get_platform()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+        config_get(project_dir, workspace_dir, data, **kwargs)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    state.validate_env()
 
     LOGGER.info("Downloading artifacts from the remote storage " +
                 state.get(BUCKET))
 
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+
     _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+
     platform.download_dir(remote_dir, artifacts_dir)
 
 
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
+    """Push local artifacts file to remote storage under last directory.
+    """
     state = get_state()
-    platform = cloud._get_platform()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+        config_get(project_dir, workspace_dir, data, **kwargs)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    state.validate_env()
+
+    LOGGER.info("Pushing local artifacts to the remote storage " +
+                state.get(BUCKET))
+
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
 
     _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
@@ -159,23 +192,36 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
+    """Delete artifacts from the remote artifacts/last directory
+    """
     state = get_state()
-    platform = cloud._get_platform()
-    state.validate_env()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
     LOGGER.info("Deleting artifacts from the remote storage " +
                 state.get(BUCKET))
+
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
     platform.delete_dir(dir_name)
 
 
 def files_get(project_dir, workspace_dir, data, **kwargs):
+    """Get remote files from to <workspace_dir>/files
+    """
     state = get_state()
-    if not workspace_dir:
-        raise Exception("Workspace directory is not set")
     if not state.get(BUCKET):
-       config_get(project_dir, workspace_dir, data, **kwargs)
+        _ = config_get_local(project_dir, workspace_dir, data)
+        config_get(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
+
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
 
     LOGGER.info("Downloading config files from the remote storage " +
                 state.get(BUCKET))
@@ -189,8 +235,13 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_get_local(project_dir, workspace_dir, data, **kwargs):
+    """Copy files from the local <project_dir> to <workspace_dir>
+    Any existing files in workspace_dir will be deleted.
+    """
     if not project_dir:
         raise Exception("Project directory is not set")
+    if not workspace_dir:
+        raise Exception("Workspace directory is not set")
 
     LOGGER.info("Copying files from the local project directory " +
                 project_dir)
@@ -205,7 +256,7 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
-    """ Push the contents of project_dir/FILES_DIR to remote storage"""
+    """Push the contents of <project_dir>/files to remote storage"""
     _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
     files_dir = os.path.join(project_dir, FILES_DIR)
@@ -214,10 +265,15 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
-    _ = config_get_local(project_dir, workspace_dir, data)
+    """Delete files from the remote storage
+    """
+    state = get_state()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
     platform = cloud._get_platform()
-    files_dir = os.path.join(project_dir, FILES_DIR)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
 
@@ -313,10 +369,12 @@ def config_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_print(project_dir, workspace_dir, data, **kwargs):
+    _ = config_get_local(project_dir, workspace_dir, data)
     print(json.dumps(config_get(project_dir, workspace_dir, data)))
 
 
 def workspace_get(project_dir, workspace_dir, data, **kwargs):
+    _ = config_get_local(project_dir, workspace_dir, data)
     config_get(project_dir, workspace_dir, data)
     artifacts_get(project_dir, workspace_dir, data)
     files_get(project_dir, workspace_dir, data)

@@ -312,7 +312,7 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
     Example project.yml:
     ```
     commands:
-      - command: tap_rest_api
+      - command: tap-rest-api
         args: "files/rest_api_spec.json --config config/tap_config.json --schema_dir files/schema --catalog files/catalog/default.json --state .artifacts/state --start_datetime '{start_at}' --end_datetime '{end_at}'"
         venv: "proc_01"
       - command: target_gcs

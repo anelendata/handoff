@@ -1,10 +1,10 @@
 commands:
-  - command: tap_rest_api
+  - command: tap-rest-api
     args: "./files/custom_spec.json --config ./config/tap_config.json --schema_dir ./files/schema --catalog_dir ./files/catalog --catalog ./files/catalog/earthquakes.json --start_datetime '{start_at}' --state ./artifacts/state"
     venv: "proc_01"
     installs:
-      - "pip install --no-cache-dir https://github.com/anelendata/tap_rest_api/archive/34863f0e62512fba3243081ab6af29f234d2bae6.tar.gz#egg=tap_rest_api"
-        # - pip install --no-cache -e /home/ubuntu/project/tap_rest_api
+      - "pip install tap-rest-api"
+      # - pip install --no-cache -e /home/ubuntu/project/tap-rest-api
   - command: target_bigquery
     args: "--config config/target_config.json"
     venv: "proc_02"

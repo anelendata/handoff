@@ -4,18 +4,18 @@
 
 You can put `https://github.com/<account>/<repository>/archive/<commit-hash>.tar.gz#egg=<command-name>`
 format like this project of executing a pair of singer.io processes,
-[tap_rest_api](https://github.com/anelendata/tap_rest_api) and
+[tap-rest-api](https://github.com/anelendata/tap-rest-api) and
 [target_gcs](https://github.com/anelendata/target_gcs):
 ```
 commands:
-  - command: tap_rest_api
+  - command: tap-rest-api
     args: "file/rest_api_spec.json --config config/tap_config.json --schema_dir file/schema --catalog file/catalog/default.json --state artifacts/state --start_datetime '{start_at}' --end_datetime '{end_at}'"
-    venv: "proc_01"
+    venv: proc_01
     installs:
-      - "pip install --no-cache-dir https://github.com/anelendata/tap_rest_api/archive/1b46f383b62c8dc9ce1205c5cf67c7ebc3107349.tar.gz#egg=tap_rest_api"
+      - "pip install tap-rest-api"
   - command: target_gcs
     args: "--config config/target_config.json"
-    venv: "proc_02"
+    venv: proc_02
     installs:
       - "pip install install --no-cache-dir https://github.com/anelendata/target_gcs/archive/17e70bced723fe202425a61199e6e1180b6fada7.tar.gz#egg=target_gcs"
 envs:

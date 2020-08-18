@@ -489,8 +489,8 @@ def unschedule_task(target_id):
     state = get_state()
     task_stack = state.get(TASK)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
-    response = events. unschedule_task(task_stack, resource_group_stack,
-                                       target_id)
+    response = events.unschedule_task(task_stack, resource_group_stack,
+                                      target_id)
     LOGGER.info(response)
     params = {
         "region": state.get("AWS_REGION"),

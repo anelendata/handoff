@@ -5,7 +5,10 @@
 
 Deploy configurable unix pipeline jobs serverlessly.
 
-**NEW:** [Monitor metrics with Grafana](https://dev.handoff.cloud/en/latest/grafana.html)
+**NEW:**
+- handoff v0.2.0b4 patch release fixes HttpError 403 on `workspace install` command.
+  Please run `pip install -U handoff`
+- [Monitor metrics with Grafana](https://dev.handoff.cloud/en/latest/grafana.html)
 
 <img src="https://github.com/anelendata/handoff/raw/master/assets/handoff_landscape_transparent.png"/>
 

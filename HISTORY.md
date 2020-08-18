@@ -1,5 +1,9 @@
 ## History
 
+### 0.2.0b4 (2020-08-18)
+
+- Workaround for failing setuptools installation script source.
+
 ### 0.2.0b3 (2020-08-10)
 
 - Fix the issue of not downloading artifacts from remote storage.

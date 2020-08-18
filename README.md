@@ -5,6 +5,8 @@
 
 Deploy configurable unix pipeline jobs serverlessly.
 
+**NEW:** [Monitor metrics with Grafana](https://dev.handoff.cloud/en/latest/grafana.html)
+
 <img src="https://github.com/anelendata/handoff/raw/master/assets/handoff_landscape_transparent.png"/>
 
 ## What is it?

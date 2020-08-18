@@ -17,6 +17,7 @@ Contents
    quick_example
    essential_commands
    guided_tour
+   grafana
    faq
    contributing
    code_of_conduct

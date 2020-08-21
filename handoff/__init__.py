@@ -247,7 +247,7 @@ def main():
     if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
         print("""Try running:
-    handoff tutorial start
+    handoff quick_start make
 in a new directory.
 Check out https://dev.handoff.cloud to learn more.
 

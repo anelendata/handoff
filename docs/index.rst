@@ -17,6 +17,7 @@ Contents
    quick_example
    essential_commands
    guided_tour
+   advanced
    grafana
    faq
    contributing

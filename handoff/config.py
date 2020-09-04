@@ -7,8 +7,11 @@ LOGGER = utils.get_logger(__name__)
 
 ARTIFACTS_DIR = "artifacts"
 CONFIG_DIR = "config"
+TEMPLATES_DIR = "templates"
 FILES_DIR = "files"
 PROJECT_FILE = "project.yml"
+SECRETS_DIR = ".secrets"
+SECRETS_FILE = "secrets.yml"
 STATE_FILE = "state"
 
 BUCKET_CURRENT_PREFIX = "last"

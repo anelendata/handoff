@@ -1,16 +1,21 @@
 import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
+from jinja2 import Template
+
 from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
-                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR,
+                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR, TEMPLATES_DIR,
+                            SECRETS_DIR, SECRETS_FILE,
                             RESOURCE_GROUP, PROJECT_FILE, TASK,
                             CLOUD_PROVIDER, CLOUD_PLATFORM, get_state)
 from handoff import utils
 from handoff.utils import pyvenvx
 
 LOGGER = utils.get_logger(__name__)
+
+SECRETS = None
 
 
 def _workspace_get_dirs(workspace_dir):
@@ -53,12 +58,53 @@ def _write_config_files(workspace_config_dir, precompiled_config):
             f.write(r["value"])
 
 
-def _set_env(config):
+def _parse_template_files(templates_dir, workspace_files_dir):
+    state = get_state()
+    for root, dirs, files in os.walk(templates_dir, topdown=True):
+        ws_root = os.path.join(workspace_files_dir,
+                               root[root.find(templates_dir) +
+                                    len(templates_dir) + 1:])
+        for d in dirs:
+            full_path = os.path.join(ws_root, d)
+            if not os.path.exists(full_path):
+                os.mkdir(full_path)
+        for fn in files:
+            with open(os.path.join(root, fn), "r") as f:
+                tf = f.read().replace('"', "\"")
+            template = Template(tf)
+            parsed = template.render(**state)
+            full_path = os.path.join(ws_root, fn)
+            with open(full_path, "w") as f:
+                f.write(parsed)
+
+
+def _get_secret(key):
+    """Get secret value from local .secret file or remote secret store
+    """
+    global SECRETS
+    if SECRETS is None:
+        raise Exception("Secrets are not loaded")
+    return SECRETS.get(key)
+
+
+def _update_state(config):
+    """Set environment variable and in-memory variables
+    Warning: environment variables are inherited to subprocess. The sensitive
+    information may be compromised by a bad subprocess.
+    The variables should not be passed to subprocess directly should be listed
+    in "vars" section of the project.yml so they remain on-memory only.
+    """
     state = get_state()
     LOGGER.info("Setting environment variables from config.")
     for v in config.get("envs", list()):
-        # Trust the values from project file
+        if v.get("value") is None:
+            v["value"] = _get_secret(v["key"])
         state.set_env(v["key"], v["value"], trust=True)
+
+    for v in config.get("vars", list()):
+        if v.get("value") is None:
+            v["value"] = _get_secret(v["key"])
+        state[v["key"]] = v["value"]
 
     if not state.get(BUCKET):
         try:
@@ -120,6 +166,62 @@ def _read_project(project_file):
         LOGGER.info("Platform: " + platform.NAME)
 
     return project
+
+
+def secrets_get(project_dir, workspace_dir, data, **kwargs):
+    state = get_state()
+    global SECRETS
+    SECRETS = {}
+    raise Exception("Implement this")
+
+
+def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
+    global SECRETS
+    SECRETS = {}
+    secrets_file = os.path.join(SECRETS_DIR, SECRETS_FILE)
+    if not os.path.isfile(secrets_file):
+        LOGGER.info(secrets_file + " does not exsist")
+        return None
+    with open(secrets_file, "r") as f:
+        LOGGER.info("Reading secrets from local file: " + secrets_file)
+        # <key>:
+        #   value: <value>
+        #   level: resource_group|task
+        secrets = yaml.load(f, Loader=yaml.FullLoader)
+    for key in secrets:
+        if secrets[key].get("value"):
+            SECRETS[key] = secrets[key]["value"]
+        elif secrets[key].get("file"):
+            full_path = os.path.join(SECRETS_DIR, secrets[key].get("file"))
+            if not os.path.isfile(full_path):
+                raise Exception(full_path + " does not exist")
+            with open(full_path, "r") as f:
+                SECRETS[key] = f.read()
+        else:
+            raise Exception("Neither key or value defined for secret key " +
+                            key)
+
+    return secrets
+
+
+def secrets_push(project_dir, workspace_dir, data, **kwargs):
+    """Push the contents of <project_dir>/files to remote storage"""
+    _ = config_get_local(project_dir, workspace_dir, data)
+    state = get_state()
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
+    platform = cloud._get_platform()
+    secrets = secrets_get_local()
+    for key in secrets:
+        level = secrets[key].get("level")
+        if not level:
+            prefix = ""
+        elif level == "resource_group":
+            prefix = state.get(RESOURCE_GROUP) + "-"
+        elif level == "task":
+            prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK) + "-"
+        else:
+            raise Exception("Unknown secret level " + level)
+        platform.push_secret(prefix + key, SECRETS[key])
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
@@ -229,9 +331,15 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    _, _, files_dir = _workspace_get_dirs(workspace_dir)
+    _, _, files_dir =  _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.download_dir(remote_dir, files_dir)
+
+    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
+    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
+    platform.download_dir(remote_dir, templates_dir)
+    _parse_template_files(templates_dir,
+                          os.path.join(workspace_dir, FILES_DIR))
 
 
 def files_get_local(project_dir, workspace_dir, data, **kwargs):
@@ -247,21 +355,30 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
                 project_dir)
 
     project_files_dir = os.path.join(project_dir, FILES_DIR)
-    if not os.path.exists(project_files_dir):
-        return
-    _, _, files_dir = _workspace_get_dirs(workspace_dir)
-    if os.path.exists(files_dir):
-        shutil.rmtree(files_dir)
-    shutil.copytree(project_files_dir, files_dir)
+    if os.path.exists(project_files_dir):
+        _, _, files_dir = _workspace_get_dirs(workspace_dir)
+        if os.path.exists(files_dir):
+            shutil.rmtree(files_dir)
+        shutil.copytree(project_files_dir, files_dir)
+
+    _ = config_get_local(project_dir, workspace_dir, data)
+    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
+    _parse_template_files(templates_dir,
+                          os.path.join(workspace_dir, FILES_DIR))
 
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
     """Push the contents of <project_dir>/files to remote storage"""
     _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
+
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.upload_dir(files_dir, prefix)
+
+    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
+    prefix = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
+    platform.upload_dir(templates_dir, prefix)
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
@@ -276,15 +393,22 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
     platform = cloud._get_platform()
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
+    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
+    platform.delete_dir(dir_name)
 
 
 def config_get(project_dir, workspace_dir, data, **kwargs):
+    """Read configs from remote parameter store and copy them to workspace dir
+    """
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     LOGGER.info("Reading configurations from remote parameter store.")
     config_dir, _, _ = _workspace_get_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
-    _set_env(precompiled_config)
+
+    secrets_get(project_dir, workspace_dir, data, **kwargs)
+    _update_state(precompiled_config)
+
     _write_config_files(config_dir, precompiled_config)
 
     return precompiled_config
@@ -295,7 +419,8 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 
     The output JSON file describes the commands and arguments for each process.
     It also contains the environment variables for the run-time.
-    JSON format configuration files are encoded into the output JSON so they
+
+    *.json files under config directory are encoded into the output JSON so they
     can be restored in the docker instance when it runs.
 
     The parameters file may contain secrets and it should kept private. (i.e.
@@ -306,7 +431,8 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 
     - project_dir: The project directory that contains:
       - project.yml
-      - *.json: JSON format configuration files necessary for each process.
+      - config:
+        - *.json: JSON format configuration files necessary for each process.
         (e.g. singer tap/target config files, Google Cloud Platform secret file)
 
     Example project.yml:
@@ -329,7 +455,8 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
     project = _read_project(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
-    _set_env(config)
+    secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    _update_state(config)
 
     config["files"] = list()
     proj_config_dir = os.path.join(project_dir, CONFIG_DIR)

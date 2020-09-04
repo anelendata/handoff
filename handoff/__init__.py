@@ -288,9 +288,15 @@ handoff <command> -h for more help.\033[0m
     kwargs["cloud_profile"] = args.cloud_profile
     kwargs["allow_advanced_tier"] = args.allow_advanced_tier
 
+    if (args.project_dir and args.workspace_dir and
+            args.project_dir == args.workspace_dir):
+        print("Error: workspace directory must be different from project directory.")
+        exit(1)
+
     do(args.command, args.subcommand,
        args.project_dir, args.workspace_dir,
        data, **kwargs)
+
 
 if __name__ == "__main__":
     main()

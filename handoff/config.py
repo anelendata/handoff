@@ -5,6 +5,7 @@ from handoff import utils
 
 LOGGER = utils.get_logger(__name__)
 
+HANDOFF_DIR = ".handoff"
 ARTIFACTS_DIR = "artifacts"
 CONFIG_DIR = "config"
 FILES_DIR = "files"

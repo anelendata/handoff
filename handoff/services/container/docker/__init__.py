@@ -22,7 +22,13 @@ def build(project_dir, workspace_dir, data, **kwargs):
     _envs(project_dir, workspace_dir, data, **kwargs)
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
-    impl.build(project_dir)
+    config_vars = admin.config_get_local(
+        project_dir, workspace_dir, data, **kwargs)
+    files_dir = config_vars.get("container", {}).get("files_dir")
+    docker_file = config_vars.get("container", {}).get("docker_file")
+    if docker_file:
+        LOGGER.info("Using Dockerfile at: " + docker_file)
+    impl.build(project_dir, docker_file=docker_file, files_dir=files_dir)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):

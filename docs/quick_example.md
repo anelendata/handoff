@@ -83,4 +83,4 @@ cd projects
 
 Otherwise, you can browse the same content from the next page:
 
-Next: [Essential Commands at a Glance](./essential_commands)
+Next: [A Guided Tour](./guided_tour)

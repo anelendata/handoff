@@ -41,15 +41,16 @@ def get_latest_version(image_name, ignore=["latest"]):
     return version
 
 
-def build(project_dir, new_version=None, docker_file=None, nocache=False):
+def build(project_dir, new_version=None, docker_file=None, files_dir=None,
+          nocache=False):
     state = get_state()
     cli = docker_api_client()
     image_name = state[DOCKER_IMAGE]
     if not image_name:
         raise Exception("You need to set DOCKER_IMAGE environment variable.")
 
+    docker_file_dir, _ = os.path.split(__file__)
     if not docker_file:
-        docker_file_dir, _ = os.path.split(__file__)
         docker_file = os.path.join(docker_file_dir, DOCKERFILE)
 
     if not new_version:
@@ -81,6 +82,12 @@ def build(project_dir, new_version=None, docker_file=None, nocache=False):
         shutil.copytree(os.path.join(docker_file_dir, "script"),
                         os.path.join(build_dir, "script"))
         shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
+
+        if files_dir:
+            logger.info(("Copying the directory %s to Docker image build " +
+                         "temporary directory") % files_dir)
+            path, dir_ = os.path.split(files_dir)
+            shutil.copytree(files_dir, os.path.join(build_dir, dir_))
 
         for line in cli.build(path=build_dir,
                               tag=image_name + ":" + new_version,

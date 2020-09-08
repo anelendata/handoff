@@ -15,8 +15,10 @@ Contents
    :maxdepth: 2
 
    quick_example
-   essential_commands
    guided_tour
+   project_file
+   essential_commands
+   advanced
    grafana
    faq
    contributing

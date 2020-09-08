@@ -142,7 +142,12 @@ class State(dict):
                                 (env, self._mandatory_envs[env], value))
                 invalid.append(env)
         if invalid:
-            raise ValueError("Invalid environment variables")
+            LOGGER.critical("Invalid environment variables: %s\n" % invalid +
+                            "Check if necessary variables are defined in " +
+                            "the project file.\nSee " +
+                            "https://dev.handoff.cloud/en/latest/" +
+                            "project_file.html")
+            exit(1)
 
 
 STATE = None

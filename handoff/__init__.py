@@ -205,8 +205,8 @@ def print_update():
     global LATEST_AVAILABLE_VERSION
     elapsed = 0
     while LATEST_AVAILABLE_VERSION is None and elapsed < 2.0:
-        time.sleep(0.5)
-        elapsed += 0.5
+        time.sleep(0.25)
+        elapsed += 0.25
 
     if (not LATEST_AVAILABLE_VERSION or
             "handoff-" + VERSION >= LATEST_AVAILABLE_VERSION):
@@ -237,8 +237,8 @@ def print_announcements():
     global ANNOUNCEMENTS
     elapsed = 0
     while ANNOUNCEMENTS is None and elapsed < 2.0:
-        time.sleep(0.5)
-        elapsed += 0.5
+        time.sleep(0.25)
+        elapsed += 0.25
     if not ANNOUNCEMENTS:
         return
     home = str(Path.home())

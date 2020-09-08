@@ -226,6 +226,8 @@ def check_announcements(**kwargs):
     try:
         response = requests.get(url, params=kwargs)
         ANNOUNCEMENTS = yaml.load(response.content, Loader=yaml.FullLoader)
+        if type(ANNOUNCEMENTS) != dict:
+            ANNOUNCEMENTS = None
     except Exception as e:
         LOGGER.warning(e)
     return
@@ -252,15 +254,18 @@ def print_announcements():
     if os.path.isfile(date_file):
         with open(date_file, "r") as f:
             last_update = f.read()
-    announcements = ANNOUNCEMENTS.get("announcements", [])
-    if announcements:
+    announcements = list()
+    for a in ANNOUNCEMENTS.get("announcements", []):
+        if a.get("date") and str(a["date"]) > last_update:
+            announcements.append(a)
+    if len(announcements) > 0:
         print(bcolors.OKGREEN)
         print("Announcements:" + bcolors.ENDC)
     for a in announcements:
-        if a.get("date") and str(a["date"]) > last_update:
             print(a["date"])
             print("  " + a.get("title"))
             print("  " + a.get("message"))
+
     try:
         with open(date_file, "w") as f:
             f.write(str(datetime.date.today()))

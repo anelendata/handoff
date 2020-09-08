@@ -1,8 +1,11 @@
-import argparse, datetime, json, logging, os, sys
+import argparse, datetime, json, logging, os, sys, threading, time
+from pathlib import Path
+import yaml
 from lxml import html
 import requests
 
-from handoff.config import (VERSION, ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
+from handoff.config import (VERSION, HANDOFF_DIR,
+                            ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
                             DOCKER_IMAGE, IMAGE_VERSION,
                             CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -14,6 +17,9 @@ from handoff.services import cloud, container
 from handoff import plugins
 
 LOGGER = get_logger("handoff")
+
+LATEST_AVAILABLE_VERSION = None
+ANNOUNCEMENTS = None
 
 
 def _list_plugins():
@@ -149,7 +155,8 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
         os.chdir(prev_wd)
-        check_update()
+        print_update()
+        print_announcements()
         return
 
     if top_command == "container":
@@ -183,6 +190,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
 
 def check_update():
+    global LATEST_AVAILABLE_VERSION
     try:
         response = requests.get("https://pypi.org/simple/handoff")
     except Exception:
@@ -190,22 +198,83 @@ def check_update():
     tree = html.fromstring(response.content)
     package_list = [package for package in tree.xpath("//a/text()")]
     package_list.sort(reverse=True)
-    latest = package_list[0][:-len(".tar.gz")]
+    LATEST_AVAILABLE_VERSION = package_list[0][:-len(".tar.gz")]
 
-    if "handoff-" + VERSION >= latest:
+
+def print_update():
+    global LATEST_AVAILABLE_VERSION
+    elapsed = 0
+    while LATEST_AVAILABLE_VERSION is None and elapsed < 2.0:
+        time.sleep(0.25)
+        elapsed += 0.25
+
+    if (not LATEST_AVAILABLE_VERSION or
+            "handoff-" + VERSION >= LATEST_AVAILABLE_VERSION):
         return
 
     print(bcolors.OKGREEN)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-    print(":tada: handoff Ver. %s available!" % latest)
+    print(":tada: handoff Ver. %s available!" % LATEST_AVAILABLE_VERSION)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" + bcolors.ENDC)
     print(bcolors.BOLD + "Upgrade now:" + bcolors.ENDC +
           " pip install -U handoff\n")
-    print("See what's new at " +
-          "https://dev.handoff.cloud/en/latest/history.html\n")
+
+
+def check_announcements(**kwargs):
+    global ANNOUNCEMENTS
+    url = "https://api.handoff.cloud/api/v1/announcements"
+    try:
+        response = requests.get(url, params=kwargs)
+        ANNOUNCEMENTS = yaml.load(response.content, Loader=yaml.FullLoader)
+        if type(ANNOUNCEMENTS) != dict:
+            ANNOUNCEMENTS = None
+    except Exception as e:
+        LOGGER.warning(e)
+    return
+
+
+def print_announcements():
+    global ANNOUNCEMENTS
+    elapsed = 0
+    while ANNOUNCEMENTS is None and elapsed < 2.0:
+        time.sleep(0.25)
+        elapsed += 0.25
+    if not ANNOUNCEMENTS:
+        return
+    home = str(Path.home())
+    ho_dir = os.path.join(home, HANDOFF_DIR)
+    if not os.path.isdir(ho_dir):
+        try:
+            os.mkdir(ho_dir)
+        except Exception as e:
+            print("Warning: Failed to create handoff global config directory" +
+                  "at %s: %s" % (ho_dir, e))
+    date_file = os.path.join(ho_dir, "last_announcement_date")
+    last_update = ""
+    if os.path.isfile(date_file):
+        with open(date_file, "r") as f:
+            last_update = f.read()
+    announcements = list()
+    for a in ANNOUNCEMENTS.get("announcements", []):
+        if a.get("date") and str(a["date"]) > last_update:
+            announcements.append(a)
+    if len(announcements) > 0:
+        print(bcolors.OKGREEN)
+        print("Announcements:" + bcolors.ENDC)
+    for a in announcements:
+            print(a["date"])
+            print("  " + a.get("title"))
+            print("  " + a.get("message"))
+
+    try:
+        with open(date_file, "w") as f:
+            f.write(str(datetime.date.today()))
+    except Exception as e:
+        LOGGER.warning("Failed to write %s: %s" % (date_file, e))
 
 
 def main():
+    threading.Thread(target=check_update).start()
     admin_command_list = "\n- ".join(_list_commands(admin, True))
     task_command_list = "\n- ".join(_list_commands(task, True))
     plugin_list = "\n- ".join(_list_plugins().keys())
@@ -265,7 +334,7 @@ Available subcommands:
 handoff <command> -h for more help.\033[0m
 """ % (admin_command_list, task_command_list, plugin_list))
 
-        check_update()
+        print_update()
         sys.exit(1)
 
     args = parser.parse_args()
@@ -288,9 +357,19 @@ handoff <command> -h for more help.\033[0m
     kwargs["cloud_profile"] = args.cloud_profile
     kwargs["allow_advanced_tier"] = args.allow_advanced_tier
 
+    if (args.project_dir and args.workspace_dir and
+            args.project_dir == args.workspace_dir):
+        print("Error: workspace directory must be different from project directory.")
+        exit(1)
+
+    threading.Thread(target=check_announcements,
+                     kwargs= {"command": args.command,
+                              "subcommand": args.subcommand}).start()
+
     do(args.command, args.subcommand,
        args.project_dir, args.workspace_dir,
        data, **kwargs)
+
 
 if __name__ == "__main__":
     main()

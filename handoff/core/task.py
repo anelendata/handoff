@@ -101,7 +101,13 @@ def run(config, data):
             raise
 
     for i in range(0, len(commands) - 1):
-        procs[i].wait()
+        return_code = procs[i].wait()
+        if return_code > 0:
+            print(return_code)
+            for j in range(i, len(commands) - 1):
+                procs[j].terminate()
+            raise Exception("Process %d (%s) exited with code %d" %
+                            (i, commands[i], return_code))
 
     state = (procs[-1].communicate()[0]).decode("utf-8").strip("\n").strip(" ")
 

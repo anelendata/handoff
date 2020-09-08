@@ -25,7 +25,22 @@ def _workspace_get_dirs(workspace_dir):
     return config_dir, artifacts_dir, files_dir
 
 
-def _make_venv(venv_path):
+def _install(install, venv_path=None):
+    if venv_path:
+        venv_switch = "source " + venv_path + "/bin/activate && "
+    else:
+        venv_switch = ""
+    command = '/bin/bash -c "{venv_switch}{install}"'.format(
+        **{"venv_switch": venv_switch, "install": install})
+
+    LOGGER.info("Running %s" % command)
+    p = subprocess.Popen([command],
+                         # stdout=subprocess.PIPE,
+                         shell=True)
+    p.wait()
+
+
+def _make_python_venv(venv_path):
     if os.path.exists(venv_path):
         LOGGER.warning("%s already exists. Skipping python -m venv..." %
                        venv_path)
@@ -38,16 +53,7 @@ def _make_venv(venv_path):
         # https://github.com/anelendata/handoff/issues/25#issuecomment-667945434
         builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
-
-
-def _install(venv_path, install):
-    command = '/bin/bash -c "source {venv}/bin/activate && pip install wheel && {install}"'.format(
-        **{"venv": venv_path, "install": install})
-    LOGGER.info("Running %s" % command)
-    p = subprocess.Popen([command],
-                         # stdout=subprocess.PIPE,
-                         shell=True)
-    p.wait()
+        _install("pip install wheel", venv_path)
 
 
 def _write_config_files(workspace_config_dir, precompiled_config):
@@ -536,9 +542,9 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
     os.chdir(workspace_dir)
     for command in project["commands"]:
         if command.get("venv"):
-            _make_venv(command["venv"])
+            _make_python_venv(command["venv"])
         for install in command.get("installs", []):
-            _install(os.path.join(command["venv"]), install)
+            _install(install, os.path.join(command["venv"]))
 
 
 def version(project_dir, workspace_dir, data, **kwargs):

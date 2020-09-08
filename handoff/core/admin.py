@@ -107,11 +107,6 @@ def _update_state(config):
             v["value"] = _get_secret(v["key"])
         state.set_env(v["key"], v["value"], trust=True)
 
-    for v in config.get("vars", list()):
-        if v.get("value") is None:
-            v["value"] = _get_secret(v["key"])
-        state[v["key"]] = v["value"]
-
     if not state.get(BUCKET):
         try:
             platform = cloud._get_platform()
@@ -160,9 +155,13 @@ def _read_project(project_file):
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
-    deploy_env = project.get("deploy", dict()).get("envs", dict())
+    deploy_env = project.get("deploy", dict())
     for key in deploy_env:
-        state.set_env(ENV_PREFIX + key.upper(), deploy_env[key])
+        full_key = ENV_PREFIX + key.upper()
+        if state.is_allowed_env(full_key):
+            state.set_env(full_key, deploy_env[key])
+        else:
+            state[full_key] = deploy_env[key]
 
     cloud_provider_name = project.get("deploy", dict()).get("provider")
     cloud_platform_name = project.get("deploy", dict()).get("platform")
@@ -184,7 +183,8 @@ def secrets_get(project_dir, workspace_dir, data, **kwargs):
 def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
     global SECRETS
     SECRETS = {}
-    secrets_file = os.path.join(SECRETS_DIR, SECRETS_FILE)
+    secrets_file = os.path.join(project_dir, SECRETS_DIR, SECRETS_FILE)
+    state = get_state()
     if not os.path.isfile(secrets_file):
         LOGGER.info(secrets_file + " does not exsist")
         return None
@@ -198,7 +198,8 @@ def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
         if secrets[key].get("value"):
             SECRETS[key] = secrets[key]["value"]
         elif secrets[key].get("file"):
-            full_path = os.path.join(SECRETS_DIR, secrets[key].get("file"))
+            full_path = os.path.join(project_dir, SECRETS_DIR,
+                                     secrets[key].get("file"))
             if not os.path.isfile(full_path):
                 raise Exception(full_path + " does not exist")
             with open(full_path, "r") as f:
@@ -206,7 +207,8 @@ def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
         else:
             raise Exception("Neither key or value defined for secret key " +
                             key)
-
+        # Automatically register to state (on-memory)
+        state[key] = SECRETS[key]
     return secrets
 
 
@@ -342,7 +344,7 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
     platform.download_dir(remote_dir, files_dir)
 
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
-    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
+    templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
     platform.download_dir(remote_dir, templates_dir)
     _parse_template_files(templates_dir,
                           os.path.join(workspace_dir, FILES_DIR))

@@ -89,7 +89,7 @@ class State(dict):
         self._allowed_envs = {**self._mandatory_envs, **SAFE_ENVS}
 
     def __getitem__(self, key):
-        """
+        """Get value
         First look up in-memory key. Tries to return env var if not in memory
         """
         v = super(State, self).get(key)
@@ -101,14 +101,20 @@ class State(dict):
         return self.__getitem__(key)
 
     def unset(self, key):
+        """Erases both from memoery and env var
+        """
         if super(State, self).get(key):
             super(State, self).pop(key)
         if os.environ.get(key):
             del os.environ[key]
 
+    def is_allowed_env(self, key):
+        return key in self._allowed_envs.keys()
+
     def set_env(self, key, value, trust=False):
-        if not trust and key not in self._allowed_envs.keys():
+        if not trust and not self.is_allowed_env(key):
             raise KeyError(key + " is not whitelisted for env var usage.")
+        self.unset(key)
         os.environ[key] = value
 
     def get_env(self, name):

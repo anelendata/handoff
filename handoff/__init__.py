@@ -130,6 +130,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
        show_help=False, **kwargs):
     state = get_state()
     command = (top_command + " " + sub_command).strip()
+
     if workspace_dir:
         admin.workspace_init(project_dir, workspace_dir, data)
 
@@ -142,6 +143,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                                  **kwargs)
         except Exception as e:
             LOGGER.critical(e)
+            raise
         return
 
     admin_commands = _list_commands(admin, True)

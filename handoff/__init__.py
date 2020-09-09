@@ -22,6 +22,20 @@ LATEST_AVAILABLE_VERSION = None
 ANNOUNCEMENTS = None
 
 
+def _load_data_params(arg_list):
+    data = {}
+    for a in arg_list:
+        pos = a.find("=")
+        if pos < 0:
+            raise ValueError("data argument list format error")
+        key = a[0:pos].strip()
+        value = a[pos + 1:].strip()
+        if not key or not value:
+            raise ValueError("data argument list format error")
+        data[key] = value
+    return data
+
+
 def _list_plugins():
     modules = dict()
     objects = dir(plugins)
@@ -285,15 +299,15 @@ def main():
         description=("Run parameterized Unix pipeline command."))
 
     parser.add_argument("command", type=str, help="command")
-    parser.add_argument("subcommand", type=str, nargs="?", default="",
+    parser.add_argument("subcommand", type=str, nargs="*", default="",
                         help="subcommand")
 
     parser.add_argument("-p", "--project-dir", type=str, default=None,
                         help="Specify the location of project directory")
     parser.add_argument("-w", "--workspace-dir", type=str, default=None,
                         help="Location of workspace directory")
-    parser.add_argument("-d", "--data", type=str, default="{}",
-                        help="Data required for the command as a JSON string")
+    parser.add_argument("-d", "--data", type=str, nargs="*", default="",
+                        help="Data required for the command a='x' b='y' ...")
     parser.add_argument("-a", "--push-artifacts", action="store_true",
                         help="Push artifacts to remote at the end of the run")
 
@@ -343,11 +357,7 @@ handoff <command> -h for more help.\033[0m
 
     LOGGER.setLevel(args.log_level.upper())
 
-    data_json = args.data
-    try:
-        data = json.loads(data_json)
-    except json.JSONDecodeError:
-        data = json.loads(data_json[0:-1])
+    data = _load_data_params(args.data)
 
     os.environ[CLOUD_PROVIDER] = args.cloud_provider
     os.environ[CLOUD_PLATFORM] = args.cloud_platform
@@ -361,9 +371,11 @@ handoff <command> -h for more help.\033[0m
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):
-        print("Error: workspace directory must be different from project directory.")
+        print("Error: workspace directory must be different from " +
+              "project directory.")
         exit(1)
 
+    args.subcommand = "_".join(args.subcommand)
     threading.Thread(target=check_announcements,
                      kwargs= {"command": args.command,
                               "subcommand": args.subcommand}).start()

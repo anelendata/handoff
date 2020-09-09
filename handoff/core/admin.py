@@ -204,11 +204,15 @@ def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
                 raise Exception(full_path + " does not exist")
             with open(full_path, "r") as f:
                 SECRETS[key] = f.read()
+        elif secrets[key].get("resource_group_level"):
+            LOGGER.warning("Unregistered resource_group_level secret: %s" %
+                           key)
         else:
-            raise Exception("Neither key or value defined for secret key " +
-                            key)
-        # Automatically register to state (on-memory)
-        state[key] = SECRETS[key]
+            raise Exception("Neither value or file defined for task-level " +
+                            "secret key " + key)
+        if SECRETS.get(key) is not None:
+            # Automatically register to state (on-memory)
+            state[key] = SECRETS[key]
     return secrets
 
 
@@ -218,18 +222,28 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
-    secrets = secrets_get_local()
+    secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
     for key in secrets:
-        level = secrets[key].get("level")
-        if not level:
-            prefix = ""
-        elif level == "resource_group":
-            prefix = state.get(RESOURCE_GROUP) + "-"
-        elif level == "task":
-            prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK) + "-"
-        else:
-            raise Exception("Unknown secret level " + level)
-        platform.push_secret(prefix + key, SECRETS[key])
+        resource_group_level = secrets[key].get("resource_group_level")
+        platform.push_parameter(key, SECRETS[key],
+                                resource_group_level=resource_group_level,
+                                **kwargs)
+
+
+def secrets_delete(project_dir, workspace_dir, data, **kwargs):
+    """Push the contents of <project_dir>/files to remote storage"""
+    _ = config_get_local(project_dir, workspace_dir, data)
+    state = get_state()
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
+    platform = cloud._get_platform()
+    secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    for key in secrets:
+        resource_group_level = secrets[key].get("resource_group_level")
+        if resource_group_level:
+            continue
+        platform.delete_parameter(key,
+                                  resource_group_level=resource_group_level,
+                                  **kwargs)
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):

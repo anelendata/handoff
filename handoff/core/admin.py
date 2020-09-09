@@ -175,18 +175,30 @@ def _read_project(project_file):
 
 def secrets_get(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
+    if not state.get(BUCKET):
+        _ = config_get_local(project_dir, workspace_dir, data)
+        config_get(project_dir, workspace_dir, data, **kwargs)
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
+
+    LOGGER.info("Fetching the secrets from the remote parameter store.")
+
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+
     global SECRETS
-    SECRETS = {}
-    raise Exception("Implement this")
+    SECRETS.update(platform.get_all_parameters())
 
 
 def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
     global SECRETS
     SECRETS = {}
-    secrets_file = os.path.join(project_dir, SECRETS_DIR, SECRETS_FILE)
+    if data.get("file"):
+        secrets_file = data["file"]
+    else:
+        secrets_file = os.path.join(project_dir, SECRETS_DIR, SECRETS_FILE)
     state = get_state()
     if not os.path.isfile(secrets_file):
-        LOGGER.info(secrets_file + " does not exsist")
+        LOGGER.warning(secrets_file + " does not exsist")
         return None
     with open(secrets_file, "r") as f:
         LOGGER.info("Reading secrets from local file: " + secrets_file)
@@ -223,6 +235,18 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
     secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+
+    if not secrets:
+        return
+    print("Putting the following keys to remote parameter store:")
+
+    for key in secrets:
+        print("  - " + key)
+    response = input("Proceed? (y/N)")
+    if response.lower() not in ["yes", "y"]:
+        print("aborting")
+        return
+
     for key in secrets:
         resource_group_level = secrets[key].get("resource_group_level")
         platform.push_parameter(key, SECRETS[key],
@@ -237,13 +261,27 @@ def secrets_delete(project_dir, workspace_dir, data, **kwargs):
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
     secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+
+    if not secrets:
+        return
+    print("Deleting the following keys to remote parameter store:")
+
+    for key in secrets:
+        print("  - " + key)
+    response = input("Proceed? (y/N)")
+    if response.lower() not in ["yes", "y"]:
+        print("aborting")
+        return
+
     for key in secrets:
         resource_group_level = secrets[key].get("resource_group_level")
-        if resource_group_level:
-            continue
-        platform.delete_parameter(key,
-                                  resource_group_level=resource_group_level,
-                                  **kwargs)
+        try:
+            platform.delete_parameter(key,
+                                      resource_group_level=resource_group_level,
+                                      **kwargs)
+        except Exception:
+            LOGGER.warning("%s does not exist in remote parameter store." %
+                           key)
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):

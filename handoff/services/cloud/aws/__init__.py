@@ -129,11 +129,15 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None):
     return response
 
 
-def get_parameter(key):
+def get_parameter(key, resource_group_level=False):
+    state = get_state()
+    if resource_group_level:
+        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
+    else:
+        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
+                      "/" + key)
+
     try:
-        state = get_state()
-        prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
-        prefix_key = prefix + "-" + key
         value = ssm.get_parameter(prefix_key)
     except Exception as e:
         LOGGER.error("Cannot get %s - %s" % (prefix_key, str(e)))
@@ -143,6 +147,15 @@ def get_parameter(key):
                      "&tab=Table#list_parameter_filters=Name:Contains:" +
                      prefix_key)
     return value
+
+
+def get_all_parameters():
+    state = get_state()
+    path = "/" + state.get(RESOURCE_GROUP)
+    params = ssm.get_parameters_by_path(path)
+    path = path + "/" + state.get(TASK)
+    params.update(ssm.get_parameters_by_path(path))
+    return params
 
 
 def push_parameter(key, value, allow_advanced_tier=False,

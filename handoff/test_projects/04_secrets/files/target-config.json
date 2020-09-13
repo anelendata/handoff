@@ -1,0 +1,5 @@
+{
+    "delimiter": ",",
+    "quotechar": "'",
+    "destination_path": "artifacts"
+}

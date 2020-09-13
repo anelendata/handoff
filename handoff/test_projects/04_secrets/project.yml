@@ -4,8 +4,6 @@ commands:
     venv: "proc_01"
     installs:
       - "pip install tap-exchangeratesapi"
-  - command: "python files/stats_collector.py"
-    venv: "proc_01"
   - command: "target-csv"
     args: "--config config/target-config.json"
     venv: "proc_02"
@@ -17,3 +15,6 @@ deploy:
   resource_group: "handoff-test"
   docker_image: "singer_exchange_rates_to_csv"
   task: "test-exchange-rates"
+envs:
+  - key: "date"
+    value: "2020-09-01"

@@ -19,6 +19,18 @@ def get_parameter(key):
     return value
 
 
+def get_parameters_by_path(path):
+    client = get_client()
+    response = client.get_parameters_by_path(
+        Path=path,
+        Recursive=False,
+        WithDecryption=True)
+    params = {}
+    for item in response["Parameters"]:
+        params[item["Name"]] = item["Value"]
+    return params
+
+
 def put_parameter(key, value,
                   description="",
                   type_="SecureString",

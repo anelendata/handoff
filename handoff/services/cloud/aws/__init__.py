@@ -129,11 +129,16 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None):
     return response
 
 
-def get_parameter(key):
+def get_parameter(key, resource_group_level=False):
+    state = get_state()
+    if resource_group_level:
+        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
+    else:
+        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
+                      "/" + key)
+
+    value = None
     try:
-        state = get_state()
-        prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
-        prefix_key = prefix + "-" + key
         value = ssm.get_parameter(prefix_key)
     except Exception as e:
         LOGGER.error("Cannot get %s - %s" % (prefix_key, str(e)))
@@ -145,12 +150,37 @@ def get_parameter(key):
     return value
 
 
-def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
+def get_all_parameters():
+    state = get_state()
+    params = {}
+
+    path = "/" + state.get(RESOURCE_GROUP)
+    raw_params = ssm.get_parameters_by_path(path)
+    for key in raw_params:
+        value = raw_params[key]
+        key = key.split("/")[-1]
+        params[key] = value
+
+    path = path + "/" + state.get(TASK)
+    raw_params = ssm.get_parameters_by_path(path)
+    for key in raw_params:
+        value = raw_params[key]
+        key = key.split("/")[-1]
+        params[key] = value
+
+    return params
+
+
+def push_parameter(key, value, allow_advanced_tier=False,
+                   resource_group_level=False, **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, "AWS_REGION"])
 
-    prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
-    prefix_key = prefix + "-" + key
+    if resource_group_level:
+        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
+    else:
+        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
+                      "/" + key)
 
     if allow_advanced_tier:
         LOGGER.info("Allowing AWS SSM Parameter Store to store with " +
@@ -164,8 +194,8 @@ def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
         else:
             raise Exception(("Parameter string is %s > 4096 byte. " +
                              "You must use --allow-advanced-tier option.") % len(value))
-    LOGGER.info("Putting the config to AWS SSM Parameter Store with %s tier" %
-                tier)
+    LOGGER.info("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
+                (prefix_key, tier))
     ssm.put_parameter(prefix_key, value, tier=tier)
     LOGGER.info("See the parameters at https://console.aws.amazon.com/" +
                 "systems-manager/parameters/?region=" +
@@ -174,10 +204,15 @@ def push_parameter(key, value, allow_advanced_tier=False, **kwargs):
                 prefix_key)
 
 
-def delete_parameter(key):
+def delete_parameter(key, resource_group_level=False, **kwargs):
     state = get_state()
-    prefix = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
-    prefix_key = prefix + "-" + key
+
+    if resource_group_level:
+        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
+    else:
+        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
+                      "/" + key)
+
     ssm.delete_parameter(prefix_key)
 
 

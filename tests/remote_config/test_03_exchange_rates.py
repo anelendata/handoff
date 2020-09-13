@@ -17,7 +17,7 @@ def test_03_exchange_rates():
         os.environ.get(CONTAINER_PROVIDER, "docker"))
 
     if (not os.environ.get("AWS_PROFILE") and
-        not os.environ.get("AWS_ACCESS_KEY_ID")):
+            not os.environ.get("AWS_ACCESS_KEY_ID")):
         print("Please set environment variable AWS_PROFILE or " +
               "(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) to run this test.")
         assert False
@@ -67,6 +67,7 @@ def test_03_exchange_rates():
             if fn[:len("exchange_rate-")] == "exchange_rate-":
                 rate_file = fn
                 break
+        assert rate_file is not None
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR, rate_file),
                   "r") as f:
             rows = csv.DictReader(f)

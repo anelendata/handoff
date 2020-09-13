@@ -1,7 +1,7 @@
 project
 workspace
 install_test
-google_client_secret.json
+.secrets
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

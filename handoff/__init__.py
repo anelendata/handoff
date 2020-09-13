@@ -32,7 +32,18 @@ def _load_data_params(arg_list):
         value = a[pos + 1:].strip()
         if not key or not value:
             raise ValueError("data argument list format error")
+
+        # Convert to float or int when we can
+        try:
+            number = float(value)
+            if "." not in value:
+                number = int(number)
+            value = number
+        except ValueError:
+            pass
+
         data[key] = value
+    LOGGER.debug("data params: %s" % data)
     return data
 
 
@@ -144,6 +155,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
        show_help=False, **kwargs):
     state = get_state()
     command = (top_command + " " + sub_command).strip()
+
     if workspace_dir:
         admin.workspace_init(project_dir, workspace_dir, data)
 
@@ -156,6 +168,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                                  **kwargs)
         except Exception as e:
             LOGGER.critical(e)
+            raise
         return
 
     admin_commands = _list_commands(admin, True)

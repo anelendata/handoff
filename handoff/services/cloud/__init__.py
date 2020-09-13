@@ -209,3 +209,19 @@ def unschedule(project_dir, workspace_dir, data, **kwargs):
     state.validate_env()
     target_id = str(data["target_id"])
     platform.unschedule_task(target_id)
+
+
+def logs(project_dir, workspace_dir, data, **kwargs):
+    """Show logs
+    Use --data (-d) option to:
+    - start_time: ISO 8086 formatted date time to indicate the start time
+    - end_time
+    - follow: If set, it waits for more logs until interrupted by ctrl-c
+    """
+    state = config.get_state()
+    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
+    platform = _get_platform()
+    state.validate_env()
+    last_update = platform.print_logs(**data)
+
+    print(last_update)

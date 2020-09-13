@@ -32,7 +32,18 @@ def _load_data_params(arg_list):
         value = a[pos + 1:].strip()
         if not key or not value:
             raise ValueError("data argument list format error")
+
+        # Convert to float or int when we can
+        try:
+            number = float(value)
+            if "." not in value:
+                number = int(number)
+            value = number
+        except ValueError:
+            pass
+
         data[key] = value
+    LOGGER.debug("data params: %s" % data)
     return data
 
 

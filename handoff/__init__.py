@@ -60,7 +60,7 @@ def _list_plugins():
     return modules
 
 
-def _list_commands(module, split_first=False):
+def _list_commands(module):
     commands = dict()
     objects = dir(module)
     for name in objects:
@@ -69,8 +69,7 @@ def _list_commands(module, split_first=False):
         obj = getattr(module, name)
 
         # Make it "command sub_command" format
-        if split_first:
-            name = name.replace("_", " ", 1)
+        name = name.replace("_", " ")
 
         if callable(obj):
             commands[name] = obj
@@ -80,7 +79,7 @@ def _list_commands(module, split_first=False):
 def _run_subcommand(module, command, project_dir, workspace_dir, data,
                     show_help, **kwargs):
     prev_wd = os.getcwd()
-    commands = _list_commands(module, False)
+    commands = _list_commands(module)
     if command in commands:
         if show_help:
             print(commands[command].__doc__ or
@@ -106,7 +105,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
                          push_artifacts=False, **kwargs):
     state = get_state()
     prev_wd = os.getcwd()
-    commands = _list_commands(task, True)
+    commands = _list_commands(task)
 
     admin.workspace_init(project_dir, workspace_dir, data)
 
@@ -161,7 +160,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
     plugin_modules = _list_plugins()
 
-    if command in _list_commands(task, True):
+    if command in _list_commands(task):
         # Wrap with try except for better logging in docker execution
         try:
             _run_task_subcommand(command, project_dir, workspace_dir, data,
@@ -171,7 +170,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
             raise
         return
 
-    admin_commands = _list_commands(admin, True)
+    admin_commands = _list_commands(admin)
     if command in admin_commands:
         prev_wd = os.getcwd()
         if show_help:
@@ -302,8 +301,8 @@ def print_announcements():
 
 def main():
     threading.Thread(target=check_update).start()
-    admin_command_list = "\n- ".join(_list_commands(admin, True))
-    task_command_list = "\n- ".join(_list_commands(task, True))
+    admin_command_list = "\n- ".join(_list_commands(admin))
+    task_command_list = "\n- ".join(_list_commands(task))
     plugin_list = "\n- ".join(_list_plugins().keys())
     parser = argparse.ArgumentParser(
         add_help=False,

@@ -1,7 +1,7 @@
 import datetime, json, logging, os, shutil, sys, subprocess
 import yaml
 
-from jinja2 import Template
+from jinja2 import Template as _Template
 
 from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
@@ -77,7 +77,7 @@ def _parse_template_files(templates_dir, workspace_files_dir):
         for fn in files:
             with open(os.path.join(root, fn), "r") as f:
                 tf = f.read().replace('"', "\"")
-            template = Template(tf)
+            template = _Template(tf)
             parsed = template.render(**state)
             full_path = os.path.join(ws_root, fn)
             with open(full_path, "w") as f:
@@ -155,7 +155,7 @@ def _read_project(project_file):
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
-    deploy_env = project.get("deploy", dict())
+    deploy_env = project.get("deploy", dict()).get("envs", dict())
     for key in deploy_env:
         full_key = ENV_PREFIX + key.upper()
         if state.is_allowed_env(full_key):

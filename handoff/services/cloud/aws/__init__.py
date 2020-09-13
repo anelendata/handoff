@@ -1,12 +1,13 @@
-import logging, os
+import datetime, logging, os, time
 
 import botocore
+import dateutil
 
 from handoff import utils
 from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK, get_state)
-from handoff.services.cloud.aws import (ecs, ecr, events, iam, s3, ssm, sts,
-                                  cloudformation)
+from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
+                                        sts, cloudformation)
 from handoff.services.cloud.aws import credentials as cred
 
 
@@ -535,3 +536,54 @@ def unschedule_task(target_id):
     LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
                  "home?region={region}#/clusters/{resource_group}-" +
                  "{task}/scheduledTasks").format(**params))
+
+
+def print_logs(start_time=None, end_time=None, format_=None, follow=False,
+               wait=2.5, last_line=None, **extras):
+    state = get_state()
+    log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+
+    if start_time and type(start_time) is str:
+        start_time = dateutil.parser.parse(start_time)
+    if end_time and type(end_time) is str:
+        end_time = dateutil.parser.parse(end_time)
+
+    if not format_:
+        format_ = "{datetime} - {message}"
+
+    response = logs.filter_log_events(log_group_name,
+                                      start_time=start_time,
+                                      end_time=end_time,
+                                      extras=extras)
+
+    for e in response.get("events", list()):
+        wait = 2.5
+        e["datetime"] = datetime.datetime.fromtimestamp(e["timestamp"] / 1000)
+        start_time = e["timestamp"]
+        new_line = format_.format(**e)
+        if new_line == last_line:
+            continue
+        last_line = new_line
+        print(new_line)
+
+    next_token = response.get("nextToken")
+    while next_token:
+        response = logs.filter_log_events(log_group_name,
+                                          next_token=next_token)
+        for e in response.get("events", list()):
+            e["datetime"] = datetime.datetime.fromtimestamp(
+                e["timestamp"] / 1000)
+            start_time = e["timestamp"]
+            new_line = format_.format(**e)
+            if new_line == last_line:
+                continue
+            last_line = new_line
+            print(new_line)
+        next_token = response.get("nextToken")
+
+    if follow:
+        time.sleep(wait)
+        print_logs(start_time, end_time, format_, follow, wait * 2, last_line,
+                   **extras)
+
+    return start_time

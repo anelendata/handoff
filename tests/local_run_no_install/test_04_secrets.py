@@ -23,7 +23,7 @@ def test_04_secrets():
 
         handoff.do("workspace", "init", project_dir, workspace_dir, data,
                    push_artifacts=False)
-        handoff.do("files", "get_local", project_dir, workspace_dir, data,
+        handoff.do("files", "get local", project_dir, workspace_dir, data,
                    push_artifacts=False)
         state = get_state()
 

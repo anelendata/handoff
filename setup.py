@@ -32,7 +32,7 @@ setup(
         "botocore>=1.13.0",
         "docker>=4.0.0",
         "lxml>=4.2.0",
-        "Jinjia2>=2.10.1",
+        "Jinja2>=2.10.1",
         "python-dateutil>=2.8.0",
         "pyyaml>=5.1",
         "requests>=2.19.0",

@@ -137,6 +137,7 @@ def get_parameter(key, resource_group_level=False):
         prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
                       "/" + key)
 
+    value = None
     try:
         value = ssm.get_parameter(prefix_key)
     except Exception as e:

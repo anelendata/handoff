@@ -42,13 +42,13 @@ commands.
 To install everything, run this command:
 '
 
-Command "handoff -p 03_exchange_rates -w workspace_03 workspace install"
+Command "handoff workspace install -p 03_exchange_rates -w workspace_03"
 
 echo "
 Now let's run the task. Try entering this command below:
 "
 
-Command "handoff -p 03_exchange_rates -w workspace_03 run local"
+Command "handoff run local -p 03_exchange_rates -w workspace_03"
 
 echo "
 This process should have created a CSV file in artifacts directory:

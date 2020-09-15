@@ -50,7 +50,7 @@ key-value storage.
 Try running:
 "
 
-Command "handoff -p 03_exchange_rates config push"
+Command "handoff config push -p 03_exchange_rates"
 
 echo '
 Look at the end of the log that says,
@@ -78,7 +78,7 @@ So we will create a cloud data storage (S3 bucket) for that.
 Try running:
 "
 
-Command "handoff -p 03_exchange_rates cloud create_bucket"
+Command "handoff cloud bucket create -p 03_exchange_rates"
 
 echo '
 Wait for a minute and check here
@@ -100,7 +100,7 @@ Now it's time to push the files to the bucket.
 Try running:
 "
 
-Command "handoff -p 03_exchange_rates files push"
+Command "handoff files push -p 03_exchange_rates"
 
 echo '
 Look at the end of the log that says,
@@ -119,14 +119,14 @@ echo "
 Install the workspace:
 "
 
-Command "handoff -p 03_exchange_rates -w workspace workspace install"
+Command "handoff workspace install -p 03_exchange_rates -w workspace"
 
 echo "
 Now let's run the command by pulling the configurations and files from remote. 
 
 Try running:
 "
-Command "handoff -p 03_exchange_rates -w workspace run remote_config --push-artifacts"
+Command "handoff run remote config -p 03_exchange_rates -w workspace --push-artifacts"
 
 echo '
 Notice that we used --push-artifacts option in the last command.

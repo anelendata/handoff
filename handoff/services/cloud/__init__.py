@@ -50,7 +50,7 @@ def _get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
     return platform.get_platform_auth_env(data)
 
 
-def create_role(project_dir, workspace_dir, data, **kwargs):
+def role_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -71,7 +71,7 @@ def create_role(project_dir, workspace_dir, data, **kwargs):
     )
 
 
-def update_role(project_dir, workspace_dir, data, **kwargs):
+def role_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -92,7 +92,7 @@ def update_role(project_dir, workspace_dir, data, **kwargs):
     )
 
 
-def delete_role(project_dir, workspace_dir, data, **kwargs):
+def role_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -100,7 +100,7 @@ def delete_role(project_dir, workspace_dir, data, **kwargs):
     platform.delete_role()
 
 
-def create_bucket(project_dir, workspace_dir, data, **kwargs):
+def bucket_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -108,7 +108,7 @@ def create_bucket(project_dir, workspace_dir, data, **kwargs):
     platform.create_bucket()
 
 
-def update_bucket(project_dir, workspace_dir, data, **kwargs):
+def bucket_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -116,7 +116,7 @@ def update_bucket(project_dir, workspace_dir, data, **kwargs):
     platform.update_bucket()
 
 
-def delete_bucket(project_dir, workspace_dir, data, **kwargs):
+def bucket_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -124,7 +124,7 @@ def delete_bucket(project_dir, workspace_dir, data, **kwargs):
     platform.delete_bucket()
 
 
-def create_resources(project_dir, workspace_dir, data, **kwargs):
+def resources_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -132,7 +132,7 @@ def create_resources(project_dir, workspace_dir, data, **kwargs):
     platform.create_resources()
 
 
-def update_resources(project_dir, workspace_dir, data, **kwargs):
+def resources_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -140,7 +140,7 @@ def update_resources(project_dir, workspace_dir, data, **kwargs):
     platform.update_resources()
 
 
-def delete_resources(project_dir, workspace_dir, data, **kwargs):
+def resources_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -148,7 +148,7 @@ def delete_resources(project_dir, workspace_dir, data, **kwargs):
     platform.delete_resources()
 
 
-def create_task(project_dir, workspace_dir, data, **kwargs):
+def task_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -156,7 +156,7 @@ def create_task(project_dir, workspace_dir, data, **kwargs):
     platform.create_task()
 
 
-def update_task(project_dir, workspace_dir, data, **kwargs):
+def task_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
@@ -164,7 +164,7 @@ def update_task(project_dir, workspace_dir, data, **kwargs):
     platform.update_task()
 
 
-def delete_task(project_dir, workspace_dir, data, **kwargs):
+def task_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
     admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()

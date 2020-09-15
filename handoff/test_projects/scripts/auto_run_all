@@ -7,5 +7,5 @@ source scripts/funcs
 for i in `ls scripts/aws_get_started | grep -v funcs | grep -v cleanup`;
 do
 export SCRIPT=$i
-./auto_run auto 10
+./scripts/auto_run auto 10
 done

@@ -89,6 +89,8 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data,
             os.chdir(prev_wd)
             return
 
+        if workspace_dir:
+            admin.workspace_init(project_dir, workspace_dir, data)
         commands[command](project_dir, workspace_dir, data)
     else:
         if command:
@@ -163,9 +165,6 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
     state = get_state()
     command = (top_command + " " + sub_command).strip()
 
-    if workspace_dir:
-        admin.workspace_init(project_dir, workspace_dir, data)
-
     plugin_modules = _list_plugins()
 
     if command in _list_commands(task):
@@ -187,7 +186,10 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
             os.chdir(prev_wd)
             return
 
+        if workspace_dir:
+            admin.workspace_init(project_dir, workspace_dir, data)
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
+
         os.chdir(prev_wd)
         print_update()
         print_announcements()

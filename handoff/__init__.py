@@ -43,6 +43,7 @@ def _load_data_params(arg_list):
             pass
 
         data[key] = value
+
     LOGGER.debug("data params: %s" % data)
     return data
 
@@ -109,11 +110,18 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
 
     admin.workspace_init(project_dir, workspace_dir, data)
 
-    remote_ops = ["run", "run remote_config"]
+    remote_ops = ["run", "run remote config"]
     local_ops = ["run local", "show commands"]
     if command in remote_ops:
         if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
-            admin.config_get_local(project_dir, workspace_dir, data)
+            try:
+                admin.config_get_local(project_dir, workspace_dir, data)
+            except Exception:
+                LOGGER.error("To test run with remote config, you need to" +
+                             "either set the project directory (-p) or" +
+                             "manually set environmental variables: %s %s" %
+                             (RESOURCE_GROUP, TASK))
+                exit(1)
         config = admin.config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
         admin.artifacts_get(project_dir, workspace_dir, data)
@@ -385,7 +393,7 @@ handoff <command> -h for more help.\033[0m
               "project directory.")
         exit(1)
 
-    args.subcommand = "_".join(args.subcommand)
+    args.subcommand = " ".join(args.subcommand)
     threading.Thread(target=check_announcements,
                      kwargs= {"command": args.command,
                               "subcommand": args.subcommand}).start()

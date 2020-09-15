@@ -38,17 +38,17 @@ Try running the following command. Enter y when prompted at the beginning.
 The build may take 5~10 minutes.
 "
 
-Command "handoff -p 03_exchange_rates container build"
+Command "handoff container build -p 03_exchange_rates"
 
 echo "
 Now let's run the code in the Docker container.
 "
 
-Command "handoff -p 03_exchange_rates container run"
+Command "handoff continer run -p 03_exchange_rates"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
-BUCKET=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_BUCKET"}' -l critical`
-TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+BUCKET=`handoff -p 03_exchange_rates envs get -d key=HO_BUCKET -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d key=HO_TASK -l critical`
 
 echo '
 Confirm the run by checking the logs. Also check the artifacts on S3:
@@ -72,9 +72,9 @@ Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 "
 
-Command "handoff -p 03_exchange_rates container push"
+Command "handoff container push -p 03_exchange_rates"
 
-REGION=`handoff -p 03_exchange_rates envs get -d '{"key":"AWS_REGION"}' -l critical`
+REGION=`handoff -p 03_exchange_rates envs get -d key=AWS_REGION -l critical`
 echo "
 Confirm that the Docker image has been uploaded to:
 

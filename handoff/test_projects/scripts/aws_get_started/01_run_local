@@ -16,7 +16,7 @@ echo "
 Each project directory contains:
 "
 
-ListDir "01_word_count" 
+ListDir "01_word_count"
 
 Prompt
 
@@ -24,7 +24,7 @@ echo "
 project.yml looks like:
 "
 
-Cat "01_word_count/project.yml" 
+Cat "01_word_count/project.yml"
 
 Prompt
 
@@ -39,13 +39,13 @@ echo "
 The example from 01_word_count runs a command line equivalent of:
 "
 
-Code "cat ./files/the_great_dictator_speech.txt | wc -w" 
+Code "cat ./files/the_great_dictator_speech.txt | wc -w"
 
 echo "
 Now let's run. Try entering this command below:
 "
 
-Command "handoff --project 01_word_count --workspace workspace run local" 
+Command "handoff run local --project 01_word_count --workspace workspace"
 
 Prompt
 
@@ -57,7 +57,7 @@ Code "\n
 INFO - 2020-08-03 04:51:01,971 - handoff.config - Reading configurations from 01_word_count/project.yml\n
 ...\n
 INFO - 2020-08-03 04:51:02,690 - handoff.config - Processed in 0:00:00.005756\n
-" 
+"
 
 Prompt
 
@@ -66,13 +66,13 @@ Then great! You just ran the first local test. It created a workspace
 directory that looks like:
 "
 
-ListDir workspace 
+ListDir workspace
 
 echo "
 And the word count is stored at workspace/artifacts/state. Here is the content:
 "
 
-Cat " workspace/artifacts/state" 
+Cat " workspace/artifacts/state"
 
 Prompt
 
@@ -98,7 +98,7 @@ echo "
 Now to the second example. This time project.yml looks like:
 "
 
-Cat 02_collect_stats/project.yml 
+Cat 02_collect_stats/project.yml
 
 Prompt
 
@@ -106,7 +106,7 @@ echo "
 ...which is shell equivalent to
 "
 
-Code "cat ./files/the_great_dictator_speech.txt | python ./files/stats_collector.py | wc -w" 
+Code "cat ./files/the_great_dictator_speech.txt | python ./files/stats_collector.py | wc -w"
 
 echo "
 The script for the second command stats_collector.py can be found in
@@ -115,7 +115,7 @@ The script for the second command stats_collector.py can be found in
 
 Prompt
 
-Cat "02_collect_stats/files/stats_collector.py" 
+Cat "02_collect_stats/files/stats_collector.py"
 
 echo "
 The script reads from stdin and counts the lines while passing the raw input to stdout.
@@ -128,7 +128,7 @@ echo "
 Now let's run. Try entering this command below:
 "
 
-Command "handoff --project 02_collect_stats --workspace workspace run local" $DIM 0
+Command "handoff run local --project 02_collect_stats --workspace workspace" $DIM 0
 
 echo "
 Let's check out the contents of the second command:

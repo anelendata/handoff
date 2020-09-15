@@ -28,7 +28,7 @@ Prompt "The following command is set to trigger the task 5 minutes later from no
 hour=`date -u +"%H"`
 min=`date -u +"%M"`
 min=$(($min + 5))
-Command "handoff -p 03_exchange_rates cloud schedule --data '{\"target_id\": \"1\", \"cron\": \"$min $hour * * ? *\"}'"
+Command "handoff cloud schedule -p 03_exchange_rates --data target_id=1 cron=\"$min $hour * * ? *\""
 
 echo '
 

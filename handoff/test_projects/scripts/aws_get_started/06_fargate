@@ -26,7 +26,7 @@ We will first need to create a cluster.
 To make this process easy, handoff packed everything up in a command:
 "
 
-Command "handoff -p 03_exchange_rates cloud create_resources"
+Command "handoff cloud resources create -p 03_exchange_rates"
 
 echo '
 
@@ -52,7 +52,7 @@ echo "
 Now it's time to deploy the task and here is the command:
 "
 
-Command "handoff -p 03_exchange_rates cloud create_task"
+Command "handoff cloud task create -p 03_exchange_rates"
 
 echo '
 
@@ -78,7 +78,7 @@ Once the task is created, try running on Fargate.
 To do so, run this command:
 "
 
-Command "handoff -p 03_exchange_rates cloud run"
+Command "handoff cloud run -p 03_exchange_rates"
 
 echo '
 At the end of the log, you should see a line like:

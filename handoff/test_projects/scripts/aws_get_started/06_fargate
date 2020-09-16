@@ -127,6 +127,25 @@ of the section.
 The log should be similar to the output from the local execution.
 '
 
+if [[ $MODE = "auto" ]]; then sleep 5m; fi
+
+Prompt
+
+echo "
+Another way to check the log is to use handoff's built in command:
+"
+
+Command "handoff cloud logs -p 03_exchange_rates"
+
+echo '
+The log can also take the parameters such as start_time, end_time, and follow:
+```
+handoff cloud logs -p 03_exchange_rates -d follow=true start_time="2020-09-15 07:18:00"
+```
+
+follow=true will wait for more logs to be produced. ctrl-C to quit.
+'
+
 Prompt
 
 Thanks

@@ -62,8 +62,28 @@ INFO - 2020-08-03 04:51:02,690 - handoff.config - Processed in 0:00:00.005756\n
 Prompt
 
 echo "
-Then great! You just ran the first local test. It created a workspace
-directory that looks like:
+Then great! You just ran the first local test.
+    
+For now, let's not worry about the warnings in the log such as:
+
+- .secrets files not found:
+```
+[ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:199)
+```
+  This is for using handoff Template feature with secret variables.
+
+- Environment variables not set:
+```
+[ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:126)
+```
+  This is for running the task with remotely stored configurations and files.
+  I will explain in the later section.
+"
+
+Prompt
+
+echo "
+The previous run created a workspace directory that looks like:
 "
 
 ListDir workspace

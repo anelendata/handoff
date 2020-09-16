@@ -7,5 +7,4 @@ def get(project_dir, workspace_dir, data, **kwargs):
     -d '{"key": <ENV_VAR_KEY>}'
     """
     state = _get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     print(state[data["key"]])

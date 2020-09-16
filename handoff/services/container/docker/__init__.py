@@ -10,22 +10,26 @@ LOGGER = utils.get_logger(__name__)
 
 
 def _envs(project_dir, workspace_dir, data, **kwargs):
-    _ = admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = cloud._get_platform()
     if not platform.login():
         raise Exception("Please set platform credentials")
-    # Do this again to set DOCKER_IMAGE
-    _ = admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
+    # Do this to set DOCKER_IMAGE
+    _ = admin._config_get_local(project_dir, workspace_dir, data, **kwargs)
 
 
 def build(project_dir, workspace_dir, data, **kwargs):
+    """Build Docker image
+    If you want to feed a custom Dockerfile, use --data option:
+      --data docker_file="/path_to/Dockerfile"
+    If you have extra files to copy to the image's workspace directory,
+    use --data option. Every file under the directory will be copied:
+      --data files_dir="/path_to/extra_files_dir"
+    """
     _envs(project_dir, workspace_dir, data, **kwargs)
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
-    config_vars = admin.config_get_local(
-        project_dir, workspace_dir, data, **kwargs)
-    files_dir = config_vars.get("container", {}).get("files_dir")
-    docker_file = config_vars.get("container", {}).get("docker_file")
+    files_dir = data.get("files_dir")
+    docker_file = data.get("docker_file")
     if docker_file:
         LOGGER.info("Using Dockerfile at: " + docker_file)
     impl.build(project_dir, docker_file=docker_file, files_dir=files_dir)

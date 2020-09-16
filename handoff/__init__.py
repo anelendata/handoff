@@ -4,7 +4,7 @@ import yaml
 from lxml import html
 import requests
 
-from handoff.config import (VERSION, HANDOFF_DIR,
+from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
                             DOCKER_IMAGE, IMAGE_VERSION,
@@ -22,13 +22,13 @@ LATEST_AVAILABLE_VERSION = None
 ANNOUNCEMENTS = None
 
 
-def _load_data_params(arg_list):
+def _load_param_list(arg_list):
     data = {}
     for a in arg_list:
         pos = a.find("=")
         if pos < 0:
             raise ValueError("data argument list format error")
-        key = a[0:pos].strip()
+        key = a[0:pos].strip().strip('"').strip("'")
         value = a[pos + 1:].strip()
         if not key or not value:
             raise ValueError("data argument list format error")
@@ -114,24 +114,23 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
 
     remote_ops = ["run", "run remote config"]
     local_ops = ["run local", "show commands"]
+
+    # Load config from remote or local
+    config = dict()
     if command in remote_ops:
         if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
-            try:
-                admin.config_get_local(project_dir, workspace_dir, data)
-            except Exception:
-                LOGGER.error("To test run with remote config, you need to" +
-                             "either set the project directory (-p) or" +
-                             "manually set environmental variables: %s %s" %
-                             (RESOURCE_GROUP, TASK))
-                exit(1)
-        config = admin.config_get(project_dir, workspace_dir, data)
+            LOGGER.error("To test run with remote config, you need to" +
+                         "either set the project directory (-p) or" +
+                         "manually set environmental variables: %s %s" %
+                         (RESOURCE_GROUP, TASK))
+            exit(1)
+        config = admin._config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
         admin.artifacts_get(project_dir, workspace_dir, data)
     elif command in local_ops:
-        config = admin.config_get_local(project_dir, workspace_dir, data)
+        config = admin._config_get_local(project_dir, workspace_dir, data)
         admin.files_get_local(project_dir, workspace_dir, data)
-    else:
-        config = {}
+
     os.chdir(workspace_dir)
 
     LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
@@ -167,8 +166,8 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
     plugin_modules = _list_plugins()
 
+    # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):
-        # Wrap with try except for better logging in docker execution
         try:
             _run_task_subcommand(command, project_dir, workspace_dir, data,
                                  **kwargs)
@@ -188,6 +187,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
 
         if workspace_dir:
             admin.workspace_init(project_dir, workspace_dir, data)
+        admin._config_get_local(project_dir, workspace_dir, data)
         admin_commands[command](project_dir, workspace_dir, data, **kwargs)
 
         os.chdir(prev_wd)
@@ -196,6 +196,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
         return
 
     if top_command == "container":
+        admin._config_get_local(project_dir, workspace_dir, data)
         _run_subcommand(container, sub_command, project_dir, workspace_dir, data,
                         show_help, **kwargs)
         return
@@ -206,7 +207,7 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                             data, show_help, **kwargs)
             return
 
-        admin.config_get_local(project_dir, workspace_dir, data)
+        admin._config_get_local(project_dir, workspace_dir, data)
         if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = container.get_latest_image_version(
                 project_dir, workspace_dir, data)
@@ -218,6 +219,8 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
         return
 
     if top_command in plugin_modules.keys():
+        if project_dir:
+            admin._config_get_local(project_dir, workspace_dir, data)
         _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
                         workspace_dir, data, show_help, **kwargs)
         return
@@ -327,7 +330,9 @@ def main():
     parser.add_argument("-w", "--workspace-dir", type=str, default=None,
                         help="Location of workspace directory")
     parser.add_argument("-d", "--data", type=str, nargs="*", default="",
-                        help="Data required for the command a='x' b='y' ...")
+                        help="Extra data for the command. List after this option like: -d key1=value1 key2=value2...")
+    parser.add_argument("-e", "--envs", type=str, nargs="*", default="",
+                        help="Define environment variables. List after this option like: -d key1=value1 key2=value2...")
     parser.add_argument("-a", "--push-artifacts", action="store_true",
                         help="Push artifacts to remote at the end of the run")
 
@@ -377,8 +382,11 @@ handoff <command> -h for more help.\033[0m
 
     LOGGER.setLevel(args.log_level.upper())
 
-    data = _load_data_params(args.data)
+    data = _load_param_list(args.data)
 
+    envs = _load_param_list(args.envs)
+    for key in envs.keys():
+        os.environ[ENV_PREFIX + key.upper()] = envs[key]
     os.environ[CLOUD_PROVIDER] = args.cloud_provider
     os.environ[CLOUD_PLATFORM] = args.cloud_platform
     os.environ[CONTAINER_PROVIDER] = args.container_provider

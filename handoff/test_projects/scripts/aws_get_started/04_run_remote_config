@@ -40,7 +40,7 @@ Cat "03_exchange_rates/config/tap-config.json" $DIM 0
 Cat "03_exchange_rates/config/target-config.json" $DIM 0
 
 echo "
-Often times, such configuration files contain sensitive information.
+Such configuration files often contain sensitive information.
 So we push the configrations to a secure key store such as
 AWS Systems Manager (SSM) Parameter Store (In SecuresString format)
 handoff wraps this proces by a single command. handoff packs all the JSON
@@ -126,18 +126,23 @@ Now let's run the command by pulling the configurations and files from remote.
 
 Try running:
 "
-Command "handoff run remote config -p 03_exchange_rates -w workspace --push-artifacts"
+Command "handoff run -w workspace --envs resource_group=handoff-test task=test-exchange-rates --push-artifacts"
 
 echo '
-Notice that we used --push-artifacts option in the last command.
+This time, we are not using the local project definition.
+We are pulling the project configurations from the remote parameter store identified
+by the resource group and task names.
+
+Also notice that we used --push-artifacts option in the last command.
 With this option, we pushed the result to the bucket under
 
 
-```shell'
+```shell
+'
 
-TASK=`handoff -p 03_exchange_rates envs get -d '{"key":"HO_TASK"}' -l critical`
+TASK=`handoff -p 03_exchange_rates envs get -d key=HO_TASK -l critical`
 
-echo "    $TASK/last/artifacts"
+echo "    s3://..../$TASK/last/artifacts"
 
 echo '
 ```
@@ -151,8 +156,7 @@ Also note that artifacts are automatically archived at each run at
 ```shell
 '
 
-echo "
-    $TASK/runs/
+echo "    s3://..../$TASK/runs/
 "
 
 echo '
@@ -160,6 +164,28 @@ echo '
 
 directory.
 '
+
+Prompt
+
+echo "
+Recall 03_exchange_rates/project.yml looks like:
+"
+
+Cat "03_exchange_rates/project.yml" $DIM 0
+
+echo "
+The deploy section specifies:
+
+- cloud_provider: Currently only AWS is supported.
+- cloud_platform: The serverless platfor on which the task will run.
+- envs: The environment variables set when running `cloud` sub-commands:
+  - resource_group: The resource group name, which is used for creating
+    remote storage (e.g. AWS S3) names and the remote parameter store's
+    namespace. The resource can be shared with multiple tasks.
+  - docker_image: The Docker image name given to the current project.
+  - task: Task name. Note that multiple tasks with varying configurations can
+    be generated from a Docker image.
+"
 
 Prompt
 

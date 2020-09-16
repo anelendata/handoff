@@ -175,18 +175,16 @@ def _read_project(project_file):
 
 def secrets_get(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
-        config_get(project_dir, workspace_dir, data, **kwargs)
-    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
-
-    LOGGER.info("Fetching the secrets from the remote parameter store.")
-
+    state.validate_env([RESOURCE_GROUP, TASK,
+                        CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
-
+    LOGGER.info("Fetching the secrets from the remote parameter store.")
     global SECRETS
-    SECRETS.update(platform.get_all_parameters())
+    SECRETS = {}
+    params = platform.get_all_parameters()
+    if params:
+        SECRETS.update(params)
 
 
 def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
@@ -230,7 +228,6 @@ def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
 
 def secrets_push(project_dir, workspace_dir, data, **kwargs):
     """Push the contents of <project_dir>/files to remote storage"""
-    _ = config_get_local(project_dir, workspace_dir, data)
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
@@ -259,7 +256,6 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
 
 def secrets_delete(project_dir, workspace_dir, data, **kwargs):
     """Push the contents of <project_dir>/files to remote storage"""
-    _ = config_get_local(project_dir, workspace_dir, data)
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
@@ -291,8 +287,6 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
     """Archive: Copy the artifacts directory from last to run in the remote
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -311,9 +305,6 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
     """Download artifacts from the remote storage to <workspace_dir>
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
-        config_get(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -336,9 +327,6 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
     """Push local artifacts file to remote storage under last directory.
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
-        config_get(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -360,8 +348,6 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
     """Delete artifacts from the remote artifacts/last directory
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -379,9 +365,6 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
     """Get remote files from to <workspace_dir>/files
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
-        config_get(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -394,7 +377,7 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    _, _, files_dir =  _workspace_get_dirs(workspace_dir)
+    _, _, files_dir = _workspace_get_dirs(workspace_dir)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.download_dir(remote_dir, files_dir)
 
@@ -424,7 +407,6 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
             shutil.rmtree(files_dir)
         shutil.copytree(project_files_dir, files_dir)
 
-    _ = config_get_local(project_dir, workspace_dir, data)
     templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
     _parse_template_files(templates_dir,
                           os.path.join(workspace_dir, FILES_DIR))
@@ -432,7 +414,6 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
     """Push the contents of <project_dir>/files to remote storage"""
-    _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
 
     files_dir = os.path.join(project_dir, FILES_DIR)
@@ -448,8 +429,6 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
     """Delete files from the remote storage
     """
     state = get_state()
-    if not state.get(BUCKET):
-        _ = config_get_local(project_dir, workspace_dir, data)
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
@@ -460,7 +439,7 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_dir(dir_name)
 
 
-def config_get(project_dir, workspace_dir, data, **kwargs):
+def _config_get(project_dir, workspace_dir, data, **kwargs):
     """Read configs from remote parameter store and copy them to workspace dir
     """
     if not workspace_dir:
@@ -477,7 +456,7 @@ def config_get(project_dir, workspace_dir, data, **kwargs):
     return precompiled_config
 
 
-def config_get_local(project_dir, workspace_dir, data, **kwargs):
+def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     """ Compile configuration JSON file from the project.yml
 
     The output JSON file describes the commands and arguments for each process.
@@ -546,28 +525,19 @@ def config_get_local(project_dir, workspace_dir, data, **kwargs):
 def config_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
     LOGGER.info("Compiling config from %s" % project_dir)
-    config = json.dumps(config_get_local(project_dir, workspace_dir, data))
+    config = json.dumps(_config_get_local(project_dir, workspace_dir, data))
 
     platform = cloud._get_platform()
     platform.push_parameter("config", config, **kwargs)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
-    _ = config_get_local(project_dir, workspace_dir, data)
     platform = cloud._get_platform()
     platform.delete_parameter("config")
 
 
 def config_print(project_dir, workspace_dir, data, **kwargs):
-    _ = config_get_local(project_dir, workspace_dir, data)
-    print(json.dumps(config_get(project_dir, workspace_dir, data)))
-
-
-def workspace_get(project_dir, workspace_dir, data, **kwargs):
-    _ = config_get_local(project_dir, workspace_dir, data)
-    config_get(project_dir, workspace_dir, data)
-    artifacts_get(project_dir, workspace_dir, data)
-    files_get(project_dir, workspace_dir, data)
+    print(json.dumps(_config_get(project_dir, workspace_dir, data)))
 
 
 def workspace_init(project_dir, workspace_dir, data, **kwargs):

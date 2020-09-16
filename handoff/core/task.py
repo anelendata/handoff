@@ -31,14 +31,15 @@ def _get_env():
 
 def _get_command_string(command, argstring, params):
     """
-    Construct a shell command string from a template, inserting virtual env and parameters.
+    Construct a shell command string from a template, inserting virtual env
+    and parameters.
 
     Available params:
     - python
     - code_dir
     - work_dir
     """
-    if argstring == None:
+    if argstring is None:
         argstring = ""
     command = "%s %s" % (command,  argstring)
     command = command.format(**params)
@@ -54,7 +55,8 @@ def _get_commands(params, data):
     for command in params["commands"]:
         params = _get_params(data)
         params["venv"] = command.get("venv", None)
-        command_str = _get_command_string(command["command"], command.get("args", None), params)
+        command_str = _get_command_string(command["command"],
+                                          command.get("args", None), params)
         commands.append(command_str)
     return commands
 
@@ -88,7 +90,8 @@ def run(config, data):
     # "Limiting each container to one process is a good rule of thumb, but it is not a hard and fast rule."
     # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#decouple-applications
     procs = list()
-    procs.append(subprocess.Popen([commands[0]], stdout=subprocess.PIPE, env=env, shell=True))
+    procs.append(subprocess.Popen([commands[0]], stdout=subprocess.PIPE,
+                                  env=env, shell=True))
 
     for i in range(1, len(commands)):
         try:
@@ -114,10 +117,6 @@ def run(config, data):
     LOGGER.debug("State after the execution: %s" % state)
 
     return state
-
-
-def run_remote_config(config, data):
-    return run(config, data)
 
 
 def run_local(config, data):

@@ -150,7 +150,4 @@ Resources:
                 - ssm:Get*
                 - ssm:List*
               Resource:
-                # 0.1.x follows ${AWS::StackName}- prefix
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${AWS::StackName}*
-                # 0.2.x will follow ${ResourceGroup}-${AWS::StackName}- prefix
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}-${AWS::StackName}*
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}*

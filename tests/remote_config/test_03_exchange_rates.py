@@ -51,7 +51,7 @@ def test_03_exchange_rates():
         handoff.do("workspace", "install", project_dir, workspace_dir, data,
                    push_artifacts=False)
 
-        handoff.do("run", "remote_config", None, workspace_dir, data,
+        handoff.do("run", "", None, workspace_dir, data,
                    push_artifacts=True)
 
         handoff.do("files", "delete", project_dir, None, data,

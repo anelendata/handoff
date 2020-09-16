@@ -17,8 +17,8 @@ ChooseAwsProfile
 fi
 
 echo '
-To schedule a task, use schedule command with target_id and
-[CRON format]://en.wikipedia.org/wiki/Cron).
+To schedule a task, use schedule command with parameters target_id and
+cron in [CRON format](https://en.wikipedia.org/wiki/Cron).
 
 We pass those values to handoff with `--data` (`-d` for short) option:
 '
@@ -28,7 +28,7 @@ Prompt "The following command is set to trigger the task 5 minutes later from no
 hour=`date -u +"%H"`
 min=`date -u +"%M"`
 min=$(($min + 5))
-Command "handoff cloud schedule -p 03_exchange_rates --data target_id=1 cron=\"$min $hour * * ? *\""
+Command "handoff cloud schedule -p 03_exchange_rates --data target_id=1 cron='$min $hour * * ? *'"
 
 echo '
 

@@ -21,7 +21,7 @@ commands:
     installs:
       - "pip install target-csv"
 
-# deploy is required for using run remote_config, config/files get/push,
+# deploy is required for using `handoff run`, config/files push/delete,
 #   container, cloud
 deploy:
   # For now, aws/fargate is the only supported provider/platform

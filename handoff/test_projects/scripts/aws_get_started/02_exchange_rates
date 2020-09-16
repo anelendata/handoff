@@ -24,6 +24,10 @@ Cat "03_exchange_rates/project.yml" $DIM 0
 Prompt
 
 echo "
+(The deploy section in the file is irrelevant and unnecessary for now.
+We will use it in the later exercise.)
+
+
 ...which is shell equivalent to
 
     tap-exchangeratesapi | python files/stats_collector.py | target-csv

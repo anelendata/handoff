@@ -72,7 +72,7 @@ The following code removes all the locally stored Docker images containing the
 project name:
 "
 
-Command "docker images --format '{{.Repository}}:{{.Tag}}' |grep $REPO | xargs -I % sh -c 'docker rmi %'"
+Command "docker images --format '{{.Repository}}:{{.Tag}}' |grep $REPO | xargs -I % sh -c 'docker rmi --force %'"
 
 echo "
 That's all.

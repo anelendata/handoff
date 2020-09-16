@@ -11,70 +11,71 @@ Try running the following command. Enter y when prompted at the beginning.
 The build may take 5~10 minutes.
 
 ```shell
-> handoff -p 03_exchange_rates container build
+> handoff container build -p 03_exchange_rates
 ```
 ```shell
 
-INFO - 2020-08-06 03:38:59,397 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:38:59,478 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:38:59,766 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:38:59,766 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:38:59,766 - handoff.config - Setting environment variables from config.
-INFO - 2020-08-06 03:38:59,833 - handoff.config - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test
-INFO - 2020-08-06 03:38:59,913 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:38:59,913 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:38:59,916 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:38:59,916 - handoff.config - Setting environment variables from config.
+[2020-09-15 16:54:57,503] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 16:54:57,506] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 16:54:57,508] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-09-15 16:54:57,626] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 16:54:57,910] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 16:54:57,978] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
+[2020-09-15 16:54:58,085] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 16:54:58,085] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 16:54:58,088] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 16:54:58,088] [    INFO] - Setting environment variables from config. - (admin.py:104)
 .
 .
 .
-
-INFO - 2020-08-06 03:41:40,008 - handoff.config - Step 27/27 : CMD handoff ${COMMAND:-run remote_config} -w workspace -a -d ${DATA:-{}} -a
-INFO - 2020-08-06 03:41:40,044 - handoff.config -  ---> Running in 21a548c43c0b
-
-INFO - 2020-08-06 03:41:40,148 - handoff.config -  ---> 1bbadd87b10d
-
-INFO - 2020-08-06 03:41:41,621 - handoff.config - Successfully built 1bbadd87b10d
-
-INFO - 2020-08-06 03:41:41,652 - handoff.config - Successfully tagged singer_exchange_rates_to_csv:0.5
+ - (impl.py:101)
+[2020-09-15 17:03:05,396] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d ${DATA:-"dummy=1"} -a - (impl.py:101)
+[2020-09-15 17:03:05,433] [    INFO] -  ---> Running in c68be66fc7be
+ - (impl.py:101)
+[2020-09-15 17:03:05,540] [    INFO] -  ---> c1b0adcfac9a
+ - (impl.py:101)
+[2020-09-15 17:03:11,992] [    INFO] - Successfully built c1b0adcfac9a
+ - (impl.py:101)
+[2020-09-15 17:03:12,009] [    INFO] - Successfully tagged singer_exchange_rates_to_csv:0.1
+ - (impl.py:101)
 ```
 
 Now let's run the code in the Docker container.
 
 ```shell
-> handoff -p 03_exchange_rates container run
+> handoff container run -p 03_exchange_rates
 ```
 ```shell
 
-INFO - 2020-08-06 03:41:45,336 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:41:45,509 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:41:45,964 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:41:45,965 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:41:45,965 - handoff.config - Setting environment variables from config.
-INFO - 2020-08-06 03:41:46,029 - handoff.config - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test
-INFO - 2020-08-06 03:41:46,108 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:41:46,108 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:41:46,111 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:41:46,112 - handoff.config - Setting environment variables from config.
+[2020-09-15 17:03:18,506] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 17:03:18,512] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 17:03:18,514] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-09-15 17:03:18,724] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:03:19,183] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 17:03:19,247] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
+[2020-09-15 17:03:19,417] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 17:03:19,417] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 17:03:19,420] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 17:03:19,421] [    INFO] - Setting environment variables from config. - (admin.py:104)
 .
 .
 .
-INFO - 2020-08-06 03:41:54,603 - handoff.services.cloud.aws.s3 - Copied s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/collect_stats.json to s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/runs/2020-08-06T03:41:54.279771/artifacts/collect_stats.json
+[2020-09-15 17:03:28,849] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/collect_stats.json to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/collect_stats.json - (s3.py:53)
 
-INFO - 2020-08-06 03:41:54,797 - handoff.services.cloud.aws.s3 - Copied s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/exchange_rate-20200806T033855.csv to s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/runs/2020-08-06T03:41:54.279771/artifacts/exchange_rate-20200806T033855.csv
+[2020-09-15 17:03:29,040] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/exchange_rate-20200915T165453.csv to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/exchange_rate-20200915T165453.csv - (s3.py:53)
 
-INFO - 2020-08-06 03:41:55,002 - handoff.services.cloud.aws.s3 - Copied s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/exchange_rate-20200806T034150.csv to s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/runs/2020-08-06T03:41:54.279771/artifacts/exchange_rate-20200806T034150.csv
+[2020-09-15 17:03:29,236] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/exchange_rate-20200915T170326.csv to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/exchange_rate-20200915T170326.csv - (s3.py:53)
 
-INFO - 2020-08-06 03:41:55,172 - handoff.services.cloud.aws.s3 - Copied s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/state to s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/runs/2020-08-06T03:41:54.279771/artifacts/state
+[2020-09-15 17:03:29,501] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/state to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/state - (s3.py:53)
 
-INFO - 2020-08-06 03:41:55,342 - handoff.services.cloud.aws.s3 - Copied s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/files/stats_collector.py to s3://xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/runs/2020-08-06T03:41:54.279771/files/stats_collector.py
+[2020-09-15 17:03:29,768] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/files/stats_collector.py to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/files/stats_collector.py - (s3.py:53)
 ```
 
 Confirm the run by checking the logs. Also check the artifacts on S3:
 ```shell
 
 
-    xxxxxxxxxxxx-handoff-test/test-03-exchange-rates/last/artifacts/
+    xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/
 
 
 ```
@@ -87,33 +88,33 @@ Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 
 ```shell
-> handoff -p 03_exchange_rates container push
+> handoff container push -p 03_exchange_rates
 ```
 ```shell
 
-INFO - 2020-08-06 03:41:57,295 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:41:57,378 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:41:57,659 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:41:57,659 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:41:57,660 - handoff.config - Setting environment variables from config.
-INFO - 2020-08-06 03:41:57,725 - handoff.config - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test
-INFO - 2020-08-06 03:41:57,804 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:41:57,804 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:41:57,807 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:41:57,808 - handoff.config - Setting environment variables from config.
+[2020-09-15 17:03:32,370] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 17:03:32,373] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 17:03:32,375] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-09-15 17:03:32,490] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:03:32,773] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 17:03:32,838] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
+[2020-09-15 17:03:32,944] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 17:03:32,944] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 17:03:32,948] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 17:03:32,948] [    INFO] - Setting environment variables from config. - (admin.py:104)
 .
 .
 .
-INFO - 2020-08-06 03:44:22,758 - handoff.config - id: 6734fdd29c24 [================================================>  ]  526.1MB/540.8MB
-INFO - 2020-08-06 03:44:23,478 - handoff.config - id: c836a53f9c0b [=============================================>     ]    401MB/439.5MB
-INFO - 2020-08-06 03:44:24,493 - handoff.config - id: 44aecb8afa22 [=============================================>     ]  400.4MB/439.5MB
-INFO - 2020-08-06 03:44:29,789 - handoff.config - id: c836a53f9c0b [================================================>  ]  426.4MB/439.5MB
-INFO - 2020-08-06 03:44:29,849 - handoff.config - id: 6734fdd29c24 status: Pushed
-INFO - 2020-08-06 03:44:30,083 - handoff.config - id: 44aecb8afa22 [================================================>  ]  426.9MB/439.5MB
-INFO - 2020-08-06 03:44:35,306 - handoff.config - id: c836a53f9c0b [==================================================>]  453.1MB
-INFO - 2020-08-06 03:44:35,744 - handoff.config - id: 44aecb8afa22 [==================================================>]  453.7MB
-INFO - 2020-08-06 03:44:37,333 - handoff.config - id: c836a53f9c0b status: Pushed
-INFO - 2020-08-06 03:44:39,716 - handoff.config - id: 44aecb8afa22 status: Pushed
+[2020-09-15 17:06:47,417] [    INFO] - id: 077eb5a59fa7 [==========================================>        ]  706.5MB/831MB - (impl.py:172)
+[2020-09-15 17:06:50,171] [    INFO] - id: 2549ac7ad267 [==========================================>        ]  706.5MB/831MB - (impl.py:172)
+[2020-09-15 17:06:55,213] [    INFO] - id: 077eb5a59fa7 [=============================================>     ]  757.2MB/831MB - (impl.py:172)
+[2020-09-15 17:06:56,651] [    INFO] - id: 2549ac7ad267 [=============================================>     ]  756.7MB/831MB - (impl.py:172)
+[2020-09-15 17:07:04,541] [    INFO] - id: 077eb5a59fa7 [================================================>  ]  806.5MB/831MB - (impl.py:172)
+[2020-09-15 17:07:05,412] [    INFO] - id: 2549ac7ad267 [================================================>  ]  806.5MB/831MB - (impl.py:172)
+[2020-09-15 17:07:15,095] [    INFO] - id: 077eb5a59fa7 [==================================================>]  856.4MB - (impl.py:172)
+[2020-09-15 17:07:15,404] [    INFO] - id: 2549ac7ad267 [==================================================>]  856.4MB - (impl.py:172)
+[2020-09-15 17:07:23,465] [    INFO] - id: 077eb5a59fa7 status: Pushed - (impl.py:163)
+[2020-09-15 17:07:23,608] [    INFO] - id: 2549ac7ad267 status: Pushed - (impl.py:163)
 ```
 
 Confirm that the Docker image has been uploaded to:

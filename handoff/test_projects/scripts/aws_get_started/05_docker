@@ -44,7 +44,7 @@ echo "
 Now let's run the code in the Docker container.
 "
 
-Command "handoff continer run -p 03_exchange_rates"
+Command "handoff container run -p 03_exchange_rates"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
 BUCKET=`handoff -p 03_exchange_rates envs get -d key=HO_BUCKET -l critical`

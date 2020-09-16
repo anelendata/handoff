@@ -2,35 +2,27 @@
 
 In this section, we will learn how to schedule a task so it runs automatically.
 
-
-To schedule a task, use schedule command with target_id and
-[CRON format]://en.wikipedia.org/wiki/Cron).
+To schedule a task, use schedule command with parameters target_id and
+cron in [CRON format](https://en.wikipedia.org/wiki/Cron).
 
 We pass those values to handoff with `--data` (`-d` for short) option:
 
 
 ```shell
-> handoff -p 03_exchange_rates cloud schedule --data '{"target_id": "1", "cron": "55 03 * * ? *"}'
+> handoff cloud schedule -p 03_exchange_rates --data target_id=1 cron='23 17 * * ? *'
 ```
 ```shell
 
-INFO - 2020-08-06 03:50:50,489 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:50:50,570 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:50:50,855 - handoff.config - You have the access to AWS resources.
-INFO - 2020-08-06 03:50:50,856 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:50:50,856 - handoff.config - Setting environment variables from config.
-INFO - 2020-08-06 03:50:50,922 - handoff.config - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test
-INFO - 2020-08-06 03:50:51,364 - handoff.config - Reading configurations from 03_exchange_rates/project.yml
-INFO - 2020-08-06 03:50:51,368 - handoff.config - Platform: aws
-INFO - 2020-08-06 03:50:51,373 - handoff.config - Setting environment variables from config.
-INFO - 2020-08-06 03:50:51,396 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-.
-.
-.
-INFO - 2020-08-06 03:50:51,760 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:50:52,131 - botocore.credentials - Found credentials in shared credentials file: ~/.aws/credentials
-INFO - 2020-08-06 03:50:52,745 - handoff.config - {'FailedEntryCount': 0, 'FailedEntries': [], 'ResponseMetadata': {'RequestId': 'xxxxxxxxef778e23', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': 'xxxxxxxxef778e23', 'content-type': 'application/x-amz-json-1.1', 'content-length': '41', 'date': 'Thu, 06 Aug 2020 03:50:52 GMT'}, 'RetryAttempts': 0}}
-INFO - 2020-08-06 03:50:52,745 - handoff.config - Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/xxxxxxxxe-rates/scheduledTasks
+[2020-09-15 17:18:38,459] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
+[2020-09-15 17:18:38,462] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
+[2020-09-15 17:18:38,464] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-09-15 17:18:38,581] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:18:38,861] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
+[2020-09-15 17:18:38,926] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
+[2020-09-15 17:18:39,449] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:18:39,856] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:18:40,219] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-09-15 17:18:40,821] [    INFO] - {'FailedEntryCount': 0, 'FailedEntries': [], 'ResponseMetadata': {'RequestId': 'xxxxxxxx8a5f6783', 'HTTPStatusCode': 200, 'HTTPHeaders': {'x-amzn-requestid': 'xxxxxxxx8a5f6783', 'content-type': 'application/x-amz-json-1.1', 'content-length': '41', 'date': 'Tue, 15 Sep 2020 17:18:40 GMT'}, 'RetryAttempts': 0}} - (__init__.py:513)
 ```
 
 

@@ -34,7 +34,6 @@ def _get_platform(provider_name=None, platform_name=None,
 
 def _assume_role(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
     role_arn = data.get("role_arn")
@@ -52,7 +51,6 @@ def _get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
 
 def role_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -73,7 +71,6 @@ def role_create(project_dir, workspace_dir, data, **kwargs):
 
 def role_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -94,7 +91,6 @@ def role_update(project_dir, workspace_dir, data, **kwargs):
 
 def role_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.delete_role()
@@ -102,7 +98,6 @@ def role_delete(project_dir, workspace_dir, data, **kwargs):
 
 def bucket_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.create_bucket()
@@ -110,7 +105,6 @@ def bucket_create(project_dir, workspace_dir, data, **kwargs):
 
 def bucket_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.update_bucket()
@@ -118,7 +112,6 @@ def bucket_update(project_dir, workspace_dir, data, **kwargs):
 
 def bucket_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.delete_bucket()
@@ -126,7 +119,6 @@ def bucket_delete(project_dir, workspace_dir, data, **kwargs):
 
 def resources_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.create_resources()
@@ -134,7 +126,6 @@ def resources_create(project_dir, workspace_dir, data, **kwargs):
 
 def resources_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.update_resources()
@@ -142,7 +133,6 @@ def resources_update(project_dir, workspace_dir, data, **kwargs):
 
 def resources_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.delete_resources()
@@ -150,7 +140,6 @@ def resources_delete(project_dir, workspace_dir, data, **kwargs):
 
 def task_create(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     platform.create_task()
@@ -158,7 +147,6 @@ def task_create(project_dir, workspace_dir, data, **kwargs):
 
 def task_update(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     platform.update_task()
@@ -166,7 +154,6 @@ def task_update(project_dir, workspace_dir, data, **kwargs):
 
 def task_delete(project_dir, workspace_dir, data, **kwargs):
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.delete_task()
@@ -176,7 +163,6 @@ def run(project_dir, workspace_dir, data, **kwargs):
     """Run a task once in the platform
     """
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     platform.run_task(env=data)
@@ -190,7 +176,6 @@ def schedule(project_dir, workspace_dir, data, **kwargs):
     An example of cron-format string is "10 01 * * ? *"
     """
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     target_id = str(data["target_id"])
@@ -204,7 +189,6 @@ def unschedule(project_dir, workspace_dir, data, **kwargs):
     -d '{"target_id": <target_id>}'
     """
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     target_id = str(data["target_id"])
@@ -219,7 +203,6 @@ def logs(project_dir, workspace_dir, data, **kwargs):
     - follow: If set, it waits for more logs until interrupted by ctrl-c
     """
     state = config.get_state()
-    admin.config_get_local(project_dir, workspace_dir, data, **kwargs)
     platform = _get_platform()
     state.validate_env()
     last_update = platform.print_logs(**data)

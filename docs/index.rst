@@ -17,6 +17,7 @@ Contents
    quick_example
    guided_tour
    project_file
+   secrets
    essential_commands
    advanced
    grafana

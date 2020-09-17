@@ -333,8 +333,6 @@ def main():
                         help="Extra data for the command. List after this option like: -d key1=value1 key2=value2...")
     parser.add_argument("-e", "--envs", type=str, nargs="*", default="",
                         help="Define environment variables. List after this option like: -d key1=value1 key2=value2...")
-    parser.add_argument("-a", "--push-artifacts", action="store_true",
-                        help="Push artifacts to remote at the end of the run")
 
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-l", "--log-level", type=str, default="info",
@@ -351,8 +349,8 @@ def main():
     parser.add_argument("--container-provider", type=str, default="docker",
                         help="Container provider name")
 
-    parser.add_argument("--allow-advanced-tier", action="store_true",
-                        help="Allow AWS SSM Parameter Store Advanced tier")
+    parser.add_argument("-a", "--push-artifacts", action="store_true",
+                        help="Push artifacts to remote at the end of the run")
 
     if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
@@ -395,7 +393,6 @@ handoff <command> -h for more help.\033[0m
     kwargs["show_help"] = args.help
     kwargs["push_artifacts"] = args.push_artifacts
     kwargs["cloud_profile"] = args.cloud_profile
-    kwargs["allow_advanced_tier"] = args.allow_advanced_tier
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):

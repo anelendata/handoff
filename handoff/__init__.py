@@ -33,14 +33,19 @@ def _load_param_list(arg_list):
         if not key or not value:
             raise ValueError("data argument list format error")
 
-        # Convert to float or int when we can
-        try:
-            number = float(value)
-            if "." not in value:
-                number = int(number)
-            value = number
-        except ValueError:
-            pass
+        if value.lower() in ["true", "t"]:
+            value = True
+        elif value.lower() in ["false", "f"]:
+            value = False
+        else:
+            # Convert to float or int when we can
+            try:
+                number = float(value)
+                if "." not in value:
+                    number = int(number)
+                value = number
+            except ValueError:
+                pass
 
         data[key] = value
 

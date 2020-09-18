@@ -21,9 +21,9 @@ def test_04_secrets():
                                        "tap-config.json")
         assert os.path.isfile(tap_config_file) is False
 
-        handoff.do("workspace", "init", project_dir, workspace_dir, data,
+        handoff.do("workspace init", project_dir, workspace_dir, data,
                    push_artifacts=False)
-        handoff.do("files", "get local", project_dir, workspace_dir, data,
+        handoff.do("files get local", project_dir, workspace_dir, data,
                    push_artifacts=False)
         state = get_state()
 

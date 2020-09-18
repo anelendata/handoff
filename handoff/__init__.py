@@ -124,11 +124,12 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     config = dict()
     if command in remote_ops:
         if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
-            LOGGER.error("To test run with remote config, you need to" +
-                         "either set the project directory (-p) or" +
-                         "manually set environmental variables: %s %s" %
-                         (RESOURCE_GROUP, TASK))
-            exit(1)
+            print("Error: To test run with remote config, you need to" +
+                  "either set the project directory (-p) or " +
+                  "give environmental variables as:\n" +
+                  "    --envs resource_group=<resource_group_name> " +
+                  "task=<task_name>\n")
+            sys.exit(1)
         config = admin._config_get(project_dir, workspace_dir, data)
         admin.files_get(project_dir, workspace_dir, data)
         admin.artifacts_get(project_dir, workspace_dir, data)
@@ -164,10 +165,15 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
         admin.artifacts_archive(project_dir, workspace_dir, data)
 
 
-def do(top_command, sub_command, project_dir, workspace_dir, data,
+def do(command, project_dir, workspace_dir, data,
        show_help=False, **kwargs):
     state = get_state()
-    command = (top_command + " " + sub_command).strip()
+
+    module_name = command[0]
+    sub_command = ""
+    if len(command) > 1:
+        sub_command = " ".join(command[1:])
+    command = " ".join(command)
 
     plugin_modules = _list_plugins()
 
@@ -200,13 +206,13 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
         print_announcements()
         return
 
-    if top_command == "container":
+    if module_name == "container":
         admin._config_get_local(project_dir, workspace_dir, data)
-        _run_subcommand(container, sub_command, project_dir, workspace_dir, data,
-                        show_help, **kwargs)
+        _run_subcommand(container, sub_command, project_dir, workspace_dir,
+                        data, show_help, **kwargs)
         return
 
-    if top_command == "cloud":
+    if module_name == "cloud":
         if show_help:
             _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
                             data, show_help, **kwargs)
@@ -223,10 +229,10 @@ def do(top_command, sub_command, project_dir, workspace_dir, data,
                         data, show_help, **kwargs)
         return
 
-    if top_command in plugin_modules.keys():
+    if module_name in plugin_modules.keys():
         if project_dir:
             admin._config_get_local(project_dir, workspace_dir, data)
-        _run_subcommand(plugin_modules[top_command], sub_command, project_dir,
+        _run_subcommand(plugin_modules[module_name], sub_command, project_dir,
                         workspace_dir, data, show_help, **kwargs)
         return
 
@@ -326,9 +332,8 @@ def main():
         add_help=False,
         description=("Run parameterized Unix pipeline command."))
 
-    parser.add_argument("command", type=str, help="command")
-    parser.add_argument("subcommand", type=str, nargs="*", default="",
-                        help="subcommand")
+    parser.add_argument("command", type=str, nargs="*", default="",
+                        help="command string such as 'config push'")
 
     parser.add_argument("-p", "--project-dir", type=str, default=None,
                         help="Specify the location of project directory")
@@ -403,14 +408,12 @@ handoff <command> -h for more help.\033[0m
             args.project_dir == args.workspace_dir):
         print("Error: workspace directory must be different from " +
               "project directory.")
-        exit(1)
+        sys.exit(1)
 
-    args.subcommand = " ".join(args.subcommand)
     threading.Thread(target=check_announcements,
-                     kwargs= {"command": args.command,
-                              "subcommand": args.subcommand}).start()
+                     kwargs={"command": args.command}).start()
 
-    do(args.command, args.subcommand,
+    do(args.command,
        args.project_dir, args.workspace_dir,
        data, **kwargs)
 

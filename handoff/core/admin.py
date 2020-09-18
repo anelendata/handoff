@@ -97,8 +97,6 @@ def _update_state(config):
     """Set environment variable and in-memory variables
     Warning: environment variables are inherited to subprocess. The sensitive
     information may be compromised by a bad subprocess.
-    The variables should not be passed to subprocess directly should be listed
-    in "vars" section of the project.yml so they remain on-memory only.
     """
     state = get_state()
     LOGGER.info("Setting environment variables from config.")

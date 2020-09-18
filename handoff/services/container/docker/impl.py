@@ -1,6 +1,8 @@
 import json, logging, os, shutil, sys, tempfile
 from collections import defaultdict
 
+from packaging import version
+
 import docker
 from docker import APIClient as docker_api_client
 
@@ -13,18 +15,20 @@ logger = utils.get_logger(__name__)
 DOCKERFILE = "Dockerfile"
 
 
-def _increment_version(version, delimiter="."):
-    digits = version.split(delimiter)
+def _increment_version(ver, delimiter="."):
+    """Increment the last digit of the version numbers with delimiter "."
+    if it fails to increment, returns original version by adding ".1"
+    """
+    digits = ver.split(delimiter)
     for i in range(len(digits) - 1, 0, -1):
         try:
             digit = int(digits[i])
         except ValueError:
             continue
         digits[i] = str(digit + 1)
-        break
-
-    new_version = ".".join(digits)
-    return new_version
+        new_version = ".".join(digits)
+        return new_version
+    return (ver + ".1")
 
 
 def get_latest_version(image_name, ignore=["latest"]):
@@ -34,11 +38,16 @@ def get_latest_version(image_name, ignore=["latest"]):
         return None
 
     tags = list()
+    max_version = None
     for image in images:
         tags = tags + image.tags
-    tags.sort(reverse=True)
-    version = "".join(tags[0].split(":")[1:])
-    return version
+    for tag in tags:
+        ver = "".join(tag.split(":")[1:])
+        if (ver not in ignore and
+                (max_version is None or
+                 version.parse(max_version) < version.parse(ver))):
+            max_version = ver
+    return max_version
 
 
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,

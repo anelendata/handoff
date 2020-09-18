@@ -522,13 +522,18 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     return config
 
 
-def config_push(project_dir, workspace_dir, data, **kwargs):
+def config_push(project_dir, workspace_dir, data):
     """ Push the contents of project_dir as a secure parameter key"""
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(_config_get_local(project_dir, workspace_dir, data))
 
+    allow_advanced_tier = data.get("allow_advanced_tier", False)
+    if type(allow_advanced_tier) is not bool:
+        raise Exception("allow_advanced_tier must be True/False")
+
     platform = cloud._get_platform()
-    platform.push_parameter("config", config, **kwargs)
+    platform.push_parameter("config", config,
+                            allow_advanced_tier=allow_advanced_tier)
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):

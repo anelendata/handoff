@@ -30,9 +30,11 @@ def build(project_dir, workspace_dir, data, **kwargs):
     state.validate_env([DOCKER_IMAGE])
     files_dir = data.get("files_dir")
     docker_file = data.get("docker_file")
+    new_version = data.get("version")
     if docker_file:
         LOGGER.info("Using Dockerfile at: " + docker_file)
-    impl.build(project_dir, docker_file=docker_file, files_dir=files_dir)
+    impl.build(project_dir, docker_file=docker_file, files_dir=files_dir,
+               new_version=new_version)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):

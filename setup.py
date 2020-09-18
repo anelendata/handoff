@@ -34,6 +34,7 @@ setup(
         "docker>=4.0.0",
         "lxml>=4.2.0",
         "Jinja2>=2.10.1",
+        "packaging>=19.2",
         "python-dateutil>=2.8.0",
         "pyyaml>=5.1",
         "requests>=2.19.0",

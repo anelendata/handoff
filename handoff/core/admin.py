@@ -173,7 +173,7 @@ def _read_project(project_file):
     return project
 
 
-def secrets_get(project_dir, workspace_dir, data, **kwargs):
+def _secrets_get(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -187,7 +187,7 @@ def secrets_get(project_dir, workspace_dir, data, **kwargs):
         SECRETS.update(params)
 
 
-def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
+def _secrets_get_local(project_dir, workspace_dir, data, **kwargs):
     global SECRETS
     SECRETS = {}
     if data.get("file"):
@@ -227,11 +227,14 @@ def secrets_get_local(project_dir, workspace_dir, data, **kwargs):
 
 
 def secrets_push(project_dir, workspace_dir, data, **kwargs):
-    """Push the contents of <project_dir>/files to remote storage"""
+    """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
+
+    Push the contents of <secrets_file> to remote parameter store
+    """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
-    secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    secrets = _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
 
     if not secrets:
         return
@@ -255,11 +258,14 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def secrets_delete(project_dir, workspace_dir, data, **kwargs):
-    """Push the contents of <project_dir>/files to remote storage"""
+    """`handoff secrets delete -p <project_directory> -d file=<secrets_file>`
+
+    Delete the contents of <secrets_file> to remote parameter store
+    """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
-    secrets = secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    secrets = _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
 
     if not secrets:
         return
@@ -448,7 +454,7 @@ def _config_get(project_dir, workspace_dir, data, **kwargs):
     config_dir, _, _ = _workspace_get_dirs(workspace_dir)
     precompiled_config = _read_precompiled_config()
 
-    secrets_get(project_dir, workspace_dir, data, **kwargs)
+    _secrets_get(project_dir, workspace_dir, data, **kwargs)
     _update_state(precompiled_config)
 
     _write_config_files(config_dir, precompiled_config)
@@ -497,7 +503,7 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     project = _read_project(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
-    secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
     _update_state(config)
 
     config["files"] = list()
@@ -522,7 +528,7 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     return config
 
 
-def config_push(project_dir, workspace_dir, data):
+def config_push(project_dir, workspace_dir, data, **kwargs):
     """ Push the contents of project_dir as a secure parameter key"""
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(_config_get_local(project_dir, workspace_dir, data))

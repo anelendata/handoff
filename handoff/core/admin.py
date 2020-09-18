@@ -102,6 +102,8 @@ def _update_state(config):
     """
     state = get_state()
     LOGGER.info("Setting environment variables from config.")
+
+    state.update(SECRETS)
     for v in config.get("envs", list()):
         if v.get("value") is None:
             v["value"] = _get_secret(v["key"])

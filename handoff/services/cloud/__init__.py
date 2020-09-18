@@ -1,4 +1,5 @@
 import os, sys
+import yaml
 from importlib import import_module as _import_module
 from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
@@ -159,16 +160,21 @@ def task_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_task()
 
 
-def run(project_dir, workspace_dir, data, **kwargs):
+def run(project_dir, workspace_dir, data, extras=None, **kwargs):
     """Run a task once in the platform
     """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.run_task(env=data)
+
+    if extras:
+        with open(extras, "r") as f:
+            extras_obj = yaml.load(f)
+
+    platform.run_task(env=data, extras=extras_obj)
 
 
-def schedule(project_dir, workspace_dir, data, **kwargs):
+def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
     """Schedule a task
     Must have --data option
     -d '{"target_id": <target_id>, "cron": <cron_format>}'
@@ -180,7 +186,12 @@ def schedule(project_dir, workspace_dir, data, **kwargs):
     state.validate_env()
     target_id = str(data["target_id"])
     cronexp = "cron(" + data["cron"] + ")"
-    platform.schedule_task(target_id, cronexp)
+
+    if extras:
+        with open(extras, "r") as f:
+            extras_obj = yaml.load(f)
+
+    platform.schedule_task(target_id, cronexp, extras=extras_obj)
 
 
 def unschedule(project_dir, workspace_dir, data, **kwargs):

@@ -14,8 +14,13 @@ def get_client():
 
 
 def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
-                     env=[], workers=1):
-    env.append({"name": "TASK_TRIGGERED_AT", "value": datetime.datetime.utcnow().isoformat()})
+                     env=[], extras=None):
+    """Run a fargate task
+    extras overwrite the kwargs given to run_task boto3 command.
+    See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
+    """
+    env.append({"name": "TASK_TRIGGERED_AT",
+                "value": datetime.datetime.utcnow().isoformat()})
     client = get_client()
     task_resources = cfn.describe_stack_resources(task_stack)["StackResources"]
     account_id = sts.get_account_id()
@@ -31,7 +36,8 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
         if not task_def_arn and r["ResourceType"] == "AWS::ECS::TaskDefinition":
             task_def_arn = r["PhysicalResourceId"]
 
-    rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
+    rg_resources = cfn.describe_stack_resources(
+        resource_group_stack)["StackResources"]
     subnets = list()
     security_groups =list()
     for r in rg_resources:
@@ -40,12 +46,13 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
         if r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])
 
-    logger.debug("%s\n%s\n%s\n%s" % (cluster_arn, task_def_arn, subnets, security_groups))
+    logger.debug("%s\n%s\n%s\n%s" %
+                 (cluster_arn, task_def_arn, subnets, security_groups))
 
     kwargs = {
         "cluster": cluster_arn,
         "taskDefinition": task_def_arn,
-        "count": workers,
+        "count": 1,
         "launchType": "FARGATE",
         "networkConfiguration": {
             "awsvpcConfiguration": {
@@ -63,4 +70,7 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
             ]
         }
     }
+    if extras:
+        kwargs.update(extras)
+
     return client.run_task(**kwargs)

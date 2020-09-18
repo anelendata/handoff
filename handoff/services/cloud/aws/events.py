@@ -15,7 +15,11 @@ def get_client():
 
 def schedule_task(task_stack, resource_group_stack, region,
                   target_id, cronexp, role_arn,
-                  workers=1):
+                  extras=None):
+    """Schedule a task
+    extras overwrite the kwargs given to put_targets boto3 command.
+    See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets
+    """
     client = get_client()
 
     rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
@@ -40,16 +44,18 @@ def schedule_task(task_stack, resource_group_stack, region,
         if not task_def_arn and r["ResourceType"] == "AWS::ECS::TaskDefinition":
             task_def_arn = r["PhysicalResourceId"]
 
-    rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
+    rg_resources = cfn.describe_stack_resources(
+        resource_group_stack)["StackResources"]
     subnets = list()
-    security_groups =list()
+    security_groups = list()
     for r in rg_resources:
-        if r["ResourceType"]  == "AWS::EC2::Subnet":
+        if r["ResourceType"] == "AWS::EC2::Subnet":
             subnets.append(r["PhysicalResourceId"])
         if r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])
 
-    logger.debug("%s\n%s\n%s\n%s" % (cluster_arn, task_def_arn, subnets, security_groups))
+    logger.debug("%s\n%s\n%s\n%s" %
+                 (cluster_arn, task_def_arn, subnets, security_groups))
 
     kwargs = {
         "Rule": rule_name,
@@ -60,7 +66,7 @@ def schedule_task(task_stack, resource_group_stack, region,
                 "RoleArn": role_arn,
                 "EcsParameters": {
                     "TaskDefinitionArn": task_def_arn,
-                    "TaskCount": workers,
+                    "TaskCount": 1,
                     "LaunchType": "FARGATE",
                     "NetworkConfiguration": {
                         "awsvpcConfiguration": {
@@ -73,6 +79,9 @@ def schedule_task(task_stack, resource_group_stack, region,
             }
         ]
     }
+    if extras:
+        kwargs.update(extras)
+
     return client.put_targets(**kwargs)
 
 

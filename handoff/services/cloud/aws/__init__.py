@@ -468,7 +468,7 @@ def delete_task():
     _log_stack_filter(stack_name)
 
 
-def run_task(env=[]):
+def run_task(env=[], extras=None):
     state = get_state()
     task_stack = state.get(TASK)
     docker_image = state.get(DOCKER_IMAGE)
@@ -478,12 +478,14 @@ def run_task(env=[]):
     extra_env = []
     for key in env.keys():
         extra_env.append({"name": key, "value": env[key]})
-    response = ecs.run_fargate_task(task_stack, resource_group_stack, docker_image, region, extra_env)
+    response = ecs.run_fargate_task(task_stack, resource_group_stack,
+                                    docker_image, region, extra_env,
+                                    extras=extras)
     LOGGER.info(response)
     _log_task_run_filter(state[RESOURCE_GROUP] + "-" + state[TASK], response)
 
 
-def schedule_task(target_id, cronexp, role_arn=None):
+def schedule_task(target_id, cronexp, role_arn=None, extras=None):
     state = get_state()
     task_stack = state.get(TASK)
     region = state.get("AWS_REGION")
@@ -502,8 +504,9 @@ def schedule_task(target_id, cronexp, role_arn=None):
         raise Exception("Role %s not found" % role_name)
 
     try:
-        response = events.schedule_task(task_stack, resource_group_stack, region,
-                                        target_id, cronexp, role_arn)
+        response = events.schedule_task(task_stack, resource_group_stack,
+                                        region, target_id, cronexp, role_arn,
+                                        extras=extras)
     except Exception as e:
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
                      (task_stack, target_id, cronexp))

@@ -169,11 +169,8 @@ def do(command, project_dir, workspace_dir, data,
        show_help=False, **kwargs):
     state = get_state()
 
-    module_name = command[0]
-    sub_command = ""
-    if len(command) > 1:
-        sub_command = " ".join(command[1:])
-    command = " ".join(command)
+    module_name = command.split(" ")[0]
+    sub_command = command[command.find(" ") + 1:]
 
     plugin_modules = _list_plugins()
 
@@ -413,7 +410,8 @@ handoff <command> -h for more help.\033[0m
     threading.Thread(target=check_announcements,
                      kwargs={"command": args.command}).start()
 
-    do(args.command,
+    command = (" ".join(args.command)).strip()
+    do(command,
        args.project_dir, args.workspace_dir,
        data, **kwargs)
 

@@ -16,6 +16,9 @@ DOCKERFILE = "Dockerfile"
 
 
 def _increment_version(ver, delimiter="."):
+    """Increment the last digit of the version numbers with delimiter "."
+    if it fails to increment, returns original version by adding ".1"
+    """
     digits = ver.split(delimiter)
     for i in range(len(digits) - 1, 0, -1):
         try:
@@ -23,10 +26,9 @@ def _increment_version(ver, delimiter="."):
         except ValueError:
             continue
         digits[i] = str(digit + 1)
-        break
-
-    new_version = ".".join(digits)
-    return new_version
+        new_version = ".".join(digits)
+        return new_version
+    return (ver + ".1")
 
 
 def get_latest_version(image_name, ignore=["latest"]):
@@ -41,8 +43,9 @@ def get_latest_version(image_name, ignore=["latest"]):
         tags = tags + image.tags
     for tag in tags:
         ver = "".join(tag.split(":")[1:])
-        if (max_version is None or
-                version.parse(max_version) < version.parse(ver)):
+        if (ver not in ignore and
+                (max_version is None or
+                 version.parse(max_version) < version.parse(ver))):
             max_version = ver
     return max_version
 

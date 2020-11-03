@@ -12,12 +12,13 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../handoff'))
 import recommonmark
 from recommonmark.transform import AutoStructify
-from m2r import MdInclude
+
+import m2r
 
 # -- Project information -----------------------------------------------------
 
@@ -42,7 +43,8 @@ release = '0.1.1-alpha'
 # ones.
 extensions = [
     'sphinx_markdown_tables',
-    'recommonmark'
+    'recommonmark',
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -189,4 +191,13 @@ def setup(app):
     app.add_config_value('m2r_parse_relative_links', False, 'env')
     app.add_config_value('m2r_anonymous_references', False, 'env')
     app.add_config_value('m2r_disable_inline_math', False, 'env')
-    app.add_directive('mdinclude', MdInclude)
+    app.add_directive('mdinclude', m2r.MdInclude)
+
+    app.connect('autodoc-process-docstring', docstring)
+
+
+def docstring(app, what, name, obj, options, lines):
+    md  = '\n'.join(lines)
+    rst = m2r.convert(md)
+    lines.clear()
+    lines += rst.splitlines()

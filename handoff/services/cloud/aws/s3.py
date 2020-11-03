@@ -53,23 +53,23 @@ def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix)
                         (os.path.join(src_bucket, k), os.path.join(dest_bucket, dest_path)))
 
 
-def download_dir(prefix, local, bucket):
+def download_dir(bucket_name, prefix, local):
     """
     params:
+    - bucket_name: s3 bucket name (without s3://) with target contents
     - prefix: pattern to match in s3
     - local: local path to folder in which to place files
-    - bucket: s3 bucket with target contents
 
     Modified from: https://stackoverflow.com/a/56267603
     """
     client = get_client()
-    logger.info("GET s3://" + bucket + "/" + prefix)
+    logger.info("GET s3://" + bucket_name + "/" + prefix)
     keys = []
     dirs = []
     next_token = ""
     base_kwargs = {
-        "Bucket":bucket,
-        "Prefix":prefix,
+        "Bucket": bucket_name,
+        "Prefix": prefix,
     }
     while next_token is not None:
         kwargs = base_kwargs.copy()
@@ -104,10 +104,10 @@ def download_dir(prefix, local, bucket):
         dest_pathname = os.path.join(local, dest_pathname)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
-        client.download_file(bucket, k, dest_pathname)
+        client.download_file(bucket_name, k, dest_pathname)
 
 
-def upload_dir(source, prefix, bucket_name):
+def upload_dir(source, bucket_name, prefix):
     """
     References:
     - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
@@ -154,36 +154,36 @@ def delete_object(bucket_name, key):
     # raise if bucket does not exist
     s3.meta.client.head_bucket(Bucket=bucket_name)
 
-    logger.info("Deleting %s from bucket %s" % (source, bucket_name))
+    logger.info("Deleting %s from bucket %s" % (key, bucket_name))
 
     client.upload_file(bucket_name, key)
 
 
-
-def delete_recurse(prefix, bucket):
-    """
+def delete_recurse(bucket_name, prefix=None):
+    """Recursively delete objects in the bucket under prefix
     params:
+    - bucket_name: s3 bucket name (without s3://) with target contents
     - prefix: pattern to match in s3
-    - local: local path to folder in which to place files
-    - bucket: s3 bucket with target contents
 
     Modified from: https://stackoverflow.com/a/56267603
     """
     client = get_client()
-    logger.info("GET s3://" + bucket + "/" + prefix)
+    logger.info("GET s3://" + bucket_name + "/" + prefix)
     objects = []
-    next_token = ''
+    next_token = ""
     base_kwargs = {
-        'Bucket':bucket,
-        'Prefix':prefix,
+        "Bucket": bucket_name
     }
+    if prefix:
+        base_kwargs["Prefix"] = prefix
+
     while next_token is not None:
         kwargs = base_kwargs.copy()
-        if next_token != '':
-            kwargs.update({'ContinuationToken': next_token})
+        if next_token != "":
+            kwargs.update({"ContinuationToken": next_token})
         results = client.list_objects_v2(**kwargs)
-        next_token = results.get('NextContinuationToken')
-        contents = results.get('Contents')
+        next_token = results.get("NextContinuationToken")
+        contents = results.get("Contents")
 
         if not contents:
             logger.warning("Nothing found in the location")
@@ -192,8 +192,7 @@ def delete_recurse(prefix, bucket):
         for i in contents:
             objects.append({"Key": i.get("Key")})
 
-
     if objects:
-        client.delete_objects(Bucket=bucket, Delete={"Objects": objects})
+        client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects})
 
     logger.info("Deleted %s" % objects)

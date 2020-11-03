@@ -22,6 +22,7 @@ Contents
    advanced
    grafana
    faq
+   commands
    contributing
    code_of_conduct
    history

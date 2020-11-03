@@ -20,18 +20,27 @@ def _get_platform(provider_name=None):
     return CONTAINER_MODULE
 
 
+def _get_latest_image_version(project_dir, workspace_dir, data, **kwargs):
+    return _get_platform().get_latest_image_version(project_dir, workspace_dir,
+                                                    data, **kwargs)
+
+
 def build(project_dir, workspace_dir, data, **kwargs):
+    """`handoff container build -p <project_directory>`
+    Build the container image
+    """
     _get_platform().build(project_dir, workspace_dir, data, **kwargs)
 
 
 def run(project_dir, workspace_dir, data, **kwargs):
+    """`handoff container run -p <project_directory> -e resource_group=<resource_group_name> task=<task_name>`
+    Run the container
+    """
     _get_platform().run(project_dir, workspace_dir, data, **kwargs)
 
 
 def push(project_dir, workspace_dir, data, **kwargs):
+    """`handoff container push -p <project_directory>`
+    Push the container image to remote repository
+    """
     _get_platform().push(project_dir, workspace_dir, data, **kwargs)
-
-
-def get_latest_image_version(project_dir, workspace_dir, data, **kwargs):
-    return _get_platform().get_latest_image_version(project_dir, workspace_dir,
-                                                    data, **kwargs)

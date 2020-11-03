@@ -74,7 +74,8 @@ def _get_time_window(data):
 
 
 def run(config, data):
-    """
+    """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
+    Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
     start_at, end_at = _get_time_window(data)
     data.update({"start_at": start_at, "end_at": end_at})
@@ -120,10 +121,16 @@ def run(config, data):
 
 
 def run_local(config, data):
+    """`handoff run local -p <project_directory> -w <workspace_directory>`
+    Run the task locally.
+    """
     return run(config, data)
 
 
 def show_commands(config, data):
+    """`handoff show commands -p <project_directory>`
+    Show the shell commands that drives the task.
+    """
     start_at, end_at = _get_time_window(data)
     data.update({"start_at": start_at, "end_at": end_at})
     commands = _get_commands(config, data)
@@ -131,5 +138,8 @@ def show_commands(config, data):
         print(command)
 
 
-def show_env(config, data):
+def show_envs(config, data):
+    """`handoff show envs -p <project_directory>`
+    Show environment variables registered during the run`
+    """
     LOGGER.info(os.system("export"))

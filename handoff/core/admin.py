@@ -85,8 +85,6 @@ def _parse_template_files(templates_dir, workspace_files_dir):
 
 
 def _get_secret(key):
-    """Get secret value from local .secret file or remote secret store
-    """
     global SECRETS
     if SECRETS is None:
         raise Exception("Secrets are not loaded")
@@ -126,30 +124,22 @@ def _update_state(config):
                        BUCKET)
 
 
-def _read_precompiled_config(precompiled_config_file=None):
-    """
-    Read parameters from a file if a file name is given.
-    Read them from remote parameters store (e.g. AWS SSM) otherwise.
+def _read_project_remote():
+    """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
-    if precompiled_config_file:
-        LOGGER.info("Reading precompiled config from: " +
-                    precompiled_config_file)
-        if not os.path.isfile(precompiled_config_file):
-            raise ValueError(precompiled_config_file + " not found.")
-        with open(precompiled_config_file, "r") as f:
-            config = json.load(f)
-    else:
-        LOGGER.info("Reading precompiled config from remote.")
-        state.validate_env([RESOURCE_GROUP, TASK,
-                            CLOUD_PROVIDER, CLOUD_PLATFORM])
-        platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                       platform_name=state.get(CLOUD_PLATFORM))
-        config = json.loads(platform.get_parameter("config"))
+    LOGGER.info("Reading precompiled config from remote.")
+    state.validate_env([RESOURCE_GROUP, TASK,
+                        CLOUD_PROVIDER, CLOUD_PLATFORM])
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+    config = json.loads(platform.get_parameter("config"))
     return config
 
 
-def _read_project(project_file):
+def _read_project_local(project_file):
+    """Read project.yml file from the local project directory
+    """
     state = get_state()
     LOGGER.info("Reading configurations from " + project_file)
     with open(project_file, "r") as f:
@@ -174,6 +164,8 @@ def _read_project(project_file):
 
 
 def _secrets_get(project_dir, workspace_dir, data, **kwargs):
+    """Fetch all secrets from the remote parameter store
+    """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -188,6 +180,15 @@ def _secrets_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def _secrets_get_local(project_dir, workspace_dir, data, **kwargs):
+    """Load secrets from local file
+    --data file (.secrets/secrets.yml): The YAML file storing secrets
+    with format:
+    key1:
+        value: value1
+        # The value is stored as a resource group level secret and can be
+        # shared among the projects under the same group.
+        resource_group_level: false
+    """
     global SECRETS
     SECRETS = {}
     if data.get("file"):
@@ -230,6 +231,14 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
     """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
 
     Push the contents of <secrets_file> to remote parameter store
+
+    --data file (.secrets/secrets.yml): The YAML file storing secrets
+    with format:
+    key1:
+        value: value1
+        # The value is stored as a resource group level secret and can be
+        # shared among the projects under the same group.
+        resource_group_level: false
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -261,6 +270,8 @@ def secrets_delete(project_dir, workspace_dir, data, **kwargs):
     """`handoff secrets delete -p <project_directory> -d file=<secrets_file>`
 
     Delete the contents of <secrets_file> to remote parameter store
+    By default, .secrets/secrets.yml in the current working directory is
+    searched for the list of the secrets.
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -290,7 +301,9 @@ def secrets_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
-    """Archive: Copy the artifacts directory from last to run in the remote
+    """`handoff artifacts archive -p <project_directory>`
+
+    Copy the artifacts directory from (remote) last to (remote) runs/<date>.
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -308,7 +321,9 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_get(project_dir, workspace_dir, data, **kwargs):
-    """Download artifacts from the remote storage to <workspace_dir>
+    """`handoff artifacts archive -p <project_directory> -w <workspace_directory>`
+
+    Download artifacts from the (remote) last to <workspace_dir>
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -330,7 +345,9 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_push(project_dir, workspace_dir, data, **kwargs):
-    """Push local artifacts file to remote storage under last directory.
+    """`handoff artifacts push -p <project_directory> -w <workspace_directory>`
+
+    Push local artifacts file to remote storage under last directory.
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -351,7 +368,9 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
-    """Delete artifacts from the remote artifacts/last directory
+    """`handoff artifacts delete -p <project_directory>`
+
+    Delete artifacts from the remote artifacts/last directory
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -368,7 +387,10 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_get(project_dir, workspace_dir, data, **kwargs):
-    """Get remote files from to <workspace_dir>/files
+    """`handoff files get -p <project_directory> -w <workspace_directory>`
+    Download remote files to <workspace_dir>/files
+    It also parse the templates with secrets and populate under
+    <workspace_dir>/files
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -395,7 +417,12 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_get_local(project_dir, workspace_dir, data, **kwargs):
-    """Copy files from the local <project_dir> to <workspace_dir>
+    """`handoff files get local -p <project_directory> -w <workspace_directory>`
+    Copy files from the local <project_dir> to <workspace_dir>
+
+    It also parse the templates with secrets and populate under
+    <workspace_dir>/files
+
     Any existing files in workspace_dir will be deleted.
     """
     if not project_dir:
@@ -419,7 +446,9 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_push(project_dir, workspace_dir, data, **kwargs):
-    """Push the contents of <project_dir>/files to remote storage"""
+    """`handoff files push -p <project_directory>`
+    Push the contents of <project_dir>/files and <project_dir>/templates
+    to remote storage"""
     platform = cloud._get_platform()
 
     files_dir = os.path.join(project_dir, FILES_DIR)
@@ -432,7 +461,8 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def files_delete(project_dir, workspace_dir, data, **kwargs):
-    """Delete files from the remote storage
+    """`handoff files delete -p <project_directory>`
+    Delete files and templates from the remote storage
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
@@ -452,7 +482,7 @@ def _config_get(project_dir, workspace_dir, data, **kwargs):
         raise Exception("Workspace directory is not set")
     LOGGER.info("Reading configurations from remote parameter store.")
     config_dir, _, _ = _workspace_get_dirs(workspace_dir)
-    precompiled_config = _read_precompiled_config()
+    precompiled_config = _read_project_remote()
 
     _secrets_get(project_dir, workspace_dir, data, **kwargs)
     _update_state(precompiled_config)
@@ -500,7 +530,7 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     if not project_dir:
         raise Exception("Project directory is not set")
     config = dict()
-    project = _read_project(os.path.join(project_dir, "project.yml"))
+    project = _read_project_local(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
     _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
@@ -529,7 +559,10 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_push(project_dir, workspace_dir, data, **kwargs):
-    """ Push the contents of project_dir as a secure parameter key"""
+    """`handoff config push -p <project_directory>`
+    Push project.yml and the contents of project_dir/config as a secure
+    parameter key.
+    """
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(_config_get_local(project_dir, workspace_dir, data))
 
@@ -543,11 +576,17 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
 
 
 def config_delete(project_dir, workspace_dir, data, **kwargs):
+    """`handoff config delete -p <project_directory>`
+    Delete the project configuration from the remote parameter store.
+    """
     platform = cloud._get_platform()
     platform.delete_parameter("config")
 
 
 def config_print(project_dir, workspace_dir, data, **kwargs):
+    """`handoff config print -p <project_directory>`
+    Print the project configuration in the remote parameter store.
+    """
     print(json.dumps(_config_get(project_dir, workspace_dir, data)))
 
 
@@ -567,7 +606,7 @@ def workspace_init(project_dir, workspace_dir, data, **kwargs):
 
 
 def workspace_install(project_dir, workspace_dir, data, **kwargs):
-    """
+    """`handoff workspace install -p <project_directory> -w <workspace_directory>`
     Install dependencies in the local virtual environment
     """
     if not project_dir:
@@ -575,7 +614,7 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    project = _read_project(os.path.join(project_dir, PROJECT_FILE))
+    project = _read_project_local(os.path.join(project_dir, PROJECT_FILE))
 
     os.chdir(workspace_dir)
     for command in project["commands"]:
@@ -586,4 +625,6 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
 
 
 def version(project_dir, workspace_dir, data, **kwargs):
+    """Print handoff version
+    """
     print(VERSION)

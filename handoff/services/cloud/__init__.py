@@ -51,18 +51,21 @@ def _get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
 
 
 def role_create(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud role create -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
+    Create the role with deployment privilege.
+    """
     state = config.get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
-    if not data.get("external_id"):
-        raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff provider create_role -p <project-dir> " +
-                         "-d '{\"external_id\": \"yyyy\"}'")
     if not data.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
-        LOGGER.warn("-d '{\"grantee_account_id\": \"xxxx\"}'")
+        LOGGER.warn("-d grantee_account_id=xxxx")
+    if not data.get("external_id"):
+        raise ValueError("external_id must be set. Do as:\n    " +
+                         "handoff provider create_role -p <project-dir> " +
+                         "-d external_id=yyyy")
 
     platform.create_role(
         grantee_account_id=data.get("grantee_account_id", account_id),
@@ -71,18 +74,21 @@ def role_create(project_dir, workspace_dir, data, **kwargs):
 
 
 def role_update(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud role update -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
+    Update the role privilege information.
+    """
     state = config.get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
-    if not data.get("external_id"):
-        raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff provider create_role -p <project-dir> " +
-                         "-d '{\"external_id\": \"yyyy\"}'")
     if not data.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
-        LOGGER.warn("-d '{\"grantee_account_id\": \"xxxx\"}'")
+        LOGGER.warn("-d grantee_account_id=xxxx")
+    if not data.get("external_id"):
+        raise ValueError("external_id must be set. Do as:\n    " +
+                         "handoff provider create_role -p <project-dir> " +
+                         "-d external_id=yyyy")
 
     platform.update_role(
         grantee_account_id=data.get("grantee_account_id", account_id),
@@ -91,13 +97,32 @@ def role_update(project_dir, workspace_dir, data, **kwargs):
 
 
 def role_delete(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud role delete -p <project_directory> -d grantee_account_id=<grantee_id>`
+    Delete the role.
+    """
     state = config.get_state()
     platform = _get_platform()
+    account_id = platform.login()
     state.validate_env()
-    platform.delete_role()
+    if not data.get("grantee_account_id"):
+        LOGGER.warn("grantee_account_id was not set." +
+                    "The grantee will be set for the same account. To set: ")
+        LOGGER.warn("-d grantee_account_id=xxxx")
+    if not data.get("external_id"):
+        raise ValueError("external_id must be set. Do as:\n    " +
+                         "handoff provider create_role -p <project-dir> " +
+                         "-d external_id=yyyy")
+
+    platform.delete_role(
+        grantee_account_id=data.get("grantee_account_id", account_id),
+        external_id=data.get("external_id")
+    )
 
 
 def bucket_create(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud bucket create -p <project_directory>`
+    Create remote storage bucket. Bucket is attached to the resource group.
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -105,6 +130,9 @@ def bucket_create(project_dir, workspace_dir, data, **kwargs):
 
 
 def bucket_update(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud bucket update -p <project_directory>`
+    Update remote storage bucket info
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -112,6 +140,9 @@ def bucket_update(project_dir, workspace_dir, data, **kwargs):
 
 
 def bucket_delete(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud bucket delete -p <project_directory>`
+    Delete remote storage bucket.
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -119,6 +150,14 @@ def bucket_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def resources_create(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud resources create -p <project_directory>`
+    Create resources necessary for task execution.
+    The resources are shared among the tasks under the same resource group.
+
+    AWS:
+    - Please refer to the
+      [CloudFormation template](https://github.com/anelendata/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -126,6 +165,11 @@ def resources_create(project_dir, workspace_dir, data, **kwargs):
 
 
 def resources_update(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud resources update -p <project_directory>`
+    Update the resources
+
+    The resources are shared among the tasks under the same resource group.
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -133,6 +177,11 @@ def resources_update(project_dir, workspace_dir, data, **kwargs):
 
 
 def resources_delete(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud resources delete -p <project_directory>`
+    Delete the resources
+
+    The resources are shared among the tasks under the same resource group.
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -140,6 +189,9 @@ def resources_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def task_create(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud task create -p <project_directory>`
+    Create the task
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
@@ -147,6 +199,9 @@ def task_create(project_dir, workspace_dir, data, **kwargs):
 
 
 def task_update(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud task update -p <project_directory>`
+    Update the task
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
@@ -154,6 +209,9 @@ def task_update(project_dir, workspace_dir, data, **kwargs):
 
 
 def task_delete(project_dir, workspace_dir, data, **kwargs):
+    """`handoff cloud task delete -p <project_directory>`
+    Delete the task
+    """
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
@@ -161,7 +219,8 @@ def task_delete(project_dir, workspace_dir, data, **kwargs):
 
 
 def run(project_dir, workspace_dir, data, extras=None, **kwargs):
-    """Run a task once in the platform
+    """`handoff cloud run -d resource_group=<resource_group_name> task=<task_name>`
+    Run a task once in the platform
     """
     state = config.get_state()
     platform = _get_platform()
@@ -175,11 +234,11 @@ def run(project_dir, workspace_dir, data, extras=None, **kwargs):
 
 
 def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
-    """Schedule a task
-    Must have --data option
-    -d '{"target_id": <target_id>, "cron": <cron_format>}'
+    """`handoff cloud schedule -d target_id=<target_id> cron="<cron_format>"`
+    Schedule a task named <target_id> at the recurring scheduled specified
+    as <cron_format>.
 
-    An example of cron-format string is "10 01 * * ? *"
+    An example of cron-format string is "10 01 * * ? *" for every day at 01:10 (1:10AM)
     """
     state = config.get_state()
     platform = _get_platform()
@@ -195,9 +254,8 @@ def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
 
 
 def unschedule(project_dir, workspace_dir, data, **kwargs):
-    """Unschedule a task
-    Must have --data option:
-    -d '{"target_id": <target_id>}'
+    """`handoff cloud unschedule -d target_id=<target_id>`
+    Unschedule a task named <target_id>
     """
     state = config.get_state()
     platform = _get_platform()
@@ -207,7 +265,8 @@ def unschedule(project_dir, workspace_dir, data, **kwargs):
 
 
 def logs(project_dir, workspace_dir, data, **kwargs):
-    """Show logs
+    """`handoff cloud logs -d start_time=<start_time> end_time=<end_time> follow=<True/False>`
+    Show logs
     Use --data (-d) option to:
     - start_time: ISO 8086 formatted date time to indicate the start time
     - end_time

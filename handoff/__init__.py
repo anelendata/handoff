@@ -29,7 +29,7 @@ def _load_param_list(arg_list):
         if pos < 0:
             raise ValueError("data argument list format error")
         key = a[0:pos].strip().strip('"').strip("'")
-        value = a[pos + 1:].strip()
+        value = a[pos + 1:].strip().strip('"').strip("'")
         if not key or not value:
             raise ValueError("data argument list format error")
 
@@ -217,7 +217,7 @@ def do(command, project_dir, workspace_dir, data,
 
         admin._config_get_local(project_dir, workspace_dir, data)
         if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
-            image_version = container.get_latest_image_version(
+            image_version = container._get_latest_image_version(
                 project_dir, workspace_dir, data)
             if image_version:
                 state.set_env(IMAGE_VERSION, image_version)

@@ -229,7 +229,7 @@ def set_env_var_from_ssm(project, name):
 def download_dir(remote_dir, local_dir):
     state = get_state()
     remote_dir = os.path.join(state.get(TASK), remote_dir)
-    s3.download_dir(remote_dir, local_dir, state.get(BUCKET))
+    s3.download_dir(state.get(BUCKET), remote_dir, local_dir)
 
 
 def upload_dir(src_dir_name, dest_prefix):
@@ -237,7 +237,7 @@ def upload_dir(src_dir_name, dest_prefix):
     state.validate_env([BUCKET, "AWS_REGION"])
     dest_prefix = os.path.join(state.get(TASK), dest_prefix)
     bucket = state.get(BUCKET)
-    s3.upload_dir(src_dir_name, dest_prefix, bucket)
+    s3.upload_dir(src_dir_name, bucket, dest_prefix)
     LOGGER.info(("See the files at https://s3.console.aws.amazon.com/s3/" +
                  "buckets/%s/%s/") % (bucket, dest_prefix))
 
@@ -245,7 +245,7 @@ def upload_dir(src_dir_name, dest_prefix):
 def delete_dir(remote_dir):
     state = get_state()
     remote_dir = os.path.join(state.get(TASK), remote_dir)
-    s3.delete_recurse(remote_dir, state.get(BUCKET))
+    s3.delete_recurse(state.get(BUCKET), remote_dir)
 
 
 def copy_dir_to_another_bucket(src_dir, dest_dir):
@@ -287,7 +287,7 @@ def create_role(grantee_account_id, external_id, template_file=None,
                 update=False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-role"
+    stack_name = resource_group + "-role-" + str(grantee_account_id)
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
@@ -341,10 +341,10 @@ def update_role(grantee_account_id, external_id, template_file=None):
     create_role(grantee_account_id, external_id, template_file, update=True)
 
 
-def delete_role():
+def delete_role(grantee_account_id, template_file=None):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-role"
+    stack_name = resource_group + "-role-" + str(grantee_account_id)
     response = cloudformation.delete_stack(stack_name)
     LOGGER.info(response)
     _log_stack_filter(stack_name)

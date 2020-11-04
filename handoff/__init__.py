@@ -327,7 +327,8 @@ def main():
     plugin_list = "\n- ".join(_list_plugins().keys())
     parser = argparse.ArgumentParser(
         add_help=False,
-        description=("Run parameterized Unix pipeline command."))
+        description=("handoff %s - Run parameterized Unix pipeline command." %
+                     VERSION))
 
     parser.add_argument("command", type=str, nargs="*", default="",
                         help="command string such as 'config push'")

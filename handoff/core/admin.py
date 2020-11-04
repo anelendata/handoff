@@ -565,6 +565,7 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     """
     LOGGER.info("Compiling config from %s" % project_dir)
     config = json.dumps(_config_get_local(project_dir, workspace_dir, data))
+    config["version"] = VERSION
 
     allow_advanced_tier = data.get("allow_advanced_tier", False)
     if type(allow_advanced_tier) is not bool:

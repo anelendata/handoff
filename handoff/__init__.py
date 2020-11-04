@@ -22,16 +22,35 @@ LATEST_AVAILABLE_VERSION = None
 ANNOUNCEMENTS = None
 
 
+def _strip_outer_quotes(string):
+    string = string.strip()
+    # Avoid over stripping. Either ' or "
+    if string[0] == '"':
+        string = string.strip('"')
+    elif string[0] == "'":
+        string = string.strip("'")
+    return string
+
 def _load_param_list(arg_list):
     data = {}
+    new_arg_list = []
+
+    # fix the limitation in passing with $(eval echo $DATA)
     for a in arg_list:
+        if "=" in a:
+            new_arg_list.append(a)
+        else:
+            new_arg_list[-1] = new_arg_list[-1] + " " + a
+
+    for a in new_arg_list:
         pos = a.find("=")
         if pos < 0:
-            raise ValueError("data argument list format error")
-        key = a[0:pos].strip().strip('"').strip("'")
-        value = a[pos + 1:].strip().strip('"').strip("'")
+            raise ValueError("data argument list format error %s" % arg_list)
+        key = _strip_outer_quotes(a[0:pos])
+        value = _strip_outer_quotes(a[pos + 1:])
+
         if not key or not value:
-            raise ValueError("data argument list format error")
+            raise ValueError("data argument list format error: %s %s" % (key, value))
 
         if value.lower() in ["true", "t"]:
             value = True
@@ -404,9 +423,8 @@ handoff <command> -h for more help.\033[0m
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):
-        print("Error: workspace directory must be different from " +
-              "project directory.")
-        sys.exit(1)
+        Exception("workspace directory must be different from " +
+                  "project directory.")
 
     threading.Thread(target=check_announcements,
                      kwargs={"command": args.command}).start()

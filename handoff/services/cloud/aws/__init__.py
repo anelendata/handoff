@@ -43,7 +43,8 @@ def _log_stack_filter(stack_name):
 def _log_task_run_filter(task_name, response):
     state = get_state()
     task_arn = response["tasks"][0]["taskArn"]
-    task_id = task_arn[task_arn.find("task/") + len("task/"):]
+    task_name_id = task_arn[task_arn.find("task/") + len("task/"):]
+    task_id = task_name_id[task_name_id.find("/") + 1:]
     params = {"task": task_name,
               "region": state["AWS_REGION"],
               "task_id": task_id}
@@ -485,9 +486,10 @@ def run_task(env=[], extras=None):
     _log_task_run_filter(state[RESOURCE_GROUP] + "-" + state[TASK], response)
 
 
-def schedule_task(target_id, cronexp, role_arn=None, extras=None):
+def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     state = get_state()
     task_stack = state.get(TASK)
+    docker_image = state.get(DOCKER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
 
@@ -503,10 +505,15 @@ def schedule_task(target_id, cronexp, role_arn=None, extras=None):
     if not role_arn:
         raise Exception("Role %s not found" % role_name)
 
+    extra_env = []
+    for key in env.keys():
+        extra_env.append({"name": key, "value": env[key]})
+
     try:
         response = events.schedule_task(task_stack, resource_group_stack,
+                                        docker_image,
                                         region, target_id, cronexp, role_arn,
-                                        extras=extras)
+                                        env=extra_env, extras=extras)
     except Exception as e:
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
                      (task_stack, target_id, cronexp))
@@ -542,7 +549,7 @@ def unschedule_task(target_id):
 
 
 def print_logs(start_time=None, end_time=None, format_=None, follow=False,
-               wait=2.5, last_line=None, **extras):
+               wait=2.5, last_timestamp=None, **extras):
     state = get_state()
     log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
 
@@ -559,15 +566,15 @@ def print_logs(start_time=None, end_time=None, format_=None, follow=False,
                                       end_time=end_time,
                                       extras=extras)
 
+    show = False
     for e in response.get("events", list()):
         wait = 2.5
         e["datetime"] = datetime.datetime.fromtimestamp(e["timestamp"] / 1000)
         start_time = e["timestamp"]
-        new_line = format_.format(**e)
-        if new_line == last_line:
-            continue
-        last_line = new_line
-        print(new_line)
+        if show or last_timestamp is None or last_timestamp < e["timestamp"]:
+            show = True
+            last_timestamp = e["timestamp"]
+            print(format_.format(**e))
 
     next_token = response.get("nextToken")
     while next_token:
@@ -577,16 +584,15 @@ def print_logs(start_time=None, end_time=None, format_=None, follow=False,
             e["datetime"] = datetime.datetime.fromtimestamp(
                 e["timestamp"] / 1000)
             start_time = e["timestamp"]
-            new_line = format_.format(**e)
-            if new_line == last_line:
-                continue
-            last_line = new_line
-            print(new_line)
+            if show or last_timestamp < e["timestamp"]:
+                show = True
+                last_timestamp = e["timestamp"]
+                print(format_.format(**e))
         next_token = response.get("nextToken")
 
     if follow:
         time.sleep(wait)
-        print_logs(start_time, end_time, format_, follow, wait * 2, last_line,
+        print_logs(start_time, end_time, format_, follow, wait * 2, last_timestamp,
                    **extras)
 
     return start_time

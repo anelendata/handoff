@@ -1,5 +1,48 @@
 # FAQs
 
+## Q. How do I specify relative time in the command?
+
+You can use [GNU date command](https://www.gnu.org/software/coreutils/manual/html_node/Examples-of-date.html).
+
+Example:
+
+```
+commands:
+  - command: echo
+    args: "UTC tomorrow to seconds in ISO8086: $(date -Iseconds -u -d '1 day') "
+```
+
+Note that `handoff run local` may not be able to handle this correctly if
+your local machine does not implement GNU date (e.g. OSX).
+By default, `handoff container run` and `handoff cloud run` should be able
+to handle correctly as the Docker image is based on Ubuntu.
+
+You can also use variables:
+
+```
+commands:
+  - command: echo
+    args: "today/tomorrow: {today}/{tomorrow}"
+```
+
+Then, run handoff with date:
+
+```
+handoff run local -p project_dir -d today=$(date -I) tomorrow=$(date -I -d "1 day")
+```
+
+You can delay the evaluation of date command in container run and cloud run
+commands by passing DATA environment variable via `-d` option:
+
+```
+handoff container run -p project_dir -d DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
+handoff cloud run -p project_dir -d DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
+```
+
+Make sure to **use single quotes** when defining DATA variable so it won't be
+evaluated when handoff command runs. You want the command string to be passed
+'as is' and then evaluated when the container executes the handoff run command.
+
 ## Q. How do I configure project.yml so it installs a Python command from a Github repository?
 
 You can put `https://github.com/<account>/<repository>/archive/<commit-hash>.tar.gz#egg=<command-name>`

@@ -1,5 +1,29 @@
 ## History
 
+### 0.3.0 (2020-11-03)
+
+https://github.com/anelendata/handoff/milestone/8?closed=1
+
+New features:
+
+- Secrets and templates
+- No more _ in the command (e.g. handoff run_local -> handoff run local)
+- Honor Parameter Store hierarchical format
+- Show logs from cloud run
+- Specify own network configuration to run AWS Fargate task
+- Custom Dockerfile
+
+Bug fixes:
+
+- container commands (build/push) fails to identify the latest version when the micro version > 9
+- Installing non-Python programs
+- Make sure project and workspace directories are separated
+- Subprocess terminates siliently when the command fails
+
+Documentation:
+
+- "environment variable is not defined" for HO_RESOURCE_GROUP, TASK, BUCKET...
+
 ### 0.2.0b4 (2020-08-18)
 
 - Workaround for failing setuptools installation script source.

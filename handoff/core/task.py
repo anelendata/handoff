@@ -66,10 +66,11 @@ def _get_time_window(data):
     start_offset = datetime.timedelta(days=data.get("start_offset_days", -1))
     end_offset = datetime.timedelta(days=data.get("duration_days", 1))
 
-    start_at, end_at = utils.get_time_window(data,
-                                           start_offset=start_offset,
-                                           end_offset=end_offset,
-                                           iso_str=iso_str)
+    start_at, end_at = utils.get_time_window(
+        data,
+        start_offset=start_offset,
+        end_offset=end_offset,
+        iso_str=iso_str)
     return start_at, end_at
 
 

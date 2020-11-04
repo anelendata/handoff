@@ -133,7 +133,11 @@ def _read_project_remote():
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
-    config = json.loads(platform.get_parameter("config"))
+    config_str = platform.get_parameter("config")
+    if not config_str:
+        raise Exception("config not found in the remote parameter store.\n" +
+                        "Check resource_group and task and do config push.")
+    config = json.loads(config_str)
     return config
 
 
@@ -564,8 +568,9 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
     parameter key.
     """
     LOGGER.info("Compiling config from %s" % project_dir)
-    config = json.dumps(_config_get_local(project_dir, workspace_dir, data))
-    config["version"] = VERSION
+    config_obj = _config_get_local(project_dir, workspace_dir, data)
+    config_obj["version"] = VERSION
+    config = json.dumps(config_obj)
 
     allow_advanced_tier = data.get("allow_advanced_tier", False)
     if type(allow_advanced_tier) is not bool:

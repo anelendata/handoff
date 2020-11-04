@@ -226,6 +226,7 @@ def run(project_dir, workspace_dir, data, extras=None, **kwargs):
     platform = _get_platform()
     state.validate_env()
 
+    extras_obj = None
     if extras:
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
@@ -243,14 +244,19 @@ def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
     state = config.get_state()
     platform = _get_platform()
     state.validate_env()
+    if not data.get("target_id") or not data.get("cron"):
+        raise Exception("Forgot to set '-d target_id=<ID> cron=<CRON>' ?")
     target_id = str(data["target_id"])
     cronexp = "cron(" + data["cron"] + ")"
 
+    extras_obj = None
     if extras:
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
-    platform.schedule_task(target_id, cronexp, extras=extras_obj)
+    env = data
+
+    platform.schedule_task(target_id, cronexp, env=env, extras=extras_obj)
 
 
 def unschedule(project_dir, workspace_dir, data, **kwargs):

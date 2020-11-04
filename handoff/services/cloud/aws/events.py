@@ -1,4 +1,4 @@
-import logging, os
+import json, logging, os
 
 import boto3
 
@@ -13,9 +13,9 @@ def get_client():
     return cred.get_client("events")
 
 
-def schedule_task(task_stack, resource_group_stack, region,
-                  target_id, cronexp, role_arn,
-                  extras=None):
+def schedule_task(task_stack, resource_group_stack, docker_image,
+                  region, target_id, cronexp, role_arn,
+                  env=[], extras=None):
     """Schedule a task
     extras overwrite the kwargs given to put_targets boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets
@@ -57,6 +57,9 @@ def schedule_task(task_stack, resource_group_stack, region,
     logger.debug("%s\n%s\n%s\n%s" %
                  (cluster_arn, task_def_arn, subnets, security_groups))
 
+    input_json = json.dumps(
+        {"containerOverrides": [{"name": docker_image, "environment": env}]})
+
     kwargs = {
         "Rule": rule_name,
         "Targets": [
@@ -75,10 +78,12 @@ def schedule_task(task_stack, resource_group_stack, region,
                             "AssignPublicIp": "ENABLED"
                         }
                     }
-                }
+                },
+                "Input": input_json
             }
         ]
     }
+
     if extras:
         kwargs.update(extras)
 

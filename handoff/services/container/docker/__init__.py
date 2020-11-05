@@ -1,4 +1,6 @@
 import os, sys
+from typing import Dict
+
 from handoff import config, utils
 from handoff.services import cloud
 from handoff.config import DOCKER_IMAGE
@@ -9,15 +11,22 @@ from . import impl
 LOGGER = utils.get_logger(__name__)
 
 
-def _envs(project_dir, workspace_dir, data, **kwargs):
+def _envs(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     platform = cloud._get_platform()
     if not platform.login():
         raise Exception("Please set platform credentials")
     # Do this to set DOCKER_IMAGE
-    _ = admin._config_get_local(project_dir, workspace_dir, data, **kwargs)
+    _ = admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
 
-def build(project_dir, workspace_dir, data, **kwargs):
+def build(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """Build Docker image
     If you want to feed a custom Dockerfile, use --data option:
       --data docker_file="/path_to/Dockerfile"
@@ -25,7 +34,7 @@ def build(project_dir, workspace_dir, data, **kwargs):
     use --data option. Every file under the directory will be copied:
       --data files_dir="/path_to/extra_files_dir"
     """
-    _envs(project_dir, workspace_dir, data, **kwargs)
+    _envs(project_dir, workspace_dir, data=data, **kwargs)
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
     files_dir = data.get("files_dir")
@@ -37,14 +46,18 @@ def build(project_dir, workspace_dir, data, **kwargs):
                new_version=new_version)
 
 
-def run(project_dir, workspace_dir, data, **kwargs):
-    _envs(project_dir, workspace_dir, data, **kwargs)
+def run(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    **kwargs) -> None:
+    _envs(project_dir, workspace_dir, envs=envs, **kwargs)
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
     env = cloud._get_platform_auth_env(project_dir, workspace_dir,
-                                       data, **kwargs)
-    env.update(data)
+                                       envs=envs, **kwargs)
+    env.update(envs)
     try:
         impl.run(extra_env=env)
     except Exception as e:
@@ -52,8 +65,11 @@ def run(project_dir, workspace_dir, data, **kwargs):
         raise
 
 
-def push(project_dir, workspace_dir, data, **kwargs):
-    _envs(project_dir, workspace_dir, data, **kwargs)
+def push(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    _envs(project_dir, workspace_dir, **kwargs)
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
 
@@ -74,7 +90,10 @@ def push(project_dir, workspace_dir, data, **kwargs):
     impl.push(username, password, registry)
 
 
-def get_latest_image_version(project_dir, workspace_dir, data, **kwargs):
+def get_latest_image_version(
+     project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> str:
     state = config.get_state()
     state.validate_env([DOCKER_IMAGE])
     image_name = state.get(DOCKER_IMAGE)

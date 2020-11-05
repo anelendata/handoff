@@ -1,10 +1,15 @@
 import os, shutil
+from typing import Dict
+
 from handoff.utils import get_logger as _get_logger
 
 LOGGER = _get_logger(__name__)
 
 
-def make(project_dir, workspace_dir, data, **kwargs):
+def make(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff quick_start make`
     Copy the test projects to the test_projects under the current directory
     """

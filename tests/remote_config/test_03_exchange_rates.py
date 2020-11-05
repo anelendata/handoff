@@ -43,22 +43,22 @@ def test_03_exchange_rates():
         workspace_dir = os.path.join(root_dir, "workspace")
 
         data["allow_advanced_tier"] = False
-        handoff.do("config push", project_dir, workspace_dir, data,
+        handoff.do("config push", project_dir, workspace_dir, data=data,
                    push_artifacts=False)
-        handoff.do("files push", project_dir, workspace_dir, data,
-                   push_artifacts=False)
-
-        handoff.do("workspace install", project_dir, workspace_dir, data,
+        handoff.do("files push", project_dir, workspace_dir, data=data,
                    push_artifacts=False)
 
-        handoff.do("run", None, workspace_dir, data,
+        handoff.do("workspace install", project_dir, workspace_dir, data=data,
+                   push_artifacts=False)
+
+        handoff.do("run", project_dir, workspace_dir, data=data,
                    push_artifacts=True)
 
-        handoff.do("files delete", project_dir, None, data,
+        handoff.do("files delete", project_dir, None, data=data,
                    push_artifacts=False)
-        handoff.do("artifacts delete", project_dir, None, data,
+        handoff.do("artifacts delete", project_dir, None, data=data,
                    push_artifacts=False)
-        handoff.do("config delete", project_dir, None, data,
+        handoff.do("config delete", project_dir, None, data=data,
                    push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))

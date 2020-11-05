@@ -1,6 +1,9 @@
 import os, sys
 import yaml
 from importlib import import_module as _import_module
+from typing import Dict
+from types import ModuleType
+
 from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
 from handoff import config
@@ -13,8 +16,12 @@ LOGGER = _get_logger(__name__)
 PLATFORM_MODULE = None
 
 
-def _get_platform(provider_name=None, platform_name=None,
-                  stdout=False, cloud_profile=None, **kwargs):
+def _get_platform(
+    provider_name: str = None,
+    platform_name: str = None,
+    stdout: bool = False,
+    cloud_profile: str = None,
+    **kwargs) -> ModuleType:
     state = config.get_state()
     if not provider_name:
         provider_name = state.get(CLOUD_PROVIDER)
@@ -33,7 +40,11 @@ def _get_platform(provider_name=None, platform_name=None,
     return PLATFORM_MODULE
 
 
-def _assume_role(project_dir, workspace_dir, data, **kwargs):
+def _assume_role(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     state = config.get_state()
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
@@ -45,12 +56,20 @@ def _assume_role(project_dir, workspace_dir, data, **kwargs):
                          external_id=external_id)
 
 
-def _get_platform_auth_env(project_dir, workspace_dir, data, **kwargs):
+def _get_platform_auth_env(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> Dict:
     platform = _get_platform()
     return platform.get_platform_auth_env(data)
 
 
-def role_create(project_dir, workspace_dir, data, **kwargs):
+def role_create(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff cloud role create -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
     Create the role with deployment privilege.
     """
@@ -73,7 +92,11 @@ def role_create(project_dir, workspace_dir, data, **kwargs):
     )
 
 
-def role_update(project_dir, workspace_dir, data, **kwargs):
+def role_update(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff cloud role update -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
     Update the role privilege information.
     """
@@ -96,7 +119,11 @@ def role_update(project_dir, workspace_dir, data, **kwargs):
     )
 
 
-def role_delete(project_dir, workspace_dir, data, **kwargs):
+def role_delete(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff cloud role delete -p <project_directory> -d grantee_account_id=<grantee_id>`
     Delete the role.
     """
@@ -119,7 +146,10 @@ def role_delete(project_dir, workspace_dir, data, **kwargs):
     )
 
 
-def bucket_create(project_dir, workspace_dir, data, **kwargs):
+def bucket_create(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud bucket create -p <project_directory>`
     Create remote storage bucket. Bucket is attached to the resource group.
     """
@@ -129,7 +159,10 @@ def bucket_create(project_dir, workspace_dir, data, **kwargs):
     platform.create_bucket()
 
 
-def bucket_update(project_dir, workspace_dir, data, **kwargs):
+def bucket_update(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud bucket update -p <project_directory>`
     Update remote storage bucket info
     """
@@ -139,7 +172,10 @@ def bucket_update(project_dir, workspace_dir, data, **kwargs):
     platform.update_bucket()
 
 
-def bucket_delete(project_dir, workspace_dir, data, **kwargs):
+def bucket_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud bucket delete -p <project_directory>`
     Delete remote storage bucket.
     """
@@ -149,7 +185,10 @@ def bucket_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_bucket()
 
 
-def resources_create(project_dir, workspace_dir, data, **kwargs):
+def resources_create(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud resources create -p <project_directory>`
     Create resources necessary for task execution.
     The resources are shared among the tasks under the same resource group.
@@ -164,7 +203,10 @@ def resources_create(project_dir, workspace_dir, data, **kwargs):
     platform.create_resources()
 
 
-def resources_update(project_dir, workspace_dir, data, **kwargs):
+def resources_update(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud resources update -p <project_directory>`
     Update the resources
 
@@ -176,7 +218,10 @@ def resources_update(project_dir, workspace_dir, data, **kwargs):
     platform.update_resources()
 
 
-def resources_delete(project_dir, workspace_dir, data, **kwargs):
+def resources_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud resources delete -p <project_directory>`
     Delete the resources
 
@@ -188,7 +233,10 @@ def resources_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_resources()
 
 
-def task_create(project_dir, workspace_dir, data, **kwargs):
+def task_create(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud task create -p <project_directory>`
     Create the task
     """
@@ -198,7 +246,10 @@ def task_create(project_dir, workspace_dir, data, **kwargs):
     platform.create_task()
 
 
-def task_update(project_dir, workspace_dir, data, **kwargs):
+def task_update(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud task update -p <project_directory>`
     Update the task
     """
@@ -208,7 +259,10 @@ def task_update(project_dir, workspace_dir, data, **kwargs):
     platform.update_task()
 
 
-def task_delete(project_dir, workspace_dir, data, **kwargs):
+def task_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff cloud task delete -p <project_directory>`
     Delete the task
     """
@@ -218,9 +272,18 @@ def task_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_task()
 
 
-def run(project_dir, workspace_dir, data, extras=None, **kwargs):
-    """`handoff cloud run -d resource_group=<resource_group_name> task=<task_name>`
+def run(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    extras: str = None,
+    **kwargs) -> None:
+    """`handoff cloud run -d resource_group=<resource_group_name> task=<task_name> -e DATA='key1=val1 key2=val2...'`
     Run a task once in the platform
+
+    If the environment variable DATA is specified via -e option, it will be
+    used as:
+    `handoff run -d $(eval echo $DATA)`
     """
     state = config.get_state()
     platform = _get_platform()
@@ -231,15 +294,24 @@ def run(project_dir, workspace_dir, data, extras=None, **kwargs):
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
-    platform.run_task(env=data, extras=extras_obj)
+    platform.run_task(env=envs, extras=extras_obj)
 
 
-def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
-    """`handoff cloud schedule -d target_id=<target_id> cron="<cron_format>"`
+def schedule(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    data: Dict = {},
+    extras: str = None,
+    **kwargs) -> None:
+    """`handoff cloud schedule -d target_id=<target_id> cron="<cron_format>" -e DATA='key1=val1 key2=val2...'`
     Schedule a task named <target_id> at the recurring scheduled specified
-    as <cron_format>.
+    as <cron_format>. An example of cron-format string is "10 01 * * ? *"
+    for every day at 01:10 (1:10AM)
 
-    An example of cron-format string is "10 01 * * ? *" for every day at 01:10 (1:10AM)
+    If the environment variable DATA is specified via -e option, it will be
+    used as:
+    `handoff run -d $(eval echo $DATA)`
     """
     state = config.get_state()
     platform = _get_platform()
@@ -254,12 +326,14 @@ def schedule(project_dir, workspace_dir, data, extras=None, **kwargs):
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
-    env = data
-
-    platform.schedule_task(target_id, cronexp, env=env, extras=extras_obj)
+    platform.schedule_task(target_id, cronexp, env=envs, extras=extras_obj)
 
 
-def unschedule(project_dir, workspace_dir, data, **kwargs):
+def unschedule(
+     project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff cloud unschedule -d target_id=<target_id>`
     Unschedule a task named <target_id>
     """
@@ -270,7 +344,11 @@ def unschedule(project_dir, workspace_dir, data, **kwargs):
     platform.unschedule_task(target_id)
 
 
-def logs(project_dir, workspace_dir, data, **kwargs):
+def logs(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff cloud logs -d start_time=<start_time> end_time=<end_time> follow=<True/False>`
     Show logs
     Use --data (-d) option to:

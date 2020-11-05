@@ -1,4 +1,5 @@
 import datetime, json, logging, os, shutil, sys, subprocess
+from typing import Dict, Tuple
 import yaml
 
 from jinja2 import Template as _Template
@@ -18,14 +19,14 @@ LOGGER = utils.get_logger(__name__)
 SECRETS = None
 
 
-def _workspace_get_dirs(workspace_dir):
+def _workspace_get_dirs(workspace_dir: str) -> Tuple[str, str, str]:
     config_dir = os.path.join(workspace_dir, CONFIG_DIR)
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     files_dir = os.path.join(workspace_dir, FILES_DIR)
     return config_dir, artifacts_dir, files_dir
 
 
-def _install(install, venv_path=None):
+def _install(install: str, venv_path: str = None) -> None:
     if venv_path:
         venv_switch = "source " + venv_path + "/bin/activate && "
     else:
@@ -40,7 +41,7 @@ def _install(install, venv_path=None):
     p.wait()
 
 
-def _make_python_venv(venv_path):
+def _make_python_venv(venv_path: str) -> None:
     if os.path.exists(venv_path):
         LOGGER.warning("%s already exists. Skipping python -m venv..." %
                        venv_path)
@@ -56,7 +57,9 @@ def _make_python_venv(venv_path):
         _install("pip install wheel", venv_path)
 
 
-def _write_config_files(workspace_config_dir, precompiled_config):
+def _write_config_files(
+        workspace_config_dir: str,
+        precompiled_config: Dict) -> None:
     if not os.path.exists(workspace_config_dir):
         os.mkdir(workspace_config_dir)
     for r in precompiled_config.get("files", []):
@@ -64,7 +67,9 @@ def _write_config_files(workspace_config_dir, precompiled_config):
             f.write(r["value"])
 
 
-def _parse_template_files(templates_dir, workspace_files_dir):
+def _parse_template_files(
+        templates_dir: str,
+        workspace_files_dir: str) -> None:
     state = get_state()
     for root, dirs, files in os.walk(templates_dir, topdown=True):
         ws_root = os.path.join(workspace_files_dir,
@@ -84,14 +89,14 @@ def _parse_template_files(templates_dir, workspace_files_dir):
                 f.write(parsed)
 
 
-def _get_secret(key):
+def _get_secret(key: str) -> str:
     global SECRETS
     if SECRETS is None:
         raise Exception("Secrets are not loaded")
     return SECRETS.get(key)
 
 
-def _update_state(config):
+def _update_state(config: Dict) -> None:
     """Set environment variable and in-memory variables
     Warning: environment variables are inherited to subprocess. The sensitive
     information may be compromised by a bad subprocess.
@@ -124,7 +129,7 @@ def _update_state(config):
                        BUCKET)
 
 
-def _read_project_remote():
+def _read_project_remote() -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
@@ -141,7 +146,7 @@ def _read_project_remote():
     return config
 
 
-def _read_project_local(project_file):
+def _read_project_local(project_file: str) -> Dict:
     """Read project.yml file from the local project directory
     """
     state = get_state()
@@ -167,7 +172,10 @@ def _read_project_local(project_file):
     return project
 
 
-def _secrets_get(project_dir, workspace_dir, data, **kwargs):
+def _secrets_get(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """Fetch all secrets from the remote parameter store
     """
     state = get_state()
@@ -183,7 +191,11 @@ def _secrets_get(project_dir, workspace_dir, data, **kwargs):
         SECRETS.update(params)
 
 
-def _secrets_get_local(project_dir, workspace_dir, data, **kwargs):
+def _secrets_get_local(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> Dict:
     """Load secrets from local file
     --data file (.secrets/secrets.yml): The YAML file storing secrets
     with format:
@@ -231,7 +243,10 @@ def _secrets_get_local(project_dir, workspace_dir, data, **kwargs):
     return secrets
 
 
-def secrets_push(project_dir, workspace_dir, data, **kwargs):
+def secrets_push(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
 
     Push the contents of <secrets_file> to remote parameter store
@@ -242,35 +257,40 @@ def secrets_push(project_dir, workspace_dir, data, **kwargs):
         value: value1
         # The value is stored as a resource group level secret and can be
         # shared among the projects under the same group.
-        resource_group_level: false
+        level: "resource group"
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
-    secrets = _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    secrets = _secrets_get_local(project_dir, workspace_dir, **kwargs)
 
     if not secrets:
-        return
+        raise Exception("No secrets are defined.")
     print("Putting the following keys to remote parameter store:")
 
     if "config" in secrets:
         raise Exception("secrets with name \"config\" is reserved by handoff.")
 
     for key in secrets:
-        print("  - " + key)
+        print("  - " + key + " (" + secrets[key].get("level", "task") +
+              " level)")
     response = input("Proceed? (y/N)")
     if response.lower() not in ["yes", "y"]:
         print("aborting")
         return
 
     for key in secrets:
-        resource_group_level = secrets[key].get("resource_group_level")
-        platform.push_parameter(key, SECRETS[key],
-                                resource_group_level=resource_group_level,
-                                **kwargs)
+        level = secrets[key].get("level", "task")
+        platform.push_parameter(
+            key, SECRETS[key],
+            resource_group_level=(level.lower().strip() == "resource group"),
+            **kwargs)
 
 
-def secrets_delete(project_dir, workspace_dir, data, **kwargs):
+def secrets_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs):
     """`handoff secrets delete -p <project_directory> -d file=<secrets_file>`
 
     Delete the contents of <secrets_file> to remote parameter store
@@ -280,31 +300,38 @@ def secrets_delete(project_dir, workspace_dir, data, **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform()
-    secrets = _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    secrets = _secrets_get_local(project_dir, workspace_dir, **kwargs)
 
     if not secrets:
         return
     print("Deleting the following keys to remote parameter store:")
 
     for key in secrets:
-        print("  - " + key)
+        print("  - " + key + " (" + secrets[key].get("level", "task") +
+              " level)")
+
     response = input("Proceed? (y/N)")
     if response.lower() not in ["yes", "y"]:
         print("aborting")
         return
 
     for key in secrets:
-        resource_group_level = secrets[key].get("resource_group_level")
+        level = secrets[key].get("level", "task")
         try:
-            platform.delete_parameter(key,
-                                      resource_group_level=resource_group_level,
-                                      **kwargs)
+            platform.delete_parameter(
+                key,
+                resource_group_level=(level.lower().strip()
+                                      == "resource group"),
+                **kwargs)
         except Exception:
             LOGGER.warning("%s does not exist in remote parameter store." %
                            key)
 
 
-def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
+def artifacts_archive(
+    project_dir:str,
+    workspace_dir:str,
+    **kwargs) -> None:
     """`handoff artifacts archive -p <project_directory>`
 
     Copy the artifacts directory from (remote) last to (remote) runs/<date>.
@@ -324,7 +351,10 @@ def artifacts_archive(project_dir, workspace_dir, data, **kwargs):
     platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
 
 
-def artifacts_get(project_dir, workspace_dir, data, **kwargs):
+def artifacts_get(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff artifacts archive -p <project_directory> -w <workspace_directory>`
 
     Download artifacts from the (remote) last to <workspace_dir>
@@ -348,7 +378,10 @@ def artifacts_get(project_dir, workspace_dir, data, **kwargs):
     platform.download_dir(remote_dir, artifacts_dir)
 
 
-def artifacts_push(project_dir, workspace_dir, data, **kwargs):
+def artifacts_push(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff artifacts push -p <project_directory> -w <workspace_directory>`
 
     Push local artifacts file to remote storage under last directory.
@@ -371,7 +404,10 @@ def artifacts_push(project_dir, workspace_dir, data, **kwargs):
     platform.upload_dir(artifacts_dir, prefix)
 
 
-def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
+def artifacts_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff artifacts delete -p <project_directory>`
 
     Delete artifacts from the remote artifacts/last directory
@@ -390,7 +426,10 @@ def artifacts_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_dir(dir_name)
 
 
-def files_get(project_dir, workspace_dir, data, **kwargs):
+def files_get(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff files get -p <project_directory> -w <workspace_directory>`
     Download remote files to <workspace_dir>/files
     It also parse the templates with secrets and populate under
@@ -420,9 +459,12 @@ def files_get(project_dir, workspace_dir, data, **kwargs):
                           os.path.join(workspace_dir, FILES_DIR))
 
 
-def files_get_local(project_dir, workspace_dir, data, **kwargs):
+def files_get_local(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff files get local -p <project_directory> -w <workspace_directory>`
-    Copy files from the local <project_dir> to <workspace_dir>
+    Copy files from the local project_dir to workspace_dir.
 
     It also parse the templates with secrets and populate under
     <workspace_dir>/files
@@ -449,7 +491,10 @@ def files_get_local(project_dir, workspace_dir, data, **kwargs):
                           os.path.join(workspace_dir, FILES_DIR))
 
 
-def files_push(project_dir, workspace_dir, data, **kwargs):
+def files_push(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff files push -p <project_directory>`
     Push the contents of <project_dir>/files and <project_dir>/templates
     to remote storage"""
@@ -464,7 +509,10 @@ def files_push(project_dir, workspace_dir, data, **kwargs):
     platform.upload_dir(templates_dir, prefix)
 
 
-def files_delete(project_dir, workspace_dir, data, **kwargs):
+def files_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff files delete -p <project_directory>`
     Delete files and templates from the remote storage
     """
@@ -479,7 +527,10 @@ def files_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_dir(dir_name)
 
 
-def _config_get(project_dir, workspace_dir, data, **kwargs):
+def _config_get(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> Dict:
     """Read configs from remote parameter store and copy them to workspace dir
     """
     if not workspace_dir:
@@ -488,7 +539,7 @@ def _config_get(project_dir, workspace_dir, data, **kwargs):
     config_dir, _, _ = _workspace_get_dirs(workspace_dir)
     precompiled_config = _read_project_remote()
 
-    _secrets_get(project_dir, workspace_dir, data, **kwargs)
+    _secrets_get(project_dir, workspace_dir, **kwargs)
     _update_state(precompiled_config)
 
     _write_config_files(config_dir, precompiled_config)
@@ -496,7 +547,10 @@ def _config_get(project_dir, workspace_dir, data, **kwargs):
     return precompiled_config
 
 
-def _config_get_local(project_dir, workspace_dir, data, **kwargs):
+def _config_get_local(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> Dict:
     """ Compile configuration JSON file from the project.yml
 
     The output JSON file describes the commands and arguments for each process.
@@ -537,7 +591,7 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     project = _read_project_local(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
-    _secrets_get_local(project_dir, workspace_dir, data, **kwargs)
+    _secrets_get_local(project_dir, workspace_dir, **kwargs)
     _update_state(config)
 
     config["files"] = list()
@@ -562,13 +616,18 @@ def _config_get_local(project_dir, workspace_dir, data, **kwargs):
     return config
 
 
-def config_push(project_dir, workspace_dir, data, **kwargs):
+def config_push(
+    project_dir: str,
+    workspace_dir: str,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff config push -p <project_directory>`
     Push project.yml and the contents of project_dir/config as a secure
     parameter key.
     """
     LOGGER.info("Compiling config from %s" % project_dir)
-    config_obj = _config_get_local(project_dir, workspace_dir, data)
+    config_obj = _config_get_local(project_dir, workspace_dir, data=data,
+                                   **kwargs)
     config_obj["version"] = VERSION
     config = json.dumps(config_obj)
 
@@ -581,7 +640,10 @@ def config_push(project_dir, workspace_dir, data, **kwargs):
                             allow_advanced_tier=allow_advanced_tier)
 
 
-def config_delete(project_dir, workspace_dir, data, **kwargs):
+def config_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff config delete -p <project_directory>`
     Delete the project configuration from the remote parameter store.
     """
@@ -589,14 +651,20 @@ def config_delete(project_dir, workspace_dir, data, **kwargs):
     platform.delete_parameter("config")
 
 
-def config_print(project_dir, workspace_dir, data, **kwargs):
+def config_print(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff config print -p <project_directory>`
     Print the project configuration in the remote parameter store.
     """
-    print(json.dumps(_config_get(project_dir, workspace_dir, data)))
+    print(json.dumps(_config_get(project_dir, workspace_dir)))
 
 
-def workspace_init(project_dir, workspace_dir, data, **kwargs):
+def workspace_init(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     if not os.path.isdir(workspace_dir):
@@ -611,7 +679,10 @@ def workspace_init(project_dir, workspace_dir, data, **kwargs):
         os.mkdir(files_dir)
 
 
-def workspace_install(project_dir, workspace_dir, data, **kwargs):
+def workspace_install(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """`handoff workspace install -p <project_directory> -w <workspace_directory>`
     Install dependencies in the local virtual environment
     """
@@ -630,7 +701,10 @@ def workspace_install(project_dir, workspace_dir, data, **kwargs):
             _install(install, os.path.join(command["venv"]))
 
 
-def version(project_dir, workspace_dir, data, **kwargs):
+def version(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
     """Print handoff version
     """
     print(VERSION)

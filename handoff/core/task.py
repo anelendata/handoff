@@ -2,6 +2,8 @@ import datetime, json, logging, os, shlex, sys, venv
 import subprocess
 from typing import Dict
 
+from jinja2 import Template as _Template
+
 from handoff import utils
 
 
@@ -43,7 +45,9 @@ def _get_command_string(command, argstring, params):
     if argstring is None:
         argstring = ""
     command = "%s %s" % (command,  argstring)
-    command = command.format(**params)
+
+    template = _Template(command)
+    command = template.render(**params)
 
     if params.get("venv"):
         command = '/bin/bash -c "source {code_dir}/{venv}/bin/activate && '.format(**params) + command + '"'

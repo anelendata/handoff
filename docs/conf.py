@@ -27,9 +27,9 @@ copyright = '2020, ANELEN'
 author = 'ANELEN'
 
 # The short X.Y version
-version = '0.1.1'
+version = '0.3.0'
 # The full version, including alpha/beta/rc tags
-release = '0.1.1-alpha'
+release = version
 
 
 # -- General configuration ---------------------------------------------------

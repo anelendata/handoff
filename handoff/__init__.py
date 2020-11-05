@@ -3,6 +3,8 @@ from pathlib import Path
 import yaml
 from lxml import html
 import requests
+from types import ModuleType
+from typing import Dict, List
 
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
@@ -22,7 +24,7 @@ LATEST_AVAILABLE_VERSION = None
 ANNOUNCEMENTS = None
 
 
-def _strip_outer_quotes(string):
+def _strip_outer_quotes(string: str) -> str:
     string = string.strip()
     # Avoid over stripping. Either ' or "
     if string[0] == '"':
@@ -31,7 +33,7 @@ def _strip_outer_quotes(string):
         string = string.strip("'")
     return string
 
-def _load_param_list(arg_list):
+def _load_param_list(arg_list: List) -> Dict:
     data = {}
     new_arg_list = []
 
@@ -72,7 +74,7 @@ def _load_param_list(arg_list):
     return data
 
 
-def _list_plugins():
+def _list_plugins() -> Dict:
     modules = dict()
     objects = dir(plugins)
     for name in objects:
@@ -85,7 +87,7 @@ def _list_plugins():
     return modules
 
 
-def _list_commands(module):
+def _list_commands(module: Dict) -> Dict:
     commands = dict()
     objects = dir(module)
     for name in objects:
@@ -101,8 +103,12 @@ def _list_commands(module):
     return commands
 
 
-def _run_subcommand(module, command, project_dir, workspace_dir, data,
-                    show_help, **kwargs):
+def _run_subcommand(module: ModuleType,
+                    command: str,
+                    project_dir: str,
+                    workspace_dir: str,
+                    show_help: bool,
+                    **kwargs) -> None:
     prev_wd = os.getcwd()
     commands = _list_commands(module)
     if command in commands:
@@ -114,8 +120,8 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data,
             return
 
         if workspace_dir:
-            admin.workspace_init(project_dir, workspace_dir, data)
-        commands[command](project_dir, workspace_dir, data)
+            admin.workspace_init(project_dir, workspace_dir, **kwargs)
+        commands[command](project_dir, workspace_dir, **kwargs)
     else:
         if command:
             print("Invalid command")
@@ -128,13 +134,16 @@ def _run_subcommand(module, command, project_dir, workspace_dir, data,
     os.chdir(prev_wd)
 
 
-def _run_task_subcommand(command, project_dir, workspace_dir, data,
-                         push_artifacts=False, **kwargs):
+def _run_task_subcommand(
+    command: str,
+    project_dir: str,
+    workspace_dir: str,
+    push_artifacts: bool = False, **kwargs) -> None:
     state = get_state()
     prev_wd = os.getcwd()
     commands = _list_commands(task)
 
-    admin.workspace_init(project_dir, workspace_dir, data)
+    admin.workspace_init(project_dir, workspace_dir, **kwargs)
 
     remote_ops = ["run", "run remote config"]
     local_ops = ["run local", "show commands"]
@@ -142,19 +151,22 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     # Load config from remote or local
     config = dict()
     if command in remote_ops:
+        if project_dir:
+            config = admin._config_get_local(project_dir, workspace_dir,
+                                             **kwargs)
         if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
-            print("Error: To test run with remote config, you need to" +
-                  "either set the project directory (-p) or " +
-                  "give environmental variables as:\n" +
-                  "    --envs resource_group=<resource_group_name> " +
-                  "task=<task_name>\n")
-            sys.exit(1)
-        config = admin._config_get(project_dir, workspace_dir, data)
-        admin.files_get(project_dir, workspace_dir, data)
-        admin.artifacts_get(project_dir, workspace_dir, data)
+            raise Exception(
+                "To test run with remote config, you need to" +
+                " either give environmental variables as:\n" +
+                "  --envs resource_group=<resource_group_name>" +
+                " task=<task_name>\n"  +
+                " or define them at deploy->envs in project.yml")
+        config = admin._config_get(project_dir, workspace_dir, **kwargs)
+        admin.files_get(project_dir, workspace_dir, **kwargs)
+        admin.artifacts_get(project_dir, workspace_dir, **kwargs)
     elif command in local_ops:
-        config = admin._config_get_local(project_dir, workspace_dir, data)
-        admin.files_get_local(project_dir, workspace_dir, data)
+        config = admin._config_get_local(project_dir, workspace_dir, **kwargs)
+        admin.files_get_local(project_dir, workspace_dir, **kwargs)
 
     os.chdir(workspace_dir)
 
@@ -163,7 +175,7 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
     LOGGER.info("Job started at " + str(start))
 
     # Run the command
-    output = commands[command](config, data)
+    output = commands[command](config, **kwargs)
 
     end = datetime.datetime.utcnow()
     LOGGER.info("Job ended at " + str(end))
@@ -180,12 +192,16 @@ def _run_task_subcommand(command, project_dir, workspace_dir, data,
         if not state.get_env(BUCKET):
             raise Exception("Cannot push artifacts. BUCKET environment" +
                             "variable is not set")
-        admin.artifacts_push(project_dir, workspace_dir, data)
-        admin.artifacts_archive(project_dir, workspace_dir, data)
+        admin.artifacts_push(project_dir, workspace_dir, **kwargs)
+        admin.artifacts_archive(project_dir, workspace_dir, **kwargs)
 
 
-def do(command, project_dir, workspace_dir, data,
-       show_help=False, **kwargs):
+def do(
+    command: str,
+    project_dir: str = None,
+    workspace_dir: str = None,
+    show_help: bool = False,
+    **kwargs) -> None:
     state = get_state()
 
     module_name = command.split(" ")[0]
@@ -196,14 +212,15 @@ def do(command, project_dir, workspace_dir, data,
     # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):
         try:
-            _run_task_subcommand(command, project_dir, workspace_dir, data,
-                                 **kwargs)
+            _run_task_subcommand(command, project_dir, workspace_dir, **kwargs)
         except Exception as e:
-            LOGGER.critical(e)
-            raise
+            raise e
         return
 
     admin_commands = _list_commands(admin)
+    if command == "version":
+        admin_commands[command](project_dir, workspace_dir, **kwargs)
+        return
     if command in admin_commands:
         prev_wd = os.getcwd()
         if show_help:
@@ -213,9 +230,9 @@ def do(command, project_dir, workspace_dir, data,
             return
 
         if workspace_dir:
-            admin.workspace_init(project_dir, workspace_dir, data)
-        admin._config_get_local(project_dir, workspace_dir, data)
-        admin_commands[command](project_dir, workspace_dir, data, **kwargs)
+            admin.workspace_init(project_dir, workspace_dir, **kwargs)
+        admin._config_get_local(project_dir, workspace_dir, **kwargs)
+        admin_commands[command](project_dir, workspace_dir, **kwargs)
 
         os.chdir(prev_wd)
         print_update()
@@ -223,39 +240,39 @@ def do(command, project_dir, workspace_dir, data,
         return
 
     if module_name == "container":
-        admin._config_get_local(project_dir, workspace_dir, data)
+        admin._config_get_local(project_dir, workspace_dir, **kwargs)
         _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                        data, show_help, **kwargs)
+                        show_help, **kwargs)
         return
 
     if module_name == "cloud":
         if show_help:
             _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                            data, show_help, **kwargs)
+                            show_help, **kwargs)
             return
 
-        admin._config_get_local(project_dir, workspace_dir, data)
+        admin._config_get_local(project_dir, workspace_dir, **kwargs)
         if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = container._get_latest_image_version(
-                project_dir, workspace_dir, data)
+                project_dir, workspace_dir, **kwargs)
             if image_version:
                 state.set_env(IMAGE_VERSION, image_version)
 
         _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                        data, show_help, **kwargs)
+                        show_help, **kwargs)
         return
 
     if module_name in plugin_modules.keys():
         if project_dir:
-            admin._config_get_local(project_dir, workspace_dir, data)
+            admin._config_get_local(project_dir, workspace_dir, **kwargs)
         _run_subcommand(plugin_modules[module_name], sub_command, project_dir,
-                        workspace_dir, data, show_help, **kwargs)
+                        workspace_dir, show_help, **kwargs)
         return
 
     print("Unrecognized command %s. Run handoff -h for help." % command)
 
 
-def check_update():
+def check_update() -> None:
     global LATEST_AVAILABLE_VERSION
     try:
         response = requests.get("https://pypi.org/simple/handoff")
@@ -267,7 +284,7 @@ def check_update():
     LATEST_AVAILABLE_VERSION = package_list[0][:-len(".tar.gz")]
 
 
-def print_update():
+def print_update() -> None:
     global LATEST_AVAILABLE_VERSION
     elapsed = 0
     while LATEST_AVAILABLE_VERSION is None and elapsed < 2.0:
@@ -286,7 +303,7 @@ def print_update():
           " pip install -U handoff\n")
 
 
-def check_announcements(**kwargs):
+def check_announcements(**kwargs) -> None:
     global ANNOUNCEMENTS
     url = "https://api.handoff.cloud/api/v1/announcements"
     try:
@@ -299,7 +316,7 @@ def check_announcements(**kwargs):
     return
 
 
-def print_announcements():
+def print_announcements() -> None:
     global ANNOUNCEMENTS
     elapsed = 0
     while ANNOUNCEMENTS is None and elapsed < 2.0:
@@ -339,7 +356,7 @@ def print_announcements():
         LOGGER.warning("Failed to write %s: %s" % (date_file, e))
 
 
-def main():
+def main() -> None:
     threading.Thread(target=check_update).start()
     admin_command_list = "\n- ".join(_list_commands(admin))
     task_command_list = "\n- ".join(_list_commands(task))
@@ -407,19 +424,17 @@ handoff <command> -h for more help.\033[0m
 
     LOGGER.setLevel(args.log_level.upper())
 
-    data = _load_param_list(args.data)
+    args.data = _load_param_list(args.data)
 
-    envs = _load_param_list(args.envs)
-    for key in envs.keys():
-        os.environ[ENV_PREFIX + key.upper()] = envs[key]
+    args.envs = _load_param_list(args.envs)
+    for key in args.envs.keys():
+        os.environ[ENV_PREFIX + key.upper()] = args.envs[key]
     os.environ[CLOUD_PROVIDER] = args.cloud_provider
     os.environ[CLOUD_PLATFORM] = args.cloud_platform
     os.environ[CONTAINER_PROVIDER] = args.container_provider
 
-    kwargs = dict()
+    kwargs = dict(vars(args))
     kwargs["show_help"] = args.help
-    kwargs["push_artifacts"] = args.push_artifacts
-    kwargs["cloud_profile"] = args.cloud_profile
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):
@@ -430,9 +445,8 @@ handoff <command> -h for more help.\033[0m
                      kwargs={"command": args.command}).start()
 
     command = (" ".join(args.command)).strip()
-    do(command,
-       args.project_dir, args.workspace_dir,
-       data, **kwargs)
+    kwargs.pop("command")
+    do(command, **kwargs)
 
 
 if __name__ == "__main__":

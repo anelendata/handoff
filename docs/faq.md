@@ -32,11 +32,11 @@ handoff run local -p project_dir -d today=$(date -I) tomorrow=$(date -I -d "1 da
 ```
 
 You can delay the evaluation of date command in container run and cloud run
-commands by passing DATA environment variable via `-d` option:
+commands by passing DATA environment variable via `-e` option:
 
 ```
-handoff container run -p project_dir -d DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
-handoff cloud run -p project_dir -d DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
+handoff container run -p project_dir -e DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
+handoff cloud run -p project_dir -e DATA='today=$(date -I) tomorrow=$(date -I -d "1 day")'
 ```
 
 Make sure to **use single quotes** when defining DATA variable so it won't be

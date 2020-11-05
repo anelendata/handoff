@@ -1,5 +1,6 @@
 import datetime, json, logging, os, shlex, sys, venv
 import subprocess
+from typing import Dict
 
 from handoff import utils
 
@@ -74,7 +75,10 @@ def _get_time_window(data):
     return start_at, end_at
 
 
-def run(config, data):
+def run(
+    config:Dict,
+    data: Dict = {},
+    **kwargs) -> None:
     """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
@@ -121,11 +125,11 @@ def run(config, data):
     return state
 
 
-def run_local(config, data):
+def run_local(config, **kwargs):
     """`handoff run local -p <project_directory> -w <workspace_directory>`
     Run the task locally.
     """
-    return run(config, data)
+    return run(config, **kwargs)
 
 
 def show_commands(config, data):

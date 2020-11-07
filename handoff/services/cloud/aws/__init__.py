@@ -158,18 +158,17 @@ def get_all_parameters():
 
     path = "/" + state.get(RESOURCE_GROUP)
     raw_params = ssm.get_parameters_by_path(path)
-    for key in raw_params:
-        value = raw_params[key]
-        key = key.split("/")[-1]
-        params[key] = value
+    for p in raw_params:
+        value = raw_params[p]
+        key = p.split("/")[-1]
+        params[key] = {"value": value, "path": p}
 
     path = path + "/" + state.get(TASK)
     raw_params = ssm.get_parameters_by_path(path)
-    for key in raw_params:
-        value = raw_params[key]
-        key = key.split("/")[-1]
-        params[key] = value
-
+    for p in raw_params:
+        value = raw_params[p]
+        key = p.split("/")[-1]
+        params[key] = {"value": value, "path": p}
     return params
 
 

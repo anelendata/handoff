@@ -115,6 +115,7 @@ class State(dict):
         if not trust and not self.is_allowed_env(key):
             raise KeyError(key + " is not whitelisted for env var usage.")
         self.unset(key)
+        self[key] = value
         os.environ[key] = value
 
     def get_env(self, name):

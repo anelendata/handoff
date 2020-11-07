@@ -15,29 +15,29 @@ The build may take 5~10 minutes.
 ```
 ```shell
 
-[2020-09-15 16:54:57,503] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 16:54:57,506] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 16:54:57,508] [    INFO] - Setting environment variables from config. - (admin.py:104)
-[2020-09-15 16:54:57,626] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-09-15 16:54:57,910] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 16:54:57,978] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
-[2020-09-15 16:54:58,085] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 16:54:58,085] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 16:54:58,088] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 16:54:58,088] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-11-05 09:24:22,993] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
+[2020-11-05 09:24:22,996] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
+[2020-11-05 09:24:22,996] [    INFO] - Setting environment variables from config. - (admin.py:105)
+[2020-11-05 09:24:23,125] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-05 09:24:23,406] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
+[2020-11-05 09:24:23,472] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
+[2020-11-05 09:24:23,582] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
+[2020-11-05 09:24:23,582] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
+[2020-11-05 09:24:23,585] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
+[2020-11-05 09:24:23,585] [    INFO] - Setting environment variables from config. - (admin.py:105)
 .
 .
 .
- - (impl.py:101)
-[2020-09-15 17:03:05,396] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d ${DATA:-"dummy=1"} -a - (impl.py:101)
-[2020-09-15 17:03:05,433] [    INFO] -  ---> Running in c68be66fc7be
- - (impl.py:101)
-[2020-09-15 17:03:05,540] [    INFO] -  ---> c1b0adcfac9a
- - (impl.py:101)
-[2020-09-15 17:03:11,992] [    INFO] - Successfully built c1b0adcfac9a
- - (impl.py:101)
-[2020-09-15 17:03:12,009] [    INFO] - Successfully tagged singer_exchange_rates_to_csv:0.1
- - (impl.py:101)
+ - (impl.py:110)
+[2020-11-05 09:32:59,063] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d $(eval echo ${DATA:-"dummy=1"}) -a - (impl.py:110)
+[2020-11-05 09:32:59,098] [    INFO] -  ---> Running in 9db189ffc3f4
+ - (impl.py:110)
+[2020-11-05 09:32:59,216] [    INFO] -  ---> fe6369aef884
+ - (impl.py:110)
+[2020-11-05 09:33:06,386] [    INFO] - Successfully built fe6369aef884
+ - (impl.py:110)
+[2020-11-05 09:33:06,401] [    INFO] - Successfully tagged singer_exchange_rates_to_csv:0.1
+ - (impl.py:110)
 ```
 
 Now let's run the code in the Docker container.
@@ -47,28 +47,8 @@ Now let's run the code in the Docker container.
 ```
 ```shell
 
-[2020-09-15 17:03:18,506] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 17:03:18,512] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 17:03:18,514] [    INFO] - Setting environment variables from config. - (admin.py:104)
-[2020-09-15 17:03:18,724] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-09-15 17:03:19,183] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 17:03:19,247] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
-[2020-09-15 17:03:19,417] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 17:03:19,417] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 17:03:19,420] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 17:03:19,421] [    INFO] - Setting environment variables from config. - (admin.py:104)
-.
-.
-.
-[2020-09-15 17:03:28,849] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/collect_stats.json to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/collect_stats.json - (s3.py:53)
-
-[2020-09-15 17:03:29,040] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/exchange_rate-20200915T165453.csv to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/exchange_rate-20200915T165453.csv - (s3.py:53)
-
-[2020-09-15 17:03:29,236] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/exchange_rate-20200915T170326.csv to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/exchange_rate-20200915T170326.csv - (s3.py:53)
-
-[2020-09-15 17:03:29,501] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/state to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/artifacts/state - (s3.py:53)
-
-[2020-09-15 17:03:29,768] [    INFO] - Copied s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/files/stats_collector.py to s3://xxxxxxxxxxxx-handoff-test/test-exchange-rates/runs/2020-09-15T17:03:28.550964/files/stats_collector.py - (s3.py:53)
+[2020-11-05 09:33:13,986] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
+[2020-11-05 09:33:13,994] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
 ```
 
 Confirm the run by checking the logs. Also check the artifacts on S3:
@@ -92,29 +72,29 @@ AWS Elastic Container Registry. This may take a few minutes.
 ```
 ```shell
 
-[2020-09-15 17:03:32,370] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 17:03:32,373] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 17:03:32,375] [    INFO] - Setting environment variables from config. - (admin.py:104)
-[2020-09-15 17:03:32,490] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-09-15 17:03:32,773] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 17:03:32,838] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:121)
-[2020-09-15 17:03:32,944] [    INFO] - You have the access to AWS resources. - (__init__.py:66)
-[2020-09-15 17:03:32,944] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:154)
-[2020-09-15 17:03:32,948] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:199)
-[2020-09-15 17:03:32,948] [    INFO] - Setting environment variables from config. - (admin.py:104)
+[2020-11-05 09:33:16,813] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
+[2020-11-05 09:33:16,816] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
+[2020-11-05 09:33:16,816] [    INFO] - Setting environment variables from config. - (admin.py:105)
+[2020-11-05 09:33:16,941] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-05 09:33:17,222] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
+[2020-11-05 09:33:17,288] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
+[2020-11-05 09:33:17,463] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
+[2020-11-05 09:33:17,463] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
+[2020-11-05 09:33:17,466] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
+[2020-11-05 09:33:17,466] [    INFO] - Setting environment variables from config. - (admin.py:105)
 .
 .
 .
-[2020-09-15 17:06:47,417] [    INFO] - id: 077eb5a59fa7 [==========================================>        ]  706.5MB/831MB - (impl.py:172)
-[2020-09-15 17:06:50,171] [    INFO] - id: 2549ac7ad267 [==========================================>        ]  706.5MB/831MB - (impl.py:172)
-[2020-09-15 17:06:55,213] [    INFO] - id: 077eb5a59fa7 [=============================================>     ]  757.2MB/831MB - (impl.py:172)
-[2020-09-15 17:06:56,651] [    INFO] - id: 2549ac7ad267 [=============================================>     ]  756.7MB/831MB - (impl.py:172)
-[2020-09-15 17:07:04,541] [    INFO] - id: 077eb5a59fa7 [================================================>  ]  806.5MB/831MB - (impl.py:172)
-[2020-09-15 17:07:05,412] [    INFO] - id: 2549ac7ad267 [================================================>  ]  806.5MB/831MB - (impl.py:172)
-[2020-09-15 17:07:15,095] [    INFO] - id: 077eb5a59fa7 [==================================================>]  856.4MB - (impl.py:172)
-[2020-09-15 17:07:15,404] [    INFO] - id: 2549ac7ad267 [==================================================>]  856.4MB - (impl.py:172)
-[2020-09-15 17:07:23,465] [    INFO] - id: 077eb5a59fa7 status: Pushed - (impl.py:163)
-[2020-09-15 17:07:23,608] [    INFO] - id: 2549ac7ad267 status: Pushed - (impl.py:163)
+[2020-11-05 09:36:58,671] [    INFO] - id: bd2610ade6e0 [==========================================>        ]  741.1MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:02,380] [    INFO] - id: 50dfc84e9311 [==========================================>        ]  741.1MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:06,659] [    INFO] - id: bd2610ade6e0 [=============================================>     ]  792.4MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:09,600] [    INFO] - id: 50dfc84e9311 [=============================================>     ]  792.4MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:17,837] [    INFO] - id: bd2610ade6e0 [================================================>  ]  844.9MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:19,888] [    INFO] - id: 50dfc84e9311 [================================================>  ]  844.9MB/870.7MB - (impl.py:181)
+[2020-11-05 09:37:29,755] [    INFO] - id: bd2610ade6e0 [==================================================>]  897.4MB - (impl.py:181)
+[2020-11-05 09:37:31,653] [    INFO] - id: 50dfc84e9311 [==================================================>]  897.4MB - (impl.py:181)
+[2020-11-05 09:37:39,688] [    INFO] - id: bd2610ade6e0 status: Pushed - (impl.py:172)
+[2020-11-05 09:37:40,325] [    INFO] - id: 50dfc84e9311 status: Pushed - (impl.py:172)
 ```
 
 Confirm that the Docker image has been uploaded to:

@@ -17,15 +17,15 @@ your local machine does not implement GNU date (e.g. OSX).
 By default, `handoff container run` and `handoff cloud run` should be able
 to handle correctly as the Docker image is based on Ubuntu.
 
-You can also use variables:
+You can also use Template variables:
 
 ```
 commands:
   - command: echo
-    args: "today/tomorrow: {today}/{tomorrow}"
+    args: "today / tomorrow: { today } / { tomorrow }"
 ```
 
-Then, run handoff with date:
+Then, run handoff with date command passing via -d option:
 
 ```
 handoff run local -p project_dir -d today=$(date -I) tomorrow=$(date -I -d "1 day")
@@ -40,8 +40,18 @@ handoff cloud run -p project_dir -e DATA='today=$(date -I) tomorrow=$(date -I -d
 ```
 
 Make sure to **use single quotes** when defining DATA variable so it won't be
-evaluated when handoff command runs. You want the command string to be passed
-'as is' and then evaluated when the container executes the handoff run command.
+evaluated when container/cloud run command runs. You want the command string to be passed
+'as is' and then evaluated when the **container** executes the `handoff run` command.
+
+DATA is a sepecial environment variable inside the container as defined in
+Dockerfile, the container evaluates DATA and pass to handoff via -d option:
+
+```
+handoff run -w workspace_dir -d $(eval echo $DATA)
+```
+
+In this way, the date command defined in DATA is finally evaluated inside
+the container.
 
 ## Q. How do I configure project.yml so it installs a Python command from a Github repository?
 

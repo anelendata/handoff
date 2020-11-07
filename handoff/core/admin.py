@@ -71,6 +71,8 @@ def _parse_template_files(
         templates_dir: str,
         workspace_files_dir: str) -> None:
     state = get_state()
+    if not os.path.exists(workspace_files_dir):
+        os.mkdir(workspace_files_dir)
     for root, dirs, files in os.walk(templates_dir, topdown=True):
         ws_root = os.path.join(workspace_files_dir,
                                root[root.find(templates_dir) +
@@ -96,7 +98,9 @@ def _get_secret(key: str) -> str:
     return SECRETS.get(key)
 
 
-def _update_state(config: Dict) -> None:
+def _update_state(
+    config: Dict,
+    data: Dict = {}) -> None:
     """Set environment variable and in-memory variables
     Warning: environment variables are inherited to subprocess. The sensitive
     information may be compromised by a bad subprocess.
@@ -108,7 +112,9 @@ def _update_state(config: Dict) -> None:
     for v in config.get("envs", list()):
         if v.get("value") is None:
             v["value"] = _get_secret(v["key"])
-        state.set_env(v["key"], v["value"], trust=True)
+        if v["value"]:
+            state.set_env(v["key"], v["value"], trust=True)
+    state.update(data)
 
     if not state.get(BUCKET):
         try:
@@ -187,8 +193,8 @@ def _secrets_get(
     global SECRETS
     SECRETS = {}
     params = platform.get_all_parameters()
-    if params:
-        SECRETS.update(params)
+    for key in params.keys():
+        SECRETS[key] = params[key]["value"]
 
 
 def _secrets_get_local(
@@ -197,50 +203,45 @@ def _secrets_get_local(
     data: Dict = {},
     **kwargs) -> Dict:
     """Load secrets from local file
-    --data file (.secrets/secrets.yml): The YAML file storing secrets
-    with format:
-    key1:
-        value: value1
-        # The value is stored as a resource group level secret and can be
-        # shared among the projects under the same group.
-        resource_group_level: false
+
+    See secrets_push for the local file specification.
     """
     global SECRETS
     SECRETS = {}
-    if data.get("file"):
-        secrets_file = data["file"]
+    if data.get("secrets_dir"):
+        secrets_dir = data["secrets_dir"]
     else:
-        secrets_file = os.path.join(project_dir, SECRETS_DIR, SECRETS_FILE)
-    state = get_state()
+        secrets_dir = os.path.join(project_dir, SECRETS_DIR)
+    secrets_file = os.path.join(secrets_dir, SECRETS_FILE)
+
     if not os.path.isfile(secrets_file):
         LOGGER.warning(secrets_file + " does not exsist")
         return None
     with open(secrets_file, "r") as f:
         LOGGER.info("Reading secrets from local file: " + secrets_file)
-        # <key>:
-        #   value: <value>
-        #   level: resource_group|task
         secrets = yaml.load(f, Loader=yaml.FullLoader)
-    for key in secrets:
-        if secrets[key].get("value"):
-            SECRETS[key] = secrets[key]["value"]
-        elif secrets[key].get("file"):
-            full_path = os.path.join(project_dir, SECRETS_DIR,
-                                     secrets[key].get("file"))
-            if not os.path.isfile(full_path):
-                raise Exception(full_path + " does not exist")
-            with open(full_path, "r") as f:
+    secrets_dict = dict()
+    for secret in secrets:
+        key = secret.get("key")
+        secrets_dict[key] = secret
+        if not key:
+            raise Exception("key must be defined for secret")
+        if secret.get("value"):
+            SECRETS[key] = secret["value"]
+        elif secret.get("file"):
+            rel_path = os.path.join(secrets_dir,
+                                     secret.get("file"))
+            if not os.path.isfile(rel_path):
+                raise Exception(rel_path + " does not exist")
+            with open(rel_path, "r") as f:
                 SECRETS[key] = f.read()
-        elif secrets[key].get("resource_group_level"):
-            LOGGER.warning("Unregistered resource_group_level secret: %s" %
-                           key)
+        elif secret.get("level", "task") == "resource group":
+            LOGGER.warning(
+                "Unregistered resource group level secret: %s" % key)
         else:
             raise Exception("Neither value or file defined for task-level " +
-                            "secret key " + key)
-        if SECRETS.get(key) is not None:
-            # Automatically register to state (on-memory)
-            state[key] = SECRETS[key]
-    return secrets
+                            "secret: " + key)
+    return secrets_dict
 
 
 def secrets_push(
@@ -253,11 +254,16 @@ def secrets_push(
 
     --data file (.secrets/secrets.yml): The YAML file storing secrets
     with format:
-    key1:
-        value: value1
-        # The value is stored as a resource group level secret and can be
-        # shared among the projects under the same group.
-        level: "resource group"
+    ```
+    - key: key1
+      value: value1
+    - key: key2
+      # The value can also be loaded from a text file
+      file: file_name
+      # The value is stored as a resource group level secret and can be
+      # shared among the projects under the same group.
+      level: "resource group"
+    ```
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -271,7 +277,7 @@ def secrets_push(
     if "config" in secrets:
         raise Exception("secrets with name \"config\" is reserved by handoff.")
 
-    for key in secrets:
+    for key in secrets.keys():
         print("  - " + key + " (" + secrets[key].get("level", "task") +
               " level)")
     response = input("Proceed? (y/N)")
@@ -326,6 +332,36 @@ def secrets_delete(
         except Exception:
             LOGGER.warning("%s does not exist in remote parameter store." %
                            key)
+
+
+def secrets_print(
+    project_dir:str,
+    workspace_dir:str,
+    **kwargs):
+    """`handoff secrets print -p <project_directory>`
+
+    Get the secrets in the remote parameter store and dump in YAML format.
+    """
+    state = get_state()
+    state.validate_env([RESOURCE_GROUP, TASK,
+                        CLOUD_PROVIDER, CLOUD_PLATFORM])
+    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
+                                   platform_name=state.get(CLOUD_PLATFORM))
+    LOGGER.info("Fetching the secrets from the remote parameter store.")
+    params = platform.get_all_parameters()
+    secret_list = list()
+    for key in params.keys():
+        if key == "config":
+            continue
+        level = "task"
+        if params[key]["path"].split("/")[-2] == state[RESOURCE_GROUP]:
+            level = "resource group"
+        secret_list.append({
+            "key": key,
+            "level": level,
+            "value": params[key]["value"]
+        })
+    print(yaml.dump(secret_list))
 
 
 def artifacts_archive(
@@ -448,13 +484,14 @@ def files_get(
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
+    # First download to the local templates directory, then parse to save
+    # in the workspace files directory.
     _, _, files_dir = _workspace_get_dirs(workspace_dir)
+    # Remote files are templates that can contain variables.
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
-    platform.download_dir(remote_dir, files_dir)
-
-    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
     templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
     platform.download_dir(remote_dir, templates_dir)
+    # Parse and save to workspace/files
     _parse_template_files(templates_dir,
                           os.path.join(workspace_dir, FILES_DIR))
 
@@ -484,11 +521,7 @@ def files_get_local(
         _, _, files_dir = _workspace_get_dirs(workspace_dir)
         if os.path.exists(files_dir):
             shutil.rmtree(files_dir)
-        shutil.copytree(project_files_dir, files_dir)
-
-    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
-    _parse_template_files(templates_dir,
-                          os.path.join(workspace_dir, FILES_DIR))
+        _parse_template_files(project_files_dir, files_dir)
 
 
 def files_push(
@@ -503,10 +536,6 @@ def files_push(
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.upload_dir(files_dir, prefix)
-
-    templates_dir = os.path.join(project_dir, TEMPLATES_DIR)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
-    platform.upload_dir(templates_dir, prefix)
 
 
 def files_delete(
@@ -523,13 +552,12 @@ def files_delete(
     platform = cloud._get_platform()
     dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     platform.delete_dir(dir_name)
-    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, TEMPLATES_DIR)
-    platform.delete_dir(dir_name)
 
 
 def _config_get(
     project_dir: str,
     workspace_dir: str,
+    data: Dict = {},
     **kwargs) -> Dict:
     """Read configs from remote parameter store and copy them to workspace dir
     """
@@ -540,7 +568,7 @@ def _config_get(
     precompiled_config = _read_project_remote()
 
     _secrets_get(project_dir, workspace_dir, **kwargs)
-    _update_state(precompiled_config)
+    _update_state(precompiled_config, data=data)
 
     _write_config_files(config_dir, precompiled_config)
 
@@ -550,6 +578,7 @@ def _config_get(
 def _config_get_local(
     project_dir: str,
     workspace_dir: str,
+    data: Dict = {},
     **kwargs) -> Dict:
     """ Compile configuration JSON file from the project.yml
 
@@ -592,7 +621,7 @@ def _config_get_local(
     config.update(project)
 
     _secrets_get_local(project_dir, workspace_dir, **kwargs)
-    _update_state(config)
+    _update_state(config, data=data)
 
     config["files"] = list()
     proj_config_dir = os.path.join(project_dir, CONFIG_DIR)

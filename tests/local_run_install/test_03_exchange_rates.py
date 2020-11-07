@@ -1,6 +1,6 @@
 import csv, datetime, json, logging, os, shutil, tempfile
 import handoff
-from handoff.config import (ARTIFACTS_DIR, CONFIG_DIR, BUCKET, IMAGE_VERSION)
+from handoff.config import (ARTIFACTS_DIR, FILES_DIR, BUCKET, IMAGE_VERSION)
 
 TEST_PROJECTS_DIR = "./handoff/test_projects"
 
@@ -14,7 +14,7 @@ def test_03_exchange_rates():
     with tempfile.TemporaryDirectory() as root_dir:
         project_dir = os.path.join(root_dir, "project")
         shutil.copytree(orig_project_dir, project_dir)
-        with open(os.path.join(project_dir, CONFIG_DIR, "tap-config.json"), "w") as f:
+        with open(os.path.join(project_dir, FILES_DIR, "tap-config.json"), "w") as f:
             config = {"base": "JPY",
                       "start_date": (datetime.datetime.now() - datetime.timedelta(days=7)).isoformat()[:10]}
             json.dump(config, f)

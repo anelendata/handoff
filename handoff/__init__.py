@@ -441,8 +441,9 @@ handoff <command> -h for more help.\033[0m
         Exception("workspace directory must be different from " +
                   "project directory.")
 
-    threading.Thread(target=check_announcements,
-                     kwargs={"command": args.command}).start()
+    threading.Thread(
+        target=check_announcements,
+        kwargs={"command": ("-".join(args.command)).strip()}).start()
 
     command = (" ".join(args.command)).strip()
     kwargs.pop("command")

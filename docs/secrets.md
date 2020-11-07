@@ -36,10 +36,25 @@ To do so, create `.secrets` directory under the project directory and
 create `secrets.yml` file there.
 
 ```
-<key_name>:
-    value: <value>
-    level: "task"  # "task" or "resource group", assumed to be task when absent.
+- key: key1
+  value: value1
+- key: key2
+  # The value can also be loaded from a text file
+  file: ./file_key.txt
+- key: key3
+  value: value3
+  # The value is stored as a resource group level secret and can be
+  # shared among the projects under the same group.
+  level: "resource group"
 ```
 
 When level is "resource group", the value is stored as a resource group level
 secret and can be shared among the projects under the same group.
+
+To push the secrets to the remote parameter store, do:
+
+```
+handoff secrets push -p <project_dir> (-d secrets_dir=<directory>)
+```
+
+If you specify `<directory>`, handoff looks for secrets.yml in the directory.

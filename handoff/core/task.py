@@ -122,11 +122,18 @@ def run(
             raise Exception("Process %d (%s) exited with code %d" %
                             (i, commands[i], return_code))
 
-    state = (procs[-1].communicate()[0]).decode("utf-8").strip("\n").strip(" ")
+    stdout, stderr = procs[-1].communicate()
 
-    LOGGER.debug("State after the execution: %s" % state)
+    if stdout:
+        stdout = stdout.decode("utf-8").strip("\n").strip(" ")
+    if stderr:
+        stderr = stderr.decode("utf-8").strip("\n").strip(" ")
 
-    return state
+    LOGGER.debug("STDOUT of the last process:\n%s\n    " % stdout)
+    LOGGER.debug("STDERR of the last process:\n%s\n    " % stderr)
+
+    return stdout
+
 
 
 def run_local(config, **kwargs):
@@ -136,7 +143,7 @@ def run_local(config, **kwargs):
     return run(config, **kwargs)
 
 
-def show_commands(config, data):
+def show_commands(config, data={}, **kwargs):
     """`handoff show commands -p <project_directory>`
     Show the shell commands that drives the task.
     """
@@ -145,10 +152,3 @@ def show_commands(config, data):
     commands = _get_commands(config, data)
     for command in commands:
         print(command)
-
-
-def show_envs(config, data):
-    """`handoff show envs -p <project_directory>`
-    Show environment variables registered during the run`
-    """
-    LOGGER.info(os.system("export"))

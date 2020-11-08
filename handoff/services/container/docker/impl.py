@@ -82,7 +82,20 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
         logger.info("Looking for handoff source at " + handoff_dir)
         if os.path.isfile(os.path.join(handoff_dir, "setup.py")):
             logger.info("Found handoff. Copying to the build directory")
-            shutil.copytree(handoff_dir, os.path.join(build_dir, "handoff"))
+            ho_build_dir = os.path.join(build_dir, "handoff")
+            os.mkdir(ho_build_dir)
+            shutil.copytree(os.path.join(handoff_dir, "handoff"),
+                            os.path.join(ho_build_dir, "handoff"))
+            files = [
+                "MANIFEST.in",
+                "README.md",
+                "requirements.txt",
+                "setup.cfg",
+                "setup.py",
+            ]
+            for fn in files:
+                shutil.copyfile(os.path.join(handoff_dir, fn),
+                                os.path.join(ho_build_dir, fn))
         else:
             logger.info("...not found")
 

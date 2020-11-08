@@ -149,6 +149,8 @@ def get_parameter(key, resource_group_level=False):
                      state.get("AWS_REGION") +
                      "&tab=Table#list_parameter_filters=Name:Contains:" +
                      prefix_key)
+    # Parameter Store does not allow {{}}. Unescaping.
+    value = value.replace("\{\{", "{{").replace("\}\}", "}}")
     return value
 
 
@@ -160,6 +162,8 @@ def get_all_parameters():
     raw_params = ssm.get_parameters_by_path(path)
     for p in raw_params:
         value = raw_params[p]
+        # Parameter Store does not allow {{}}. Unescaping.
+        value = value.replace("\{\{", "{{").replace("\}\}", "}}")
         key = p.split("/")[-1]
         params[key] = {"value": value, "path": p}
 
@@ -167,6 +171,8 @@ def get_all_parameters():
     raw_params = ssm.get_parameters_by_path(path)
     for p in raw_params:
         value = raw_params[p]
+        # Parameter Store does not allow {{}}. Unescaping.
+        value = value.replace("\{\{", "{{").replace("\}\}", "}}")
         key = p.split("/")[-1]
         params[key] = {"value": value, "path": p}
     return params
@@ -186,6 +192,8 @@ def push_parameter(key, value, allow_advanced_tier=False,
     if allow_advanced_tier:
         LOGGER.info("Allowing AWS SSM Parameter Store to store with " +
                     "Advanced tier (max 8KB)")
+    # Parameter Store does not allow {{}}. Escaping.
+    value = value.replace("{{", "\{\{").replace("}}", "\}\}")
     tier = "Standard"
     if len(value) > 8192:
         raise Exception("Parameter string must be less than 8192kb!")

@@ -5,6 +5,7 @@ from typing import Dict
 from jinja2 import Template as _Template
 
 from handoff import utils
+from handoff.config import get_state
 
 
 LOGGER = utils.get_logger(__name__)
@@ -81,14 +82,12 @@ def _get_time_window(data):
 
 def run(
     config:Dict,
-    data: Dict = {},
     **kwargs) -> None:
     """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
-    start_at, end_at = _get_time_window(data)
-    data.update({"start_at": start_at, "end_at": end_at})
-    commands = _get_commands(config, data)
+    state = get_state()
+    commands = _get_commands(config, state)
 
     env = _get_env()
 

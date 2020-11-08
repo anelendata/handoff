@@ -22,7 +22,7 @@ You can also use Template variables:
 ```
 commands:
   - command: echo
-    args: "today / tomorrow: { today } / { tomorrow }"
+    args: "today / tomorrow: {{ today }} / {{ tomorrow }}"
 ```
 
 Then, run handoff with date command passing via -d option:

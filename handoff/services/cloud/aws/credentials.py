@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 CLIENTS = dict()
 
 
-def set_container_credentials():
+def _set_container_credentials():
     """
     AWS credentials are either retrieved from credentials local endpoint
     or defined as environment variables
@@ -19,12 +19,12 @@ def set_container_credentials():
     # See https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-iam-roles.html
     response = requests.get("http://169.254.170.2" + rel_uri)
     cred = json.loads(response.content)
-    logger.info("Role ARN: " + cred["RoleArn"])
+    logger.debug("Role ARN: " + cred["RoleArn"])
     os.environ["AWS_ACCESS_KEY_ID"] = cred["AccessKeyId"]
     os.environ["AWS_SECRET_ACCESS_KEY"] = cred["SecretAccessKey"]
     os.environ["AWS_SESSION_TOKEN"] = cred["Token"]
-    logger.info("Set AWS credentials from " +
-                "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+    logger.debug("Set AWS credentials from " +
+                 "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
 
 
 def get_session(aws_access_key_id=None, aws_secret_access_key=None,
@@ -38,7 +38,7 @@ def get_session(aws_access_key_id=None, aws_secret_access_key=None,
 
 
 def get_region():
-    set_container_credentials()
+    _set_container_credentials()
     session = boto3.session.Session()
     return session.region_name
 
@@ -48,7 +48,7 @@ def get_client(service):
     if CLIENTS.get(service):
         return CLIENTS[service]
 
-    set_container_credentials()
+    _set_container_credentials()
     session = boto3.session.Session(region_name=os.environ.get("AWS_REGION"))
     CLIENTS[service] = session.client(service)
 

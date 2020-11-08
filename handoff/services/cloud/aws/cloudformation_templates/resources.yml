@@ -141,3 +141,7 @@ Resources:
                  StringLike:
                    iam:PassedToService:
                      ecs-tasks.amazonaws.com
+  FargateCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${AWS::StackName}

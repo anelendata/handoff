@@ -537,8 +537,8 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
         "task": state.get(TASK)
     }
     LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
-                 "home?region={region}#/clusters/{resource_group}-" +
-                 "{task}/scheduledTasks").format(**params))
+                 "home?region={region}#/clusters/{resource_group}-resources" +
+                 "/scheduledTasks").format(**params))
 
 
 def unschedule_task(target_id):
@@ -554,8 +554,8 @@ def unschedule_task(target_id):
         "task": state.get(TASK)
     }
     LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
-                 "home?region={region}#/clusters/{resource_group}-" +
-                 "{task}/scheduledTasks").format(**params))
+                 "home?region={region}#/clusters/{resource_group}-resources" +
+                 "/scheduledTasks").format(**params))
 
 
 def print_logs(start_time=None, end_time=None, format_=None, follow=False,

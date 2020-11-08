@@ -73,7 +73,7 @@ Resources:
               Value: !Sub ${ResourceGroup}
             - Name: !Sub ${EnvVarPrefix}BUCKET
               Value: !Sub ${Bucket}
-            - Name: !Sub ${EnvVarPrefix}DOCKER_IMAGE
+            - Name: !Sub ${EnvVarPrefix}CONTAINER_IMAGE
               Value: !Sub ${ImageName}
             - Name: !Sub ${EnvVarPrefix}TASK
               Value: !Sub ${AWS::StackName}

@@ -13,7 +13,7 @@ def get_client():
     return cred.get_client("events")
 
 
-def schedule_task(task_stack, resource_group_stack, docker_image,
+def schedule_task(task_stack, resource_group_stack, container_image,
                   region, target_id, cronexp, role_arn,
                   env=[], extras=None):
     """Schedule a task
@@ -58,7 +58,7 @@ def schedule_task(task_stack, resource_group_stack, docker_image,
                  (cluster_arn, task_def_arn, subnets, security_groups))
 
     input_json = json.dumps(
-        {"containerOverrides": [{"name": docker_image, "environment": env}]})
+        {"containerOverrides": [{"name": container_image, "environment": env}]})
 
     kwargs = {
         "Rule": rule_name,

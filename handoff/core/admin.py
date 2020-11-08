@@ -7,7 +7,7 @@ from jinja2 import Template as _Template
 from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
-                            CONFIG_DIR, DOCKER_IMAGE, FILES_DIR, TEMPLATES_DIR,
+                            CONTAINER_IMAGE, FILES_DIR, TEMPLATES_DIR,
                             SECRETS_DIR, SECRETS_FILE,
                             RESOURCE_GROUP, PROJECT_FILE, TASK,
                             CLOUD_PROVIDER, CLOUD_PLATFORM, get_state)
@@ -17,13 +17,6 @@ from handoff.utils import pyvenvx
 LOGGER = utils.get_logger(__name__)
 
 SECRETS = None
-
-
-def _workspace_get_dirs(workspace_dir: str) -> Tuple[str, str, str]:
-    config_dir = os.path.join(workspace_dir, CONFIG_DIR)
-    artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
-    files_dir = os.path.join(workspace_dir, FILES_DIR)
-    return config_dir, artifacts_dir, files_dir
 
 
 def _install(install: str, venv_path: str = None) -> None:
@@ -55,16 +48,6 @@ def _make_python_venv(venv_path: str) -> None:
         builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
         _install("pip install wheel", venv_path)
-
-
-def _write_config_files(
-        workspace_config_dir: str,
-        precompiled_config: Dict) -> None:
-    if not os.path.exists(workspace_config_dir):
-        os.mkdir(workspace_config_dir)
-    for r in precompiled_config.get("files", []):
-        with open(os.path.join(workspace_config_dir, r["name"]), "w") as f:
-            f.write(r["value"])
 
 
 def _parse_template_files(
@@ -160,7 +143,7 @@ def _read_project_local(project_file: str) -> Dict:
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
-    deploy_env = project.get("deploy", dict()).get("envs", dict())
+    deploy_env = project.get("deploy", dict())
     for key in deploy_env:
         full_key = ENV_PREFIX + key.upper()
         if state.is_allowed_env(full_key):
@@ -168,8 +151,8 @@ def _read_project_local(project_file: str) -> Dict:
         else:
             state[full_key] = deploy_env[key]
 
-    cloud_provider_name = project.get("deploy", dict()).get("provider")
-    cloud_platform_name = project.get("deploy", dict()).get("platform")
+    cloud_provider_name = project.get("deploy", dict()).get("cloud_provider")
+    cloud_platform_name = project.get("deploy", dict()).get("cloud_platform")
     if cloud_provider_name and cloud_platform_name:
         platform = cloud._get_platform(provider_name=cloud_provider_name,
                                        platform_name=cloud_platform_name)
@@ -408,7 +391,7 @@ def artifacts_get(
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
+    artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
 
     platform.download_dir(remote_dir, artifacts_dir)
@@ -435,7 +418,7 @@ def artifacts_push(
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    _, artifacts_dir, _ = _workspace_get_dirs(workspace_dir)
+    artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
     platform.upload_dir(artifacts_dir, prefix)
 
@@ -486,14 +469,13 @@ def files_get(
 
     # First download to the local templates directory, then parse to save
     # in the workspace files directory.
-    _, _, files_dir = _workspace_get_dirs(workspace_dir)
+    files_dir = os.path.join(workspace_dir, FILES_DIR)
     # Remote files are templates that can contain variables.
     remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
     templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
     platform.download_dir(remote_dir, templates_dir)
     # Parse and save to workspace/files
-    _parse_template_files(templates_dir,
-                          os.path.join(workspace_dir, FILES_DIR))
+    _parse_template_files(templates_dir, files_dir)
 
 
 def files_get_local(
@@ -518,7 +500,7 @@ def files_get_local(
 
     project_files_dir = os.path.join(project_dir, FILES_DIR)
     if os.path.exists(project_files_dir):
-        _, _, files_dir = _workspace_get_dirs(workspace_dir)
+        files_dir = os.path.join(workspace_dir, FILES_DIR)
         if os.path.exists(files_dir):
             shutil.rmtree(files_dir)
         _parse_template_files(project_files_dir, files_dir)
@@ -564,13 +546,10 @@ def _config_get(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     LOGGER.info("Reading configurations from remote parameter store.")
-    config_dir, _, _ = _workspace_get_dirs(workspace_dir)
     precompiled_config = _read_project_remote()
 
     _secrets_get(project_dir, workspace_dir, **kwargs)
     _update_state(precompiled_config, data=data)
-
-    _write_config_files(config_dir, precompiled_config)
 
     return precompiled_config
 
@@ -622,25 +601,6 @@ def _config_get_local(
 
     _secrets_get_local(project_dir, workspace_dir, **kwargs)
     _update_state(config, data=data)
-
-    config["files"] = list()
-    proj_config_dir = os.path.join(project_dir, CONFIG_DIR)
-    if os.path.exists(proj_config_dir):
-        for fn in os.listdir(proj_config_dir):
-            full_path = os.path.join(proj_config_dir, fn)
-            if (fn[-5:] != ".json" or
-                    not os.path.isfile(full_path)):
-                continue
-            with open(full_path, "r") as f:
-                config_str = f.read().replace('"', "\"")
-                config["files"].append({"name": fn, "value": config_str})
-
-    if workspace_dir:
-        ws_config_dir = os.path.join(workspace_dir, CONFIG_DIR)
-        LOGGER.info("Writing configuration files in the workspace" +
-                    " configuration directory " +
-                    ws_config_dir)
-        _write_config_files(ws_config_dir, config)
 
     return config
 
@@ -699,9 +659,8 @@ def workspace_init(
     if not os.path.isdir(workspace_dir):
         os.mkdir(workspace_dir)
 
-    config_dir, artifacts_dir, files_dir = _workspace_get_dirs(workspace_dir)
-    if not os.path.isdir(config_dir):
-        os.mkdir(config_dir)
+    artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
+    files_dir = os.path.join(workspace_dir, FILES_DIR)
     if not os.path.isdir(artifacts_dir):
         os.mkdir(artifacts_dir)
     if not os.path.isdir(files_dir):

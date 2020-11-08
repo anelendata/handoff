@@ -14,7 +14,8 @@ def _get_platform(provider_name: str = None) -> str:
     global CONTAINER_MODULE
     if not CONTAINER_MODULE:
         if not provider_name:
-            raise Exception("You need to set provider_name and platform_name")
+            raise Exception(
+                "You need to set container provider name (e.g. docker)")
         CONTAINER_MODULE = _import_module("handoff.services.container." +
                                           provider_name)
     return CONTAINER_MODULE

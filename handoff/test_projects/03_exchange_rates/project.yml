@@ -14,7 +14,6 @@ commands:
 deploy:
   cloud_provider: "aws"
   cloud_platform: "fargate"
-  envs:
-    resource_group: "handoff-test"
-    docker_image: "singer_exchange_rates_to_csv"
-    task: "test-exchange-rates"
+  resource_group: "handoff-test"
+  container_image: "singer_exchange_rates_to_csv"
+  task: "test-exchange-rates"

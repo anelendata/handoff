@@ -178,13 +178,12 @@ The deploy section specifies:
 
 - cloud_provider: Currently only AWS is supported.
 - cloud_platform: The serverless platfor on which the task will run.
-- envs: The environment variables set when running `cloud` sub-commands:
-  - resource_group: The resource group name, which is used for creating
-    remote storage (e.g. AWS S3) names and the remote parameter store's
-    namespace. The resource can be shared with multiple tasks.
-  - docker_image: The Docker image name given to the current project.
-  - task: Task name. Note that multiple tasks with varying configurations can
-    be generated from a Docker image.
+- resource_group: The resource group name, which is used for creating
+remote storage (e.g. AWS S3) names and the remote parameter store's
+namespace. The resource can be shared with multiple tasks.
+- container_image: The container image name given to the current project.
+- task: Task name. Note that multiple tasks with varying configurations can
+be generated from a container image (Docker)
 "
 
 Prompt

@@ -1,23 +1,22 @@
 commands:
   - command: tap-rest-api
-    args: "./files/custom_spec.json --config ./config/tap_config.json --schema_dir ./files/schema --catalog_dir ./files/catalog --catalog ./files/catalog/earthquakes.json --start_datetime '{start_at}' --state ./artifacts/state"
+    args: "./files/custom_spec.json --config ./files/tap_config.json --schema_dir ./files/schema --catalog_dir ./files/catalog --catalog ./files/catalog/earthquakes.json --start_datetime $(date -Iseconds) --state ./artifacts/state"
     venv: "proc_01"
     installs:
       - "pip install tap-rest-api"
       # - pip install --no-cache -e /home/ubuntu/project/tap-rest-api
   - command: target_bigquery
-    args: "--config config/target_config.json"
+    args: "--config files/target_config.json"
     venv: "proc_02"
     installs:
       - "pip install install --no-cache-dir https://github.com/anelendata/target_bigquery/archive/94d0cf097de18d06be40ae5a35f5b31bda44f219.tar.gz#egg=target_bigquery"
         # - pip install --no-cache -e /home/ubuntu/project/target_bigquery
 envs:
   - key: "GOOGLE_APPLICATION_CREDENTIALS"
-    value: "config/google_client_secret.json"
+    value: "files/google_client_secret.json"
 deploy:
-  provider: "aws"
-  platform: "fargate"
-  envs:
-    resource_group: "handoff-test"
-    docker_image: "tap-rest-api-target-bigquery"
-    task: "usgs-earthquakes"
+  cloud_provider: "aws"
+  cloud_platform: "fargate"
+  resource_group: "handoff-test"
+  container_image: "tap-rest-api-target-bigquery"
+  task: "usgs-earthquakes"

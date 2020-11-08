@@ -4,12 +4,14 @@ import botocore
 import dateutil
 
 from handoff import utils
-from handoff.config import (BUCKET, DOCKER_IMAGE, IMAGE_DOMAIN,
+from handoff.config import (BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, TASK, get_state)
 from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
                                         sts, cloudformation)
 from handoff.services.cloud.aws import credentials as cred
 
+
+logging.getLogger("boto").setLevel(logging.WARNING)
 
 NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
@@ -150,7 +152,8 @@ def get_parameter(key, resource_group_level=False):
                      "&tab=Table#list_parameter_filters=Name:Contains:" +
                      prefix_key)
     # Parameter Store does not allow {{}}. Unescaping.
-    value = value.replace("\{\{", "{{").replace("\}\}", "}}")
+    if value:
+        value = value.replace("\{\{", "{{").replace("\}\}", "}}")
     return value
 
 
@@ -277,7 +280,7 @@ def get_docker_registry_credentials(registry_id=None):
 def get_repository_images(image_name=None):
     state = get_state()
     if not image_name:
-        image_name = state.get(DOCKER_IMAGE)
+        image_name = state.get(CONTAINER_IMAGE)
     ecr_images = ecr.list_images(image_name)
     if not ecr_images:
         return None
@@ -287,7 +290,7 @@ def get_repository_images(image_name=None):
 
 def create_repository(is_mutable=False):
     state = get_state()
-    name = state.get(DOCKER_IMAGE)
+    name = state.get(CONTAINER_IMAGE)
     ecr.create_repository(name, is_mutable)
 
 
@@ -434,7 +437,7 @@ def create_task(template_file=None, update=False):
     resource_group = state.get(RESOURCE_GROUP)
     bucket = state.get(BUCKET)
     _, _, image_domain = get_docker_registry_credentials()
-    docker_image = state.get(DOCKER_IMAGE)
+    container_image = state.get(CONTAINER_IMAGE)
     image_version = state.get(IMAGE_VERSION)
     parameters = [
         {"ParameterKey": "ResourceGroup",
@@ -444,7 +447,7 @@ def create_task(template_file=None, update=False):
         {"ParameterKey": "ImageDomain",
          "ParameterValue": image_domain},
         {"ParameterKey": "ImageName",
-         "ParameterValue": docker_image},
+         "ParameterValue": container_image},
         {"ParameterKey": "ImageVersion",
          "ParameterValue": image_version}
     ]
@@ -479,7 +482,7 @@ def delete_task():
 def run_task(env=[], extras=None):
     state = get_state()
     task_stack = state.get(TASK)
-    docker_image = state.get(DOCKER_IMAGE)
+    container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
 
@@ -487,16 +490,16 @@ def run_task(env=[], extras=None):
     for key in env.keys():
         extra_env.append({"name": key, "value": env[key]})
     response = ecs.run_fargate_task(task_stack, resource_group_stack,
-                                    docker_image, region, extra_env,
+                                    container_image, region, extra_env,
                                     extras=extras)
     LOGGER.info(response)
-    _log_task_run_filter(state[RESOURCE_GROUP] + "-" + state[TASK], response)
+    _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)
 
 
 def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     state = get_state()
     task_stack = state.get(TASK)
-    docker_image = state.get(DOCKER_IMAGE)
+    container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
 
@@ -518,7 +521,7 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
 
     try:
         response = events.schedule_task(task_stack, resource_group_stack,
-                                        docker_image,
+                                        container_image,
                                         region, target_id, cronexp, role_arn,
                                         env=extra_env, extras=extras)
     except Exception as e:

@@ -62,16 +62,16 @@ format like this project of executing a pair of singer.io processes,
 ```
 commands:
   - command: tap-rest-api
-    args: "file/rest_api_spec.json --config config/tap_config.json --schema_dir file/schema --catalog file/catalog/default.json --state artifacts/state --start_datetime '{start_at}' --end_datetime '{end_at}'"
+    args: "file/rest_api_spec.json --config files/tap_config.json --schema_dir file/schema --catalog file/catalog/default.json --state artifacts/state --start_datetime '{start_at}' --end_datetime '{end_at}'"
     venv: proc_01
     installs:
       - "pip install tap-rest-api"
   - command: target_gcs
-    args: "--config config/target_config.json"
+    args: "--config files/target_config.json"
     venv: proc_02
     installs:
       - "pip install install --no-cache-dir https://github.com/anelendata/target_gcs/archive/17e70bced723fe202425a61199e6e1180b6fada7.tar.gz#egg=target_gcs"
 envs:
   - key: "GOOGLE_APPLICATION_CREDENTIALS"
-    value: "config/google_client_secret.json"
+    value: "files/google_client_secret.json"
 ```

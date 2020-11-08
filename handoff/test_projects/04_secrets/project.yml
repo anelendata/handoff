@@ -12,11 +12,6 @@ commands:
 deploy:
   cloud_provider: "aws"
   cloud_platform: "fargate"
-  docker_image: "singer_exchange_rates_to_csv"
-  envs:
-    resource_group: "handoff-test"
-    task: "test-exchange-rates"
-
-envs:
-  - key: "date"
-    value: "2020-09-01"
+  container_image: "singer_exchange_rates_to_csv"
+  resource_group: "handoff-test"
+  task: "test-exchange-rates"

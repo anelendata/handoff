@@ -9,7 +9,7 @@ from typing import Dict, List
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
-                            DOCKER_IMAGE, IMAGE_VERSION,
+                            CONTAINER_IMAGE, IMAGE_VERSION,
                             CLOUD_PROVIDER, CLOUD_PLATFORM,
                             CONTAINER_PROVIDER,
                             get_state)
@@ -160,7 +160,7 @@ def _run_task_subcommand(
                 " either give environmental variables as:\n" +
                 "  --envs resource_group=<resource_group_name>" +
                 " task=<task_name>\n"  +
-                " or define them at deploy->envs in project.yml")
+                " or define them at deploy in project.yml")
         config = admin._config_get(project_dir, workspace_dir, **kwargs)
         admin.files_get(project_dir, workspace_dir, **kwargs)
         admin.artifacts_get(project_dir, workspace_dir, **kwargs)
@@ -252,7 +252,7 @@ def do(
             return
 
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        if state.get_env(DOCKER_IMAGE) and not state.get_env(IMAGE_VERSION):
+        if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = container._get_latest_image_version(
                 project_dir, workspace_dir, **kwargs)
             if image_version:

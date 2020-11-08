@@ -7,7 +7,6 @@ LOGGER = utils.get_logger(__name__)
 
 HANDOFF_DIR = ".handoff"
 ARTIFACTS_DIR = "artifacts"
-CONFIG_DIR = "config"
 TEMPLATES_DIR = "templates"
 FILES_DIR = "files"
 PROJECT_FILE = "project.yml"
@@ -30,7 +29,7 @@ RESOURCE_GROUP = ENV_PREFIX + "RESOURCE_GROUP"
 TASK = ENV_PREFIX + "TASK"
 BUCKET = ENV_PREFIX + "BUCKET"
 
-DOCKER_IMAGE = ENV_PREFIX + "DOCKER_IMAGE"
+CONTAINER_IMAGE = ENV_PREFIX + "CONTAINER_IMAGE"
 IMAGE_DOMAIN = ENV_PREFIX + "IMAGE_DOMAIN"
 IMAGE_VERSION = ENV_PREFIX + "IMAGE_VERSION"
 
@@ -51,7 +50,7 @@ ADMIN_ENVS = {
         "min": 4,
         "max": 63
     },
-    DOCKER_IMAGE: {
+    CONTAINER_IMAGE: {
         "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_.-]*$",
         "min": 4,
         "max": 63

@@ -3,7 +3,7 @@ from typing import Dict
 
 from handoff import config, utils
 from handoff.services import cloud
-from handoff.config import DOCKER_IMAGE
+from handoff.config import CONTAINER_IMAGE
 from handoff.core import admin
 from . import impl
 
@@ -18,7 +18,7 @@ def _envs(
     platform = cloud._get_platform()
     if not platform.login():
         raise Exception("Please set platform credentials")
-    # Do this to set DOCKER_IMAGE
+    # Do this to set CONTAINER_IMAGE
     _ = admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
 
@@ -36,7 +36,7 @@ def build(
     """
     _envs(project_dir, workspace_dir, data=data, **kwargs)
     state = config.get_state()
-    state.validate_env([DOCKER_IMAGE])
+    state.validate_env([CONTAINER_IMAGE])
     files_dir = data.get("files_dir")
     docker_file = data.get("docker_file")
     new_version = data.get("version")
@@ -53,7 +53,7 @@ def run(
     **kwargs) -> None:
     _envs(project_dir, workspace_dir, envs=envs, **kwargs)
     state = config.get_state()
-    state.validate_env([DOCKER_IMAGE])
+    state.validate_env([CONTAINER_IMAGE])
 
     env = cloud._get_platform_auth_env(project_dir, workspace_dir,
                                        envs=envs, **kwargs)
@@ -71,11 +71,11 @@ def push(
     **kwargs) -> None:
     _envs(project_dir, workspace_dir, **kwargs)
     state = config.get_state()
-    state.validate_env([DOCKER_IMAGE])
+    state.validate_env([CONTAINER_IMAGE])
 
     platform = cloud._get_platform()
     username, password, registry = platform.get_docker_registry_credentials()
-    image_name = state.get(DOCKER_IMAGE)
+    image_name = state.get(CONTAINER_IMAGE)
     try:
         platform.get_repository_images(image_name)
     except Exception:
@@ -95,6 +95,6 @@ def get_latest_image_version(
     workspace_dir: str,
     **kwargs) -> str:
     state = config.get_state()
-    state.validate_env([DOCKER_IMAGE])
-    image_name = state.get(DOCKER_IMAGE)
+    state.validate_env([CONTAINER_IMAGE])
+    image_name = state.get(CONTAINER_IMAGE)
     return impl.get_latest_version(image_name)

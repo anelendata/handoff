@@ -7,7 +7,7 @@ from types import ModuleType
 from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
 from handoff import config
-from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, DOCKER_IMAGE,
+from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, CONTAINER_IMAGE,
                             IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM)
 
 LOGGER = _get_logger(__name__)
@@ -83,7 +83,7 @@ def role_create(
         LOGGER.warn("-d grantee_account_id=xxxx")
     if not data.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff provider create_role -p <project-dir> " +
+                         "handoff cloud create_role -p <project-dir> " +
                          "-d external_id=yyyy")
 
     platform.create_role(
@@ -110,7 +110,7 @@ def role_update(
         LOGGER.warn("-d grantee_account_id=xxxx")
     if not data.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff provider create_role -p <project-dir> " +
+                         "handoff cloud create_role -p <project-dir> " +
                          "-d external_id=yyyy")
 
     platform.update_role(
@@ -137,7 +137,7 @@ def role_delete(
         LOGGER.warn("-d grantee_account_id=xxxx")
     if not data.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff provider create_role -p <project-dir> " +
+                         "handoff cloud create_role -p <project-dir> " +
                          "-d external_id=yyyy")
 
     platform.delete_role(

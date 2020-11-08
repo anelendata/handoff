@@ -13,7 +13,7 @@ def get_client():
     return cred.get_client("ecs")
 
 
-def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
+def run_fargate_task(task_stack, resource_group_stack, container_image, region,
                      env=[], extras=None):
     """Run a fargate task
     extras overwrite the kwargs given to run_task boto3 command.
@@ -64,7 +64,7 @@ def run_fargate_task(task_stack, resource_group_stack, docker_image, region,
         "overrides": {
             "containerOverrides": [
                 {
-                 "name": docker_image,
+                 "name": container_image,
                  "environment": env
                  }
             ]

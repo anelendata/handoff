@@ -59,7 +59,7 @@ Here is how to delete $BUCKET bucket. The bucket must be empty. This cannot be r
 
 Command "aws s3 rb $BUCKET"
 
-REPO=`handoff -p 03_exchange_rates envs get -d key=HO_DOCKER_IMAGE -l critical`
+REPO=`handoff -p 03_exchange_rates envs get -d key=HO_CONTAINER_IMAGE -l critical`
 echo "
 Now delete $REPO repository from ECR. This cannot be reversed.
 --force option will ignore that we still have images in the repository.

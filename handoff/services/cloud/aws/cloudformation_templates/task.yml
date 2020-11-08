@@ -38,11 +38,6 @@ Parameters:
     Description: Memory (in MB) allocated to the task
 
 Resources:
-  FargateCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: !Sub ${ResourceGroup}-${AWS::StackName}
-
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 

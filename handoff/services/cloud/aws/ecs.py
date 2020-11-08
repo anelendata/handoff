@@ -22,22 +22,20 @@ def run_fargate_task(task_stack, resource_group_stack, container_image, region,
     env.append({"name": "TASK_TRIGGERED_AT",
                 "value": datetime.datetime.utcnow().isoformat()})
     client = get_client()
+
+    rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
+
     task_resources = cfn.describe_stack_resources(task_stack)["StackResources"]
-    account_id = sts.get_account_id()
-    cluster_arn = None
     task_def_arn = None
     for r in task_resources:
-        if not cluster_arn and r["ResourceType"] == "AWS::ECS::Cluster":
-            cluster_arn = "arn:aws:ecs:{region}:{account_id}:cluster/{phys_rsrc_id}".format(
-                **{"region": region,
-                   "account_id": account_id,
-                   "phys_rsrc_id": r["PhysicalResourceId"]})
-
-        if not task_def_arn and r["ResourceType"] == "AWS::ECS::TaskDefinition":
+        if r["ResourceType"] == "AWS::ECS::TaskDefinition":
             task_def_arn = r["PhysicalResourceId"]
+            break
 
     rg_resources = cfn.describe_stack_resources(
         resource_group_stack)["StackResources"]
+    account_id = sts.get_account_id()
+    cluster_arn = None
     subnets = list()
     security_groups =list()
     for r in rg_resources:
@@ -45,6 +43,11 @@ def run_fargate_task(task_stack, resource_group_stack, container_image, region,
             subnets.append(r["PhysicalResourceId"])
         if r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])
+        if r["ResourceType"] == "AWS::ECS::Cluster":
+            cluster_arn = "arn:aws:ecs:{region}:{account_id}:cluster/{phys_rsrc_id}".format(
+                **{"region": region,
+                   "account_id": account_id,
+                   "phys_rsrc_id": r["PhysicalResourceId"]})
 
     logger.debug("%s\n%s\n%s\n%s" %
                  (cluster_arn, task_def_arn, subnets, security_groups))

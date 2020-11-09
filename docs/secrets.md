@@ -46,6 +46,11 @@ create `secrets.yml` file there.
   # The value is stored as a resource group level secret and can be
   # shared among the projects under the same group.
   level: "resource group"
+- key: key4
+  file: ../../shared/file_key.txt
+  level: "resource group"
+  # You can mark to skip pushing to remote. Useful for resource level keys
+  push: False
 ```
 
 When level is "resource group", the value is stored as a resource group level

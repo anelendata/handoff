@@ -266,14 +266,19 @@ def secrets_push(
         raise Exception("secrets with name \"config\" is reserved by handoff.")
 
     for key in secrets.keys():
+        skip_msg = ""
+        if not secrets[key].get("push", True):
+            skip_msg = " SKIP PUSH"
         print("  - " + key + " (" + secrets[key].get("level", "task") +
-              " level)")
+              " level)" + skip_msg)
     response = input("Proceed? (y/N)")
     if response.lower() not in ["yes", "y"]:
         print("aborting")
         return
 
     for key in secrets:
+        if not secrets[key].get("push", True):
+            continue
         level = secrets[key].get("level", "task")
         platform.push_parameter(
             key, SECRETS[key],

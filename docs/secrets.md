@@ -1,14 +1,14 @@
-# Managing secrets with template files
+# Variables and secrets
 
 This is a new feature of v0.3.0.
 
-## Templated files
+## Files with variables
 
 Handoff now supports templated files based on
 [Jinja2](https://jinja.palletsprojects.com/).
 
 To use it, simply put files with Jinja2 templates syntax in
-project.yml or `<project_dir>/files` directory.
+project.yml or the file under `<project_dir>/files` directory.
 
 Example 1 (project.yml):
 ```
@@ -25,7 +25,7 @@ password: {{ password }}
 One simple way to pass the variables is from the command line via -d option:
 
 ```
-handoff run local -p <project_dir> -d username=my_account password="secret pw"
+handoff run local -p <project_dir> -d username=my_account password="secret pwd"
 ```
 
 ## Secrets
@@ -58,3 +58,24 @@ handoff secrets push -p <project_dir> (-d secrets_dir=<directory>)
 ```
 
 If you specify `<directory>`, handoff looks for secrets.yml in the directory.
+
+## Reserved variables
+
+handoff reserve the variable names starting with "_" as the system variables.
+
+### stage variable
+
+These corresponds to stage, given as the commmand line option
+(--stage <stage>, -s <stage>). The default value is "dev".
+
+For example, when stage is "dev",
+
+- `{{ _stage }}` translates to "dev"
+- `{{ _stage_ }}` translates to "dev_"
+- `{{ _stage- }}` translates to "dev-"
+
+When stage is "prod", all three variables above becomes "" (blank).
+
+This is useful when you are writing out in a database and use prefix "dev_"
+during the developer test.
+

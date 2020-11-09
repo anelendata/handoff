@@ -56,6 +56,9 @@ create `secrets.yml` file there.
 When level is "resource group", the value is stored as a resource group level
 secret and can be shared among the projects under the same group.
 
+When you run `handoff run local -p <project_dir> -w <workspace_dir>`, the
+secrets are loaded from the local file.
+
 To push the secrets to the remote parameter store, do:
 
 ```
@@ -63,6 +66,9 @@ handoff secrets push -p <project_dir> (-d secrets_dir=<directory>)
 ```
 
 If you specify `<directory>`, handoff looks for secrets.yml in the directory.
+
+After pushing to remote, you can run `handoff run -p <project_dir> -w <workspace_dir>`
+so it reads from the remote parameter store.
 
 ## Reserved variables
 

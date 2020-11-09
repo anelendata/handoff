@@ -76,7 +76,7 @@ envs:
     value: "files/google_client_secret.json"
 ```
 
-## Q. Can we use a customer Dockerfile?
+## Q. Can we use a custom Dockerfile?
 
 Yes, you can.
 

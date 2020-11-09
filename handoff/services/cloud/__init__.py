@@ -8,7 +8,8 @@ from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
 from handoff import config
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, CONTAINER_IMAGE,
-                            IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM)
+                            IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                            STAGE)
 
 LOGGER = _get_logger(__name__)
 
@@ -294,6 +295,7 @@ def run(
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
+    envs[STAGE] = state[STAGE]
     platform.run_task(env=envs, extras=extras_obj)
 
 
@@ -326,6 +328,7 @@ def schedule(
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
+    envs[STAGE] = state[STAGE]
     platform.schedule_task(target_id, cronexp, env=envs, extras=extras_obj)
 
 

@@ -12,14 +12,16 @@ FILES_DIR = "files"
 PROJECT_FILE = "project.yml"
 SECRETS_DIR = ".secrets"
 SECRETS_FILE = "secrets.yml"
-STATE_FILE = "state"
 
 BUCKET_CURRENT_PREFIX = "last"
 BUCKET_ARCHIVE_PREFIX = "runs"
 
 ENV_PREFIX = "HO_"
 
+DEFAULT_STAGE = "dev"
+
 # environment variable keys (not the values)
+STAGE = ENV_PREFIX + "STAGE"
 CLOUD_PROVIDER = ENV_PREFIX + "CLOUD_PROVIDER"
 CLOUD_PLATFORM = ENV_PREFIX + "CLOUD_PLATFORM"
 
@@ -60,6 +62,8 @@ ADMIN_ENVS = {
     CLOUD_PLATFORM: {
     },
     CONTAINER_PROVIDER: {
+    },
+    STAGE: {
     }
 }
 
@@ -91,9 +95,7 @@ class State(dict):
         """Get value
         First look up in-memory key. Tries to return env var if not in memory
         """
-        v = super(State, self).get(key)
-        if not v:
-            v = self.get_env(key)
+        v = super(State, self).get(key, self.get_env(key))
         return v
 
     def get(self, key):
@@ -162,8 +164,22 @@ class State(dict):
 STATE = None
 
 
+def init_state(stage=DEFAULT_STAGE):
+    global STATE
+    STATE = State()
+    if stage == "prod":
+        STATE["_stage"] = ""
+        STATE["_stage_"] = ""
+        STATE["_stage-"] = ""
+    else:
+        STATE["_stage"] = stage
+        STATE["_stage_"] = stage + "_"
+        STATE["_stage-"] = stage + "-"
+    STATE.set_env(STAGE, stage)
+
+
 def get_state():
     global STATE
     if not STATE:
-        STATE = State()
+        raise Exception("state needs to be initialized with init_state")
     return STATE

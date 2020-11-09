@@ -74,7 +74,13 @@ so it reads from the remote parameter store.
 
 handoff reserve the variable names starting with "_" as the system variables.
 
-### stage variable
+List of reserved variables:
+
+- `{{ _stage }}`: Stage (see the next section)
+- `{{ _stage_ }}`: `{{ _stage }}` + "_"
+- `{{ _stage- }}`: `{{ _stage }}` + "-"
+
+## Switching stages (prod, dev, ...)
 
 These corresponds to stage, given as the commmand line option
 (--stage <stage>, -s <stage>). The default value is "dev".

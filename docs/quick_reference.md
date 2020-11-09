@@ -42,6 +42,8 @@ deploy:
   task: "exchange-rates"
 ```
 
+## Essential commands
+
 Here is the essential commands in order of the workflow from the local testing
 to Fargate deployment:
 
@@ -75,6 +77,8 @@ to Fargate deployment:
     handoff cloud schedule -d target_id=<some_id> cront="15 0 * * ? *" -p <project_dir>
 ```
 
+## Commands for clean up
+
 Here are the commands to take down:
 
 ```
@@ -96,12 +100,16 @@ And here are AWS commands to remove the additional resources:
     aws ecr delete-repository --repository-name <docker-image-name>
 ```
 
+## Role management
+
 Here are the commands to create and delete a role (e.g. AWS Role):
 
 ```
     handoff cloud role create -p <project_dir> 
     handoff cloud role delete -p <project_dir>
 ```
+
+## Command line help
 
 handoff shows help document at the root level or subcommand-level:
 

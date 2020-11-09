@@ -17,24 +17,23 @@ We will use 03_exchange_rates project. project.yml looks like:
 ```shell
 commands:
   - command: "tap-exchangeratesapi"
-    args: "--config config/tap-config.json"
+    args: "--config files/tap-config.json"
     venv: "proc_01"
     installs:
       - "pip install tap-exchangeratesapi"
   - command: "python files/stats_collector.py"
     venv: "proc_01"
   - command: "target-csv"
-    args: "--config config/target-config.json"
+    args: "--config files/target-config.json"
     venv: "proc_02"
     installs:
       - "pip install target-csv"
 deploy:
   cloud_provider: "aws"
   cloud_platform: "fargate"
-  envs:
-    resource_group: "handoff-test"
-    docker_image: "singer_exchange_rates_to_csv"
-    task: "test-exchange-rates"
+  resource_group: "handoff-test"
+  container_image: "singer_exchange_rates_to_csv"
+  task: "test-exchange-rates"
 ```
 
 
@@ -62,28 +61,28 @@ To install everything, run this command:
 ```
 ```shell
 
-[2020-11-05 09:20:38,477] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:20:38,480] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:20:38,481] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:20:38,606] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:20:38,894] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:20:38,961] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
-[2020-11-05 09:20:38,961] [    INFO] - Writing configuration files in the workspace configuration directory workspace_03/config - (admin.py:613)
-[2020-11-05 09:20:38,961] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:20:42,885] [    INFO] - Running /bin/bash -c "source proc_01/bin/activate && pip install wheel" - (admin.py:37)
+[2020-11-09 01:46:11,331] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:46:11,460] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:46:11,740] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:46:11,740] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:46:11,740] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:46:11,806] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxt - (admin.py:115)
+[2020-11-09 01:46:11,806] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:46:11,809] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:46:15,810] [    INFO] - Running /bin/bash -c "source proc_01/bin/activate && pip install wheel" - (admin.py:30)
 Requirement already satisfied: wheel in ./proc_01/lib/python3.6/site-packages (0.35.1)
 .
 .
 .
+Collecting tzlocal
+  Using cached tzlocal-2.1-py2.py3-none-any.whl (16 kB)
 Collecting python-dateutil
   Using cached python_dateutil-2.8.1-py2.py3-none-any.whl (227 kB)
-Collecting pytzdata
-  Using cached pytzdata-2020.1-py2.py3-none-any.whl (489 kB)
 Collecting pytz
   Using cached pytz-2020.4-py2.py3-none-any.whl (509 kB)
 Collecting six>=1.5
   Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
-Installing collected packages: simplejson, pytz, tzlocal, six, python-dateutil, pytzdata, pendulum, singer-python, jsonschema, target-csv
+Installing collected packages: simplejson, pytzdata, pytz, tzlocal, six, python-dateutil, pendulum, singer-python, jsonschema, target-csv
 Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2020.4 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
 ```
 
@@ -94,28 +93,28 @@ Now let's run the task. Try entering this command below:
 ```
 ```shell
 
-[2020-11-05 09:20:52,071] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:20:52,075] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:20:52,077] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:20:52,203] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:20:52,488] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:20:52,555] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
-[2020-11-05 09:20:52,556] [    INFO] - Writing configuration files in the workspace configuration directory workspace_03/config - (admin.py:613)
-[2020-11-05 09:20:52,556] [    INFO] - Copying files from the local project directory 03_exchange_rates - (admin.py:480)
-[2020-11-05 09:20:52,557] [    INFO] - Running run local in workspace_03 directory - (__init__.py:173)
-[2020-11-05 09:20:52,557] [    INFO] - Job started at 2020-11-05 09:20:52.557366 - (__init__.py:175)
+[2020-11-09 01:46:24,654] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:46:24,779] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:46:25,054] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:46:25,055] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:46:25,055] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:46:25,118] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxt - (admin.py:115)
+[2020-11-09 01:46:25,119] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:206)
+[2020-11-09 01:46:25,119] [    INFO] - Copying files from the local project directory 03_exchange_rates - (admin.py:504)
+[2020-11-09 01:46:25,125] [    INFO] - Running run local in workspace_03 directory - (__init__.py:174)
+[2020-11-09 01:46:25,125] [    INFO] - Job started at 2020-11-09 01:46:25.125485 - (__init__.py:176)
 .
 .
 .
-[2020-11-05 09:20:54,946] [    INFO] - Job ended at 2020-11-05 09:20:54.946117 - (__init__.py:181)
-[2020-11-05 09:20:54,946] [    INFO] - Processed in 0:00:02.388751 - (__init__.py:183)
+[2020-11-09 01:46:27,914] [    INFO] - Job ended at 2020-11-09 01:46:27.914722 - (__init__.py:182)
+[2020-11-09 01:46:27,915] [    INFO] - Processed in 0:00:02.789237 - (__init__.py:184)
 ```
 
 This process should have created a CSV file in artifacts directory:
 
 ```shell
 
-exchange_rate-20201105T092053.csv
+exchange_rate-20201109T014625.csv
 ```
 
 ...which looks like:

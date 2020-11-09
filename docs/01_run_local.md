@@ -54,21 +54,16 @@ Now let's run. Try entering this command below:
 ```
 ```shell
 
-[2020-11-05 09:20:36,476] [    INFO] - Reading configurations from 01_word_count/project.yml - (admin.py:153)
-[2020-11-05 09:20:36,478] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:20:36,478] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:20:36,598] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:20:36,889] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:20:36,955] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:129)
-[2020-11-05 09:20:36,955] [    INFO] - Writing configuration files in the workspace configuration directory workspace/config - (admin.py:613)
-[2020-11-05 09:20:36,955] [    INFO] - Copying files from the local project directory 01_word_count - (admin.py:480)
-[2020-11-05 09:20:36,956] [    INFO] - Running run local in workspace directory - (__init__.py:173)
-[2020-11-05 09:20:36,956] [    INFO] - Job started at 2020-11-05 09:20:36.956160 - (__init__.py:175)
-.
-.
-.
-[2020-11-05 09:20:36,965] [    INFO] - Job ended at 2020-11-05 09:20:36.965460 - (__init__.py:181)
-[2020-11-05 09:20:36,965] [    INFO] - Processed in 0:00:00.009300 - (__init__.py:183)
+[2020-11-09 01:46:09,363] [    INFO] - Reading configurations from 01_word_count/project.yml - (admin.py:144)
+[2020-11-09 01:46:09,365] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:46:09,487] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:46:09,764] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:46:09,828] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:120)
+[2020-11-09 01:46:09,828] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:206)
+[2020-11-09 01:46:09,828] [    INFO] - Copying files from the local project directory 01_word_count - (admin.py:504)
+[2020-11-09 01:46:09,834] [    INFO] - Running run local in workspace directory - (__init__.py:174)
+[2020-11-09 01:46:09,834] [    INFO] - Job started at 2020-11-09 01:46:09.834693 - (__init__.py:176)
+[2020-11-09 01:46:09,841] [    INFO] - Job ended at 2020-11-09 01:46:09.841836 - (__init__.py:182)
 ```
 
 
@@ -89,12 +84,22 @@ For now, let's not worry about the warnings in the log such as:
 
 - .secrets files not found:
 
-  This is for using handoff Template feature with secret variables.
+```shell
+
+ [WARNING] - 01_word_count/.secrets/secrets.yml does not exsist
+```
+
+This is for using handoff Template feature with secret variables.
 
 - Environment variables not set:
 
-  This is for running the task with remotely stored configurations and files.
-  I will explain in the later section.
+```shell
+
+ [WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail.
+```
+
+This is for running the task with remotely stored configurations and files.
+I will explain in the later section.
 
 
 
@@ -106,14 +111,13 @@ The previous run created a workspace directory that looks like:
 ```shell
 
  artifacts
- config
  files
 ```
 
-And the word count is stored at workspace/artifacts/state. Here is the content:
+And the word count is stored at workspace/artifacts/stdout.log. Here is the content:
 
 ```shell
-> cat  workspace/artifacts/state
+> cat  workspace/artifacts/stdout.log
 ```
 
 ```shell
@@ -211,18 +215,17 @@ Now let's run. Try entering this command below:
 ```
 ```shell
 
-[2020-11-05 09:20:37,454] [    INFO] - Reading configurations from 02_collect_stats/project.yml - (admin.py:153)
-[2020-11-05 09:20:37,456] [ WARNING] - 02_collect_stats/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:20:37,456] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:20:37,580] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:20:37,863] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:20:37,929] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:129)
-[2020-11-05 09:20:37,929] [    INFO] - Writing configuration files in the workspace configuration directory workspace/config - (admin.py:613)
-[2020-11-05 09:20:37,929] [    INFO] - Copying files from the local project directory 02_collect_stats - (admin.py:480)
-[2020-11-05 09:20:37,930] [    INFO] - Running run local in workspace directory - (__init__.py:173)
-[2020-11-05 09:20:37,930] [    INFO] - Job started at 2020-11-05 09:20:37.930584 - (__init__.py:175)
-[2020-11-05 09:20:37,982] [    INFO] - Job ended at 2020-11-05 09:20:37.982201 - (__init__.py:181)
-[2020-11-05 09:20:37,982] [    INFO] - Processed in 0:00:00.051617 - (__init__.py:183)
+[2020-11-09 01:46:10,316] [    INFO] - Reading configurations from 02_collect_stats/project.yml - (admin.py:144)
+[2020-11-09 01:46:10,317] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:46:10,442] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:46:10,723] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:46:10,788] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:120)
+[2020-11-09 01:46:10,788] [ WARNING] - 02_collect_stats/.secrets/secrets.yml does not exsist - (admin.py:206)
+[2020-11-09 01:46:10,788] [    INFO] - Copying files from the local project directory 02_collect_stats - (admin.py:504)
+[2020-11-09 01:46:10,794] [    INFO] - Running run local in workspace directory - (__init__.py:174)
+[2020-11-09 01:46:10,794] [    INFO] - Job started at 2020-11-09 01:46:10.794303 - (__init__.py:176)
+[2020-11-09 01:46:10,850] [    INFO] - Job ended at 2020-11-09 01:46:10.850371 - (__init__.py:182)
+[2020-11-09 01:46:10,850] [    INFO] - Processed in 0:00:00.056068 - (__init__.py:184)
 ```
 
 Let's check out the contents of the second command:

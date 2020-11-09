@@ -25,9 +25,9 @@ ListDir "03_exchange_rates"
 Prompt
 
 echo "
-In the config directory, we have a couple of configuration files:
+In files directory, we have a couple of configuration files:
 "
-ListDir "03_exchange_rates/config"
+ListDir "03_exchange_rates/files"
 
 Prompt
 
@@ -35,9 +35,9 @@ echo "
 ...which look like:
 "
 
-Cat "03_exchange_rates/config/tap-config.json" $DIM 0
+Cat "03_exchange_rates/files/tap-config.json" $DIM 0
 
-Cat "03_exchange_rates/config/target-config.json" $DIM 0
+Cat "03_exchange_rates/files/target-config.json" $DIM 0
 
 echo "
 Such configuration files often contain sensitive information.
@@ -61,6 +61,10 @@ Look at the end of the log that says,
 
 Grab the link and open in the browswer (AWS login required) to confirm that
 the parameters are uploaded.
+
+Note that handoff will create all remote sources with *dev* prefix.
+To change the prefix, run handoff commands with `-s some_prefix`. To remove
+prefix, use `-s prod`.
 '
 
 Prompt

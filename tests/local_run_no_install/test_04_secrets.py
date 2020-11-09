@@ -21,10 +21,26 @@ def test_04_secrets():
                                        "tap-config.json")
         assert os.path.isfile(tap_config_file) is False
 
+        handoff.core.admin._secrets_get_local(
+            project_dir, workspace_dir, data,
+            cloud_provider="aws",
+            cloud_platform="fargate",
+            container_provider="docker",
+            stage="prod")
+
         handoff.do("workspace init", project_dir, workspace_dir, data,
+                   cloud_provider="aws",
+                   cloud_platform="fargate",
+                   container_provider="docker",
+                   stage="prod",
                    push_artifacts=False)
         handoff.do("files get local", project_dir, workspace_dir, data,
+                   cloud_provider="aws",
+                   cloud_platform="fargate",
+                   container_provider="docker",
+                   stage="prod",
                    push_artifacts=False)
+
         state = get_state()
 
         # date is registered as an env variable

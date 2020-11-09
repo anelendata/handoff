@@ -91,7 +91,9 @@ def _update_state(
     state = get_state()
     LOGGER.info("Setting environment variables from config.")
 
-    state.update(SECRETS)
+    if SECRETS:
+        state.update(SECRETS)
+
     for v in config.get("envs", list()):
         if v.get("value") is None:
             v["value"] = _get_secret(v["key"])
@@ -146,10 +148,13 @@ def _read_project_local(project_file: str) -> Dict:
     deploy_env = project.get("deploy", dict())
     for key in deploy_env:
         full_key = ENV_PREFIX + key.upper()
+        value = deploy_env[key]
+        if key in ["resource_group", "task"]:
+            value = state["_stage-"] + value
         if state.is_allowed_env(full_key):
-            state.set_env(full_key, deploy_env[key])
+            state.set_env(full_key, value)
         else:
-            state[full_key] = deploy_env[key]
+            state[full_key] = value
 
     cloud_provider_name = project.get("deploy", dict()).get("cloud_provider")
     cloud_platform_name = project.get("deploy", dict()).get("cloud_platform")
@@ -599,7 +604,6 @@ def _config_get_local(
     project = _read_project_local(os.path.join(project_dir, "project.yml"))
     config.update(project)
 
-    _secrets_get_local(project_dir, workspace_dir, **kwargs)
     _update_state(config, data=data)
 
     return config

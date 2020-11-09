@@ -7,12 +7,12 @@ from types import ModuleType
 from typing import Dict, List
 
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
-                            ARTIFACTS_DIR, PROJECT_FILE, STATE_FILE,
+                            ARTIFACTS_DIR, PROJECT_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
                             CONTAINER_IMAGE, IMAGE_VERSION,
                             CLOUD_PROVIDER, CLOUD_PLATFORM,
-                            CONTAINER_PROVIDER,
-                            get_state)
+                            CONTAINER_PROVIDER, DEFAULT_STAGE,
+                            get_state, init_state)
 from handoff.core import admin, task
 from handoff.utils import bcolors, get_logger
 from handoff.services import cloud, container
@@ -166,6 +166,7 @@ def _run_task_subcommand(
         admin.artifacts_get(project_dir, workspace_dir, **kwargs)
     elif command in local_ops:
         config = admin._config_get_local(project_dir, workspace_dir, **kwargs)
+        _ = admin._secrets_get_local(project_dir, workspace_dir, **kwargs)
         admin.files_get_local(project_dir, workspace_dir, **kwargs)
 
     os.chdir(workspace_dir)
@@ -183,7 +184,7 @@ def _run_task_subcommand(
     LOGGER.info("Processed in " + str(duration))
 
     if output:
-        with open(os.path.join(ARTIFACTS_DIR, STATE_FILE), "w") as f:
+        with open(os.path.join(ARTIFACTS_DIR, "stdout.log"), "w") as f:
             f.write(output)
 
     os.chdir(prev_wd)
@@ -202,7 +203,19 @@ def do(
     workspace_dir: str = None,
     show_help: bool = False,
     **kwargs) -> None:
+    """Determine the command to run"""
+    init_state(kwargs["stage"])
     state = get_state()
+
+    envs = kwargs.get("envs", {})
+    for key in envs.keys():
+        value = envs[key]
+        if key in ["resource_group", "task"]:
+            value = state["_stage-"] + value
+        state.set_env(ENV_PREFIX + key.upper(), value)
+    state.set_env(CLOUD_PROVIDER, kwargs["cloud_provider"])
+    state.set_env(CLOUD_PLATFORM, kwargs["cloud_platform"])
+    state.set_env(CONTAINER_PROVIDER, kwargs["container_provider"])
 
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]
@@ -373,6 +386,9 @@ def main() -> None:
                         help="Specify the location of project directory")
     parser.add_argument("-w", "--workspace-dir", type=str, default=None,
                         help="Location of workspace directory")
+    parser.add_argument("-s", "--stage", type=str, default=DEFAULT_STAGE,
+                        help=("Stage (default '" + DEFAULT_STAGE +
+                              "'). Sets env var _stage, but keeps _stage blank when --stage 'prod'"))
     parser.add_argument("-d", "--data", type=str, nargs="*", default="",
                         help="Extra data for the command. List after this option like: -d key1=value1 key2=value2...")
     parser.add_argument("-e", "--envs", type=str, nargs="*", default="",
@@ -425,13 +441,7 @@ handoff <command> -h for more help.\033[0m
     LOGGER.setLevel(args.log_level.upper())
 
     args.data = _load_param_list(args.data)
-
     args.envs = _load_param_list(args.envs)
-    for key in args.envs.keys():
-        os.environ[ENV_PREFIX + key.upper()] = args.envs[key]
-    os.environ[CLOUD_PROVIDER] = args.cloud_provider
-    os.environ[CLOUD_PLATFORM] = args.cloud_platform
-    os.environ[CONTAINER_PROVIDER] = args.container_provider
 
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help

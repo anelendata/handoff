@@ -42,23 +42,29 @@ def test_03_exchange_rates():
         workspace_dir = os.path.join(root_dir, "workspace")
 
         data["allow_advanced_tier"] = False
+        kwargs = {
+            "cloud_provider": "aws",
+            "cloud_platform": "fargate",
+            "container_provider": "docker",
+            "stage": "prod"
+        }
         handoff.do("config push", project_dir, workspace_dir, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
         handoff.do("files push", project_dir, workspace_dir, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
 
         handoff.do("workspace install", project_dir, workspace_dir, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
 
         handoff.do("run", project_dir, workspace_dir, data=data,
-                   push_artifacts=True)
+                   push_artifacts=True, **kwargs)
 
         handoff.do("files delete", project_dir, None, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
         handoff.do("artifacts delete", project_dir, None, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
         handoff.do("config delete", project_dir, None, data=data,
-                   push_artifacts=False)
+                   push_artifacts=False, **kwargs)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
         rate_file = None

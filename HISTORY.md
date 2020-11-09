@@ -1,6 +1,6 @@
 ## History
 
-### 0.3.0 (2020-11-03)
+### 0.3.0 (2020-11-08)
 
 https://github.com/anelendata/handoff/milestone/8?closed=1
 
@@ -8,6 +8,7 @@ New features:
 
 - No more _ in the command (e.g. handoff run_local -> handoff run local)
 - Secrets and templates
+- --stage option to specify the stage (e.g. prod, dev...)
 - No more project_dir/config directory. Keep templated files in files and
   secrets in .secrets/secrets.yml
 - No more JSON after -d option in command. Simply list key1=var1 key2=var2...

@@ -15,29 +15,29 @@ The build may take 5~10 minutes.
 ```
 ```shell
 
-[2020-11-05 09:24:22,993] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:24:22,996] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:24:22,996] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:24:23,125] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:24:23,406] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:24:23,472] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
-[2020-11-05 09:24:23,582] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:24:23,582] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:24:23,585] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:24:23,585] [    INFO] - Setting environment variables from config. - (admin.py:105)
+[2020-11-09 01:49:55,980] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:49:56,111] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:49:56,395] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:49:56,395] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:49:56,395] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:49:56,461] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxt - (admin.py:115)
+[2020-11-09 01:49:56,568] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:49:56,568] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:49:56,571] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:49:56,571] [    INFO] - Setting environment variables from config. - (admin.py:92)
 .
 .
 .
- - (impl.py:110)
-[2020-11-05 09:32:59,063] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d $(eval echo ${DATA:-"dummy=1"}) -a - (impl.py:110)
-[2020-11-05 09:32:59,098] [    INFO] -  ---> Running in 9db189ffc3f4
- - (impl.py:110)
-[2020-11-05 09:32:59,216] [    INFO] -  ---> fe6369aef884
- - (impl.py:110)
-[2020-11-05 09:33:06,386] [    INFO] - Successfully built fe6369aef884
- - (impl.py:110)
-[2020-11-05 09:33:06,401] [    INFO] - Successfully tagged singer_exchange_rates_to_csv:0.1
- - (impl.py:110)
+ - (impl.py:123)
+[2020-11-09 01:51:40,213] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d $(eval echo ${DATA:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a - (impl.py:123)
+[2020-11-09 01:51:40,251] [    INFO] -  ---> Running in 440d97606d31
+ - (impl.py:123)
+[2020-11-09 01:51:40,378] [    INFO] -  ---> 86c82cd076e6
+ - (impl.py:123)
+[2020-11-09 01:51:40,683] [    INFO] - Successfully built 86c82cd076e6
+ - (impl.py:123)
+[2020-11-09 01:51:40,716] [    INFO] - Successfully tagged singer_exchange_rates_to_csv:0.1
+ - (impl.py:123)
 ```
 
 Now let's run the code in the Docker container.
@@ -47,15 +47,35 @@ Now let's run the code in the Docker container.
 ```
 ```shell
 
-[2020-11-05 09:33:13,986] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:33:13,994] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
+[2020-11-09 01:51:41,753] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:51:41,885] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:51:42,179] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:51:42,179] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:51:42,179] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:51:42,246] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxt - (admin.py:115)
+[2020-11-09 01:51:42,408] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:51:42,408] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:51:42,411] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:51:42,411] [    INFO] - Setting environment variables from config. - (admin.py:92)
+.
+.
+.
+[2020-11-09 01:51:52,021] [    INFO] - Copied s3://xxxxxxxxt/dev-test-exchange-rates/last/artifacts/exchange_rate-20201109T015148.csv to s3://xxxxxxxxt/dev-test-exchange-rates/runs/2020-11-09T01:51:51.342328/artifacts/exchange_rate-20201109T015148.csv - (s3.py:53)
+
+[2020-11-09 01:51:52,257] [    INFO] - Copied s3://xxxxxxxxt/dev-test-exchange-rates/last/artifacts/stdout.log to s3://xxxxxxxxt/dev-test-exchange-rates/runs/2020-11-09T01:51:51.342328/artifacts/stdout.log - (s3.py:53)
+
+[2020-11-09 01:51:52,460] [    INFO] - Copied s3://xxxxxxxxt/dev-test-exchange-rates/last/files/stats_collector.py to s3://xxxxxxxxt/dev-test-exchange-rates/runs/2020-11-09T01:51:51.342328/files/stats_collector.py - (s3.py:53)
+
+[2020-11-09 01:51:52,628] [    INFO] - Copied s3://xxxxxxxxt/dev-test-exchange-rates/last/files/tap-config.json to s3://xxxxxxxxt/dev-test-exchange-rates/runs/2020-11-09T01:51:51.342328/files/tap-config.json - (s3.py:53)
+
+[2020-11-09 01:51:52,814] [    INFO] - Copied s3://xxxxxxxxt/dev-test-exchange-rates/last/files/target-config.json to s3://xxxxxxxxt/dev-test-exchange-rates/runs/2020-11-09T01:51:51.342328/files/target-config.json - (s3.py:53)
 ```
 
 Confirm the run by checking the logs. Also check the artifacts on S3:
 ```shell
 
 
-    xxxxxxxxxxxx-handoff-test/test-exchange-rates/last/artifacts/
+    xxxxxxxxt/dev-test-exchange-rates/last/artifacts/
 
 
 ```
@@ -72,29 +92,29 @@ AWS Elastic Container Registry. This may take a few minutes.
 ```
 ```shell
 
-[2020-11-05 09:33:16,813] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:33:16,816] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:33:16,816] [    INFO] - Setting environment variables from config. - (admin.py:105)
-[2020-11-05 09:33:16,941] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-05 09:33:17,222] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:33:17,288] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxxxxx-handoff-test - (admin.py:124)
-[2020-11-05 09:33:17,463] [    INFO] - You have the access to AWS resources. - (__init__.py:67)
-[2020-11-05 09:33:17,463] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:153)
-[2020-11-05 09:33:17,466] [ WARNING] - 03_exchange_rates/.secrets/secrets.yml does not exsist - (admin.py:216)
-[2020-11-05 09:33:17,466] [    INFO] - Setting environment variables from config. - (admin.py:105)
+[2020-11-09 01:51:55,477] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:51:55,600] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-11-09 01:51:55,882] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:51:55,882] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:51:55,882] [    INFO] - Setting environment variables from config. - (admin.py:92)
+[2020-11-09 01:51:55,949] [    INFO] - Environment variable HO_BUCKET was set autoamtically as xxxxxxxxt - (admin.py:115)
+[2020-11-09 01:51:56,058] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
+[2020-11-09 01:51:56,058] [    INFO] - Reading configurations from 03_exchange_rates/project.yml - (admin.py:144)
+[2020-11-09 01:51:56,061] [    INFO] - Platform: aws - (admin.py:164)
+[2020-11-09 01:51:56,061] [    INFO] - Setting environment variables from config. - (admin.py:92)
 .
 .
 .
-[2020-11-05 09:36:58,671] [    INFO] - id: bd2610ade6e0 [==========================================>        ]  741.1MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:02,380] [    INFO] - id: 50dfc84e9311 [==========================================>        ]  741.1MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:06,659] [    INFO] - id: bd2610ade6e0 [=============================================>     ]  792.4MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:09,600] [    INFO] - id: 50dfc84e9311 [=============================================>     ]  792.4MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:17,837] [    INFO] - id: bd2610ade6e0 [================================================>  ]  844.9MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:19,888] [    INFO] - id: 50dfc84e9311 [================================================>  ]  844.9MB/870.7MB - (impl.py:181)
-[2020-11-05 09:37:29,755] [    INFO] - id: bd2610ade6e0 [==================================================>]  897.4MB - (impl.py:181)
-[2020-11-05 09:37:31,653] [    INFO] - id: 50dfc84e9311 [==================================================>]  897.4MB - (impl.py:181)
-[2020-11-05 09:37:39,688] [    INFO] - id: bd2610ade6e0 status: Pushed - (impl.py:172)
-[2020-11-05 09:37:40,325] [    INFO] - id: 50dfc84e9311 status: Pushed - (impl.py:172)
+[2020-11-09 01:53:01,791] [    INFO] - id: 7e611f0a6c1e [==================================================>]  134.5MB - (impl.py:194)
+[2020-11-09 01:53:03,352] [    INFO] - id: 2bd5f77d0941 status: Pushed - (impl.py:185)
+[2020-11-09 01:53:03,563] [    INFO] - id: 6734fdd29c24 [=================================>                 ]  362.3MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:03,748] [    INFO] - id: 7e611f0a6c1e status: Pushed - (impl.py:185)
+[2020-11-09 01:53:05,884] [    INFO] - id: 6734fdd29c24 [====================================>              ]  395.3MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:08,107] [    INFO] - id: 6734fdd29c24 [=======================================>           ]  429.5MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:10,411] [    INFO] - id: 6734fdd29c24 [==========================================>        ]  460.4MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:13,111] [    INFO] - id: 6734fdd29c24 [=============================================>     ]  492.9MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:15,764] [    INFO] - id: 6734fdd29c24 [================================================>  ]  526.1MB/540.8MB - (impl.py:194)
+[2020-11-09 01:53:18,791] [    INFO] - id: 6734fdd29c24 status: Pushed - (impl.py:185)
 ```
 
 Confirm that the Docker image has been uploaded to:

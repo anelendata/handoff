@@ -24,8 +24,16 @@ def test_03_exchange_rates():
         # make up a bucket name for the test
         os.environ[BUCKET] = "test"
         handoff.do("workspace install", project_dir, workspace_dir, data,
+                   cloud_provider="aws",
+                   cloud_platform="fargate",
+                   container_provider="docker",
+                   stage="prod",
                    push_artifacts=False)
         handoff.do("run local", project_dir, workspace_dir, data,
+                   cloud_provider="aws",
+                   cloud_platform="fargate",
+                   container_provider="docker",
+                   stage="prod",
                    push_artifacts=False)
 
         files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))

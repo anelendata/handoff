@@ -59,6 +59,8 @@ def _get_command_string(command, argstring, params):
 def _get_commands(params, data):
     commands = list()
     for command in params["commands"]:
+        if not command.get("active", True):
+            continue
         params = _get_params(data)
         params["venv"] = command.get("venv", None)
         command_str = _get_command_string(command["command"],

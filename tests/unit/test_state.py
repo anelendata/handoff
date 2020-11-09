@@ -1,6 +1,7 @@
-from handoff.config import TASK, RESOURCE_GROUP, get_state
+from handoff.config import TASK, RESOURCE_GROUP, get_state, init_state
 
 
+init_state(stage="prod")
 state = get_state()
 
 

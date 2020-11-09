@@ -176,16 +176,19 @@ def _run_task_subcommand(
     LOGGER.info("Job started at " + str(start))
 
     # Run the command
-    output = commands[command](config, **kwargs)
+    stdout, stderr = commands[command](config, **kwargs)
 
     end = datetime.datetime.utcnow()
     LOGGER.info("Job ended at " + str(end))
     duration = end - start
     LOGGER.info("Processed in " + str(duration))
 
-    if output:
+    if stdout:
         with open(os.path.join(ARTIFACTS_DIR, "stdout.log"), "w") as f:
-            f.write(output)
+            f.write(stdout)
+    if stderr:
+        with open(os.path.join(ARTIFACTS_DIR, "stderr.log"), "w") as f:
+            f.write(stderr)
 
     os.chdir(prev_wd)
 

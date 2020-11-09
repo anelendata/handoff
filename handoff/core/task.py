@@ -133,7 +133,7 @@ def run(
     LOGGER.debug("STDOUT of the last process:\n%s\n    " % stdout)
     LOGGER.debug("STDERR of the last process:\n%s\n    " % stderr)
 
-    return stdout
+    return stdout, stderr
 
 
 

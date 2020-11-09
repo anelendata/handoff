@@ -27,6 +27,25 @@ handoff helps the teams who want to:
 
 handoff is an open-source (APLv2) project sponsored by [ANELEN](https://anelen.co).
 
+## Top 10 Features
+
+handoff simplifies the cloud orchestration.
+Developers can enjoy a seamless experience from local devlopment to cloud deployment.
+
+1. Fully managed container orchestration (AWS Elastic Continer Service)
+2. Extended (> 15min) serverless task execution (AWS Fargate)
+3. CRON Scheduling (AWS EventBridge)
+4. Configuration and secret management (AWS Systems Manager Parameter Store)
+5. Simple switch between production and devlopment stages
+6. Docker image management (AWS Elastic Container Registry)
+7. Artifacts management (AWS Simple Cloud Storage)
+8. Log management (AWS CloudWatch)
+9. Shared resource management (Virtual Private Cloud, Security Group)
+10. No need to pay and maintain a dedicated virtual machine!
+
+Note: With a unified handoff command, we are planning to support multi-cloud
+deployment experience (Azure and Google Cloud Platform).
+
 ## How it works
 
 handoff was originally designed to deploy a single-line ETL process like

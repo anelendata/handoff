@@ -165,8 +165,8 @@ def _run_task_subcommand(
         admin.files_get(project_dir, workspace_dir, **kwargs)
         admin.artifacts_get(project_dir, workspace_dir, **kwargs)
     elif command in local_ops:
-        config = admin._config_get_local(project_dir, workspace_dir, **kwargs)
         _ = admin._secrets_get_local(project_dir, workspace_dir, **kwargs)
+        config = admin._config_get_local(project_dir, workspace_dir, **kwargs)
         admin.files_get_local(project_dir, workspace_dir, **kwargs)
 
     os.chdir(workspace_dir)

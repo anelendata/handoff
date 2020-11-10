@@ -43,7 +43,18 @@ Resources:
     Properties: 
       LogGroupName: !Sub ${ResourceGroup}-${AWS::StackName}
       RetentionInDays: 365
-  
+
+  ErrorLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "ERROR"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-error
+
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:

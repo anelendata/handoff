@@ -100,29 +100,30 @@ def run(
     # Now the guideline is "Each container should have only one concern." and
     # "Limiting each container to one process is a good rule of thumb, but it is not a hard and fast rule."
     # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#decouple-applications
+    # Also see
+    # https://docs.python.org/3/library/subprocess.html#security-considerations
     procs = list()
     procs.append(subprocess.Popen([commands[0]], stdout=subprocess.PIPE,
                                   env=env, shell=True))
 
     for i in range(1, len(commands)):
-        try:
-            procs.append(subprocess.Popen([commands[i]],
-                                          stdin=procs[i - 1].stdout,
-                                          stdout=subprocess.PIPE,
-                                          env=env, shell=True))
-        except subprocess.CalledProcessError as e:
-            LOGGER.error("Error:" + str(e))
-            raise
+        procs.append(subprocess.Popen([commands[i]],
+                                      stdin=procs[i - 1].stdout,
+                                      stdout=subprocess.PIPE,
+                                      env=env, shell=True))
 
     for i in range(0, len(commands) - 1):
         return_code = procs[i].wait()
         if return_code > 0:
-            print(return_code)
+            LOGGER.error("Process %d (%s) exited with code %d" %
+                         (i, commands[i], return_code))
+            # Immediately kill the downstream processes
             for j in range(i, len(commands) - 1):
                 procs[j].terminate()
-            raise Exception("Process %d (%s) exited with code %d" %
-                            (i, commands[i], return_code))
 
+    # This assumes the data is not big. Use stdout, stderr in the last process
+    # only for logging purposes, not passing big data.
+    # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
     stdout, stderr = procs[-1].communicate()
 
     if stdout:

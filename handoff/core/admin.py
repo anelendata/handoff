@@ -664,6 +664,18 @@ def config_print(
     print(json.dumps(_config_get(project_dir, workspace_dir)))
 
 
+def project_push(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff project push -p <project_directory>`
+    Push config, files, secrets all together
+    """
+    config_push(project_dir, workspace_dir, **kwargs)
+    files_push(project_dir, workspace_dir, **kwargs)
+    secrets_push(project_dir, workspace_dir, **kwargs)
+
+
 def workspace_init(
     project_dir: str,
     workspace_dir: str,

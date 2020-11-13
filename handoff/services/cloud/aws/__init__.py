@@ -1,11 +1,12 @@
-import datetime, logging, os, time
-
+import datetime, json, logging, os, re, time
+import yaml
 import botocore
 import dateutil
 
 from handoff import utils
 from handoff.config import (BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
-                            IMAGE_VERSION, RESOURCE_GROUP, TASK, get_state)
+                            IMAGE_VERSION, RESOURCE_GROUP, STAGE, TASK,
+                            get_state)
 from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
                                         sts, cloudformation)
 from handoff.services.cloud.aws import credentials as cred
@@ -556,6 +557,27 @@ def unschedule_task(target_id):
     LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
                  "home?region={region}#/clusters/{resource_group}-resources" +
                  "/scheduledTasks").format(**params))
+
+
+def list_schedules():
+    state = get_state()
+    task_stack = state.get(TASK)
+    resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
+    response = events.list_schedules(task_stack, resource_group_stack)
+    schedules = list()
+    for r in response:
+        record = {
+            "target_id": r["targets"][0]["Id"],
+            "cron": re.sub(r"cron\((.*)\)", "\\1", r["rule"]["ScheduleExpression"])
+        }
+        input_str = r["targets"][0]["Input"]
+        input_ = json.loads(input_str.replace("\\\\", ""))
+        record["envs"] = [e for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
+        schedules.append(record)
+    yml_clean = re.sub(r"'([a-zA-Z_]*)':",
+                       "\\1:",
+                       yaml.dump({"schedules": schedules}, default_style="'"))
+    print(yml_clean)
 
 
 def print_logs(start_time=None, end_time=None, format_=None, follow=False,

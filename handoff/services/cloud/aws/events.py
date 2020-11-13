@@ -99,3 +99,21 @@ def unschedule_task(task_stack, resource_group_stack, target_id):
     }
     client.remove_targets(**kwargs)
     client.delete_rule(Name=rule_name)
+
+
+def list_schedules(task_stack, resource_group_stack):
+    client = get_client()
+    rule_prefix = resource_group_stack + "-" + task_stack
+    kwargs = {
+        "NamePrefix": rule_prefix,
+    }
+    rules = client.list_rules(**kwargs)
+    if not rules.get("Rules"):
+        raise Exception("No rules found")
+
+    response = list()
+    for rule in rules.get("Rules"):
+        targets = client.list_targets_by_rule(Rule=rule["Name"])
+        record = {"rule": rule, "targets": targets.get("Targets")}
+        response.append(record)
+    return response

@@ -6,10 +6,9 @@ from types import ModuleType
 
 from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
-from handoff import config
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, CONTAINER_IMAGE,
                             IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM,
-                            STAGE)
+                            STAGE, get_state)
 
 LOGGER = _get_logger(__name__)
 
@@ -23,7 +22,7 @@ def _get_platform(
     stdout: bool = False,
     cloud_profile: str = None,
     **kwargs) -> ModuleType:
-    state = config.get_state()
+    state = get_state()
     if not provider_name:
         provider_name = state.get(CLOUD_PROVIDER)
     if not platform_name:
@@ -46,7 +45,7 @@ def _assume_role(
     workspace_dir: str,
     data: Dict = {},
     **kwargs) -> None:
-    state = config.get_state()
+    state = get_state()
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
     role_arn = data.get("role_arn")
@@ -74,7 +73,7 @@ def role_create(
     """`handoff cloud role create -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
     Create the role with deployment privilege.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -101,7 +100,7 @@ def role_update(
     """`handoff cloud role update -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
     Update the role privilege information.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -128,7 +127,7 @@ def role_delete(
     """`handoff cloud role delete -p <project_directory> -d grantee_account_id=<grantee_id>`
     Delete the role.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -154,7 +153,7 @@ def bucket_create(
     """`handoff cloud bucket create -p <project_directory>`
     Create remote storage bucket. Bucket is attached to the resource group.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.create_bucket()
@@ -167,7 +166,7 @@ def bucket_update(
     """`handoff cloud bucket update -p <project_directory>`
     Update remote storage bucket info
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.update_bucket()
@@ -180,7 +179,7 @@ def bucket_delete(
     """`handoff cloud bucket delete -p <project_directory>`
     Delete remote storage bucket.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.delete_bucket()
@@ -198,7 +197,7 @@ def resources_create(
     - Please refer to the
       [CloudFormation template](https://github.com/anelendata/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.create_resources()
@@ -213,7 +212,7 @@ def resources_update(
 
     The resources are shared among the tasks under the same resource group.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.update_resources()
@@ -228,7 +227,7 @@ def resources_delete(
 
     The resources are shared among the tasks under the same resource group.
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.delete_resources()
@@ -241,7 +240,7 @@ def task_create(
     """`handoff cloud task create -p <project_directory>`
     Create the task
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     platform.create_task()
@@ -254,7 +253,7 @@ def task_update(
     """`handoff cloud task update -p <project_directory>`
     Update the task
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     platform.update_task()
@@ -267,7 +266,7 @@ def task_delete(
     """`handoff cloud task delete -p <project_directory>`
     Delete the task
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     platform.delete_task()
@@ -286,7 +285,7 @@ def run(
     used as:
     `handoff run -d $(eval echo $DATA)`
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
 
@@ -315,36 +314,57 @@ def schedule(
     used as:
     `handoff run -d $(eval echo $DATA)`
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
+    config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
-    if not data.get("target_id") or not data.get("cron"):
-        raise Exception("Forgot to set '-d target_id=<ID> cron=<CRON>' ?")
-    target_id = str(data["target_id"])
-    cronexp = "cron(" + data["cron"] + ")"
-
-    extras_obj = None
-    if extras:
-        with open(extras, "r") as f:
-            extras_obj = yaml.load(f)
-
+    schedules = config.get("schedules")
+    if not schedules:
+        if not data.get("target_id") or not data.get("cron"):
+            raise Exception("Forgot to set '-d target_id=<ID> cron=<CRON>' ?")
+        target_id = str(data["target_id"])
+        cronexp = "cron(" + data["cron"] + ")"
+        extras_obj = None
+        if extras:
+            with open(extras, "r") as f:
+                extras_obj = yaml.load(f)
+        schedules = [{"target_id": target_id, "cron": cronexp,
+                      "extras_obj": extras_obj}]
     envs[STAGE] = state[STAGE]
-    platform.schedule_task(target_id, cronexp, env=envs, extras=extras_obj)
+
+    for s in schedules:
+        platform.schedule_task(
+            s["target_id"], "cron(" + s["cron"] + ")",
+            env=envs,
+            extras=s.get("extras_obj"))
 
 
 def unschedule(
-     project_dir: str,
+    project_dir: str,
     workspace_dir: str,
     data: Dict = {},
     **kwargs) -> None:
     """`handoff cloud unschedule -d target_id=<target_id>`
     Unschedule a task named <target_id>
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     target_id = str(data["target_id"])
     platform.unschedule_task(target_id)
+
+
+def schedule_list(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff cloud schedule list`
+    List the scheduled tasks
+    """
+    state = get_state()
+    platform = _get_platform()
+    state.validate_env()
+    platform.list_schedules()
 
 
 def logs(
@@ -359,7 +379,7 @@ def logs(
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
     """
-    state = config.get_state()
+    state = get_state()
     platform = _get_platform()
     state.validate_env()
     last_update = platform.print_logs(**data)

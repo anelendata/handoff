@@ -305,9 +305,12 @@ def secrets_delete(
         return
     print("Deleting the following keys to remote parameter store:")
 
-    for key in secrets:
+    for key in secrets.keys():
+        skip_msg = ""
+        if not secrets[key].get("push", True):
+            skip_msg = " SKIP DELETE"
         print("  - " + key + " (" + secrets[key].get("level", "task") +
-              " level)")
+              " level)" + skip_msg)
 
     response = input("Proceed? (y/N)")
     if response.lower() not in ["yes", "y"]:
@@ -315,6 +318,8 @@ def secrets_delete(
         return
 
     for key in secrets:
+        if not secrets[key].get("push", True):
+            continue
         level = secrets[key].get("level", "task")
         try:
             platform.delete_parameter(

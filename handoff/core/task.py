@@ -10,8 +10,6 @@ from handoff.config import get_state
 
 LOGGER = utils.get_logger(__name__)
 
-ARTIFACTS_DIR = ".artifacts"
-
 
 def _get_params(args=None):
     """

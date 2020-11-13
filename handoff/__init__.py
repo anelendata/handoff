@@ -215,7 +215,10 @@ def do(
         value = envs[key]
         if key in ["resource_group", "task"]:
             value = state["_stage-"] + value
-        state.set_env(ENV_PREFIX + key.upper(), value)
+        try:
+            state.set_env(ENV_PREFIX + key.upper(), value)
+        except KeyError:
+            state.set_env(key.upper(), value, trust=True)
     state.set_env(CLOUD_PROVIDER, kwargs["cloud_provider"])
     state.set_env(CLOUD_PLATFORM, kwargs["cloud_platform"])
     state.set_env(CONTAINER_PROVIDER, kwargs["container_provider"])

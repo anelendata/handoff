@@ -333,9 +333,13 @@ def schedule(
     envs[STAGE] = state[STAGE]
 
     for s in schedules:
+        e = dict()
+        e.update(envs)
+        for e1 in s.get("envs", list()):
+            e[e1["key"]] = e1["value"]
         platform.schedule_task(
             s["target_id"], "cron(" + s["cron"] + ")",
-            env=envs,
+            env=e,
             extras=s.get("extras_obj"))
 
 

@@ -579,7 +579,8 @@ def list_schedules():
         input_str = r["targets"][0].get("Input")
         if input_str:
             input_ = json.loads(input_str.replace("\\\\", ""))
-            record["envs"] = [e for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
+            record["envs"] = [{"key": e["name"], "value": e["value"]}
+                              for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
         schedules.append(record)
     yml_clean = re.sub(r"'([a-zA-Z_]*)':",
                        "\\1:",

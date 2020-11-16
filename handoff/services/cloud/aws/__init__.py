@@ -567,12 +567,19 @@ def list_schedules():
     schedules = list()
     for r in response:
         record = {
-            "target_id": r["targets"][0]["Id"],
-            "cron": re.sub(r"cron\((.*)\)", "\\1", r["rule"]["ScheduleExpression"])
+            "name": r["rule"]["Name"],
+            "cron": re.sub(r"cron\((.*)\)", "\\1",
+                           r["rule"]["ScheduleExpression"])
         }
-        input_str = r["targets"][0]["Input"]
-        input_ = json.loads(input_str.replace("\\\\", ""))
-        record["envs"] = [e for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
+        if not r["targets"]:
+            LOGGER.warning("Rule %s has no target!" % record["name"])
+            continue
+        # One rule, one target
+        record["target_id"] = str(r["targets"][0]["Id"])
+        input_str = r["targets"][0].get("Input")
+        if input_str:
+            input_ = json.loads(input_str.replace("\\\\", ""))
+            record["envs"] = [e for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
         schedules.append(record)
     yml_clean = re.sub(r"'([a-zA-Z_]*)':",
                        "\\1:",

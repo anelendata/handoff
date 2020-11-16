@@ -236,6 +236,7 @@ def resources_delete(
 def task_create(
     project_dir: str,
     workspace_dir: str,
+    data: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task create -p <project_directory>`
     Create the task
@@ -243,12 +244,13 @@ def task_create(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.create_task()
+    platform.create_task(data.get("spec_file"))
 
 
 def task_update(
     project_dir: str,
     workspace_dir: str,
+    data: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task update -p <project_directory>`
     Update the task
@@ -256,7 +258,7 @@ def task_update(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.update_task()
+    platform.update_task(data.get("spec_file"))
 
 
 def task_delete(

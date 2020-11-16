@@ -56,7 +56,7 @@ def _get_command_string(command, argstring, params):
 
 def _get_commands(params, data):
     commands = list()
-    for command in params["commands"]:
+    for command in params["run"]:
         if not command.get("active", True):
             continue
         params = _get_params(data)

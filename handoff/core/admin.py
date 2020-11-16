@@ -24,13 +24,9 @@ def _install(install: str, venv_path: str = None) -> None:
         venv_switch = "source " + venv_path + "/bin/activate && "
     else:
         venv_switch = ""
-    command = '/bin/bash -c "{venv_switch}{install}"'.format(
-        **{"venv_switch": venv_switch, "install": install})
-
+    command = f'/bin/bash -c "{venv_switch}{install}"'
     LOGGER.info("Running %s" % command)
-    p = subprocess.Popen([command],
-                         # stdout=subprocess.PIPE,
-                         shell=True)
+    p = subprocess.Popen([command], shell=True)
     p.wait()
 
 
@@ -65,6 +61,7 @@ def _parse_template_files(
             if not os.path.exists(full_path):
                 os.mkdir(full_path)
         for fn in files:
+            LOGGER.debug("template: " + fn)
             with open(os.path.join(root, fn), "r") as f:
                 tf = f.read().replace('"', "\"")
             template = _Template(tf)
@@ -708,11 +705,10 @@ def workspace_install(
     project = _read_project_local(os.path.join(project_dir, PROJECT_FILE))
 
     os.chdir(workspace_dir)
-    for command in project["commands"]:
-        if command.get("venv"):
-            _make_python_venv(command["venv"])
-        for install in command.get("installs", []):
-            _install(install, os.path.join(command["venv"]))
+    for install in project["installs"]:
+        if install.get("venv"):
+            _make_python_venv(install["venv"])
+        _install(install["command"], install["venv"])
 
 
 def version(

@@ -171,10 +171,14 @@ def init_state(stage=DEFAULT_STAGE):
         STATE["_stage"] = ""
         STATE["_stage_"] = ""
         STATE["_stage-"] = ""
+        STATE["__stage"] = ""
+        STATE["__stage_"] = ""
     else:
         STATE["_stage"] = stage
         STATE["_stage_"] = stage + "_"
         STATE["_stage-"] = stage + "-"
+        STATE["__stage"] = "_" + stage
+        STATE["__stage_"] = "_" + stage + "_"
     STATE.set_env(STAGE, stage)
 
 

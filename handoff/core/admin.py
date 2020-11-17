@@ -379,7 +379,8 @@ def artifacts_archive(
 
     dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
-    platform.copy_dir_to_another_bucket(BUCKET_CURRENT_PREFIX, dest_dir)
+    platform.copy_dir_to_another_bucket(
+        os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR), dest_dir)
 
 
 def artifacts_get(

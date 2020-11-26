@@ -49,7 +49,7 @@ Resources:
     Properties:
       LogGroupName:
         Ref: LogGroup
-      FilterPattern: "ERROR"
+      FilterPattern: "?ERROR ?Error ?error"
       MetricTransformations:
         - MetricValue: "1"
           MetricNamespace: !Sub ${ResourceGroup}

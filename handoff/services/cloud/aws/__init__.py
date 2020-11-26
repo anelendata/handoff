@@ -601,38 +601,41 @@ def print_logs(start_time=None, end_time=None, format_=None, follow=False,
     if not format_:
         format_ = "{datetime} - {message}"
 
-    response = logs.filter_log_events(log_group_name,
-                                      start_time=start_time,
-                                      end_time=end_time,
-                                      extras=extras)
-
-    show = False
-    for e in response.get("events", list()):
-        wait = 2.5
-        e["datetime"] = datetime.datetime.fromtimestamp(e["timestamp"] / 1000)
-        start_time = e["timestamp"]
-        if show or last_timestamp is None or last_timestamp < e["timestamp"]:
-            show = True
-            last_timestamp = e["timestamp"]
-            print(format_.format(**e))
-
-    next_token = response.get("nextToken")
-    while next_token:
+    while True:
         response = logs.filter_log_events(log_group_name,
-                                          next_token=next_token)
+                                          start_time=start_time,
+                                          end_time=end_time,
+                                          extras=extras)
+
+        show = False
         for e in response.get("events", list()):
-            e["datetime"] = datetime.datetime.fromtimestamp(
-                e["timestamp"] / 1000)
+            e["datetime"] = datetime.datetime.fromtimestamp(e["timestamp"] / 1000)
             start_time = e["timestamp"]
-            if show or last_timestamp < e["timestamp"]:
+            if show or last_timestamp is None or last_timestamp < e["timestamp"]:
                 show = True
+                wait = 2.5
                 last_timestamp = e["timestamp"]
                 print(format_.format(**e))
-        next_token = response.get("nextToken")
 
-    if follow:
+        next_token = response.get("nextToken")
+        while next_token:
+            response = logs.filter_log_events(log_group_name,
+                                              next_token=next_token)
+            for e in response.get("events", list()):
+                e["datetime"] = datetime.datetime.fromtimestamp(
+                    e["timestamp"] / 1000)
+                start_time = e["timestamp"]
+                if show or last_timestamp < e["timestamp"]:
+                    show = True
+                    wait = 2.5
+                    last_timestamp = e["timestamp"]
+                    print(format_.format(**e))
+            next_token = response.get("nextToken")
+
+        if not follow:
+            break
+
         time.sleep(wait)
-        print_logs(start_time, end_time, format_, follow, wait * 2, last_timestamp,
-                   **extras)
+        wait = min(wait * 2, 60)
 
     return start_time

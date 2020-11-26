@@ -388,6 +388,4 @@ def logs(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    last_update = platform.print_logs(**data)
-
-    print(last_update)
+    platform.print_logs(**data)

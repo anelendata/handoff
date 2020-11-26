@@ -54,32 +54,6 @@ def _get_command_string(command, argstring, params):
     return command
 
 
-def _get_commands_org(params, data):
-    commands = list()
-    for command in params["run"]:
-        if not command.get("active", True):
-            continue
-        params = _get_params(data)
-        params["venv"] = command.get("venv", None)
-        command_str = _get_command_string(command["command"],
-                                          command.get("args", None), params)
-        commands.append(command_str)
-    return commands
-
-
-def _get_commands(piped_commands, data):
-    commands = list()
-    for command in piped_commands:
-        if not command.get("active", True):
-            continue
-        params = _get_params(data)
-        params["venv"] = command.get("venv", None)
-        command_str = _get_command_string(command["command"],
-                                          command.get("args", None), params)
-        commands.append(command_str)
-    return commands
-
-
 def run_pipe(
     pipe:str,
     state:Dict
@@ -88,7 +62,7 @@ def run_pipe(
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
     pipe_name = pipe["name"]
-    commands = _get_commands(pipe["commands"], state)
+    LOGGER.info("Running pipeline: " + pipe_name)
 
     env = _get_env()
 
@@ -101,29 +75,49 @@ def run_pipe(
     # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#decouple-applications
     # Also see
     # https://docs.python.org/3/library/subprocess.html#security-considerations
-    procs = list()
-    procs.append(subprocess.Popen([commands[0]], stdout=subprocess.PIPE,
-                                  env=env, shell=True))
+    commands = pipe["commands"]
+    last_proc = None
+    for command_obj in commands:
+        if not command_obj.get("active", True):
+            continue
 
-    for i in range(1, len(commands)):
-        procs.append(subprocess.Popen([commands[i]],
-                                      stdin=procs[i - 1].stdout,
-                                      stdout=subprocess.PIPE,
-                                      env=env, shell=True))
+        params = _get_params(state)
+        params["venv"] = command_obj.get("venv", None)
+        command_str = _get_command_string(command_obj["command"],
+                                          command_obj["args"],
+                                          params)
 
-    for i in range(0, len(commands) - 1):
-        return_code = procs[i].wait()
+        stdin = None
+        if last_proc:
+            stdin = last_proc.stdout
+
+        command_obj["proc"] = subprocess.Popen(
+            [command_str], stdin=stdin, stdout=subprocess.PIPE, env=env,
+            shell=True)
+        last_proc = command_obj["proc"]
+
+    kill = False
+    for command_obj in commands:
+        proc = command_obj.get("proc")
+        if not proc:
+            continue
+        if kill:
+            proc.terminate()
+            continue
+
+        if proc == last_proc:
+            break
+
+        return_code = proc.wait()
         if return_code > 0:
             LOGGER.error("Process %d (%s) exited with code %d" %
-                         (i, commands[i], return_code))
-            # Immediately kill the downstream processes
-            for j in range(i, len(commands) - 1):
-                procs[j].terminate()
+                         (proc.pid, command_obj["command"], return_code))
+            kill = True
 
     # This assumes the data is not big. Use stdout, stderr in the last process
     # only for logging purposes, not passing big data.
     # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
-    stdout, stderr = procs[-1].communicate()
+    stdout, stderr = last_proc.communicate()
 
     if stdout:
         stdout = stdout.decode("utf-8").strip("\n").strip(" ")

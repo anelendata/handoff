@@ -5,7 +5,7 @@ from typing import Dict
 from jinja2 import Template as _Template
 
 from handoff import utils
-from handoff.config import get_state
+from handoff.config import get_state, ARTIFACTS_DIR
 
 
 LOGGER = utils.get_logger(__name__)
@@ -54,7 +54,7 @@ def _get_command_string(command, argstring, params):
     return command
 
 
-def _get_commands(params, data):
+def _get_commands_org(params, data):
     commands = list()
     for command in params["run"]:
         if not command.get("active", True):
@@ -67,27 +67,28 @@ def _get_commands(params, data):
     return commands
 
 
-def _get_time_window(data):
-    iso_str = data.get("iso_format", True)
-    start_offset = datetime.timedelta(days=data.get("start_offset_days", -1))
-    end_offset = datetime.timedelta(days=data.get("duration_days", 1))
+def _get_commands(piped_commands, data):
+    commands = list()
+    for command in piped_commands:
+        if not command.get("active", True):
+            continue
+        params = _get_params(data)
+        params["venv"] = command.get("venv", None)
+        command_str = _get_command_string(command["command"],
+                                          command.get("args", None), params)
+        commands.append(command_str)
+    return commands
 
-    start_at, end_at = utils.get_time_window(
-        data,
-        start_offset=start_offset,
-        end_offset=end_offset,
-        iso_str=iso_str)
-    return start_at, end_at
 
-
-def run(
-    config:Dict,
-    **kwargs) -> None:
+def run_pipe(
+    pipe:str,
+    state:Dict
+    ) -> None:
     """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
-    state = get_state()
-    commands = _get_commands(config, state)
+    pipe_name = pipe["name"]
+    commands = _get_commands(pipe["commands"], state)
 
     env = _get_env()
 
@@ -129,11 +130,27 @@ def run(
     if stderr:
         stderr = stderr.decode("utf-8").strip("\n").strip(" ")
 
-    LOGGER.debug("STDOUT of the last process:\n%s\n    " % stdout)
-    LOGGER.debug("STDERR of the last process:\n%s\n    " % stderr)
+    if stdout:
+        with open(os.path.join(ARTIFACTS_DIR, pipe_name + "_stdout.log"), "w") as f:
+            f.write(stdout)
+    if stderr:
+        with open(os.path.join(ARTIFACTS_DIR, pipe_name + "_stderr.log"), "w") as f:
+            f.write(stderr)
 
     return stdout, stderr
 
+
+def run(
+    config:Dict,
+    **kwargs) -> None:
+    """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
+    Run the task by the configurations and files stored in the remote parameter store and the file store.
+    """
+    state = get_state()
+    for pipe in config["pipelines"]:
+        if not pipe.get("active", True):
+            continue
+        run_pipe(pipe, state)
 
 
 def run_local(config, **kwargs):
@@ -147,8 +164,6 @@ def show_commands(config, data={}, **kwargs):
     """`handoff show commands -p <project_directory>`
     Show the shell commands that drives the task.
     """
-    start_at, end_at = _get_time_window(data)
-    data.update({"start_at": start_at, "end_at": end_at})
     commands = _get_commands(config, data)
     for command in commands:
         print(command)

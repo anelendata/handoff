@@ -96,6 +96,10 @@ def _update_state(
             v["value"] = _get_secret(v["key"])
         if v["value"]:
             state.set_env(v["key"], v["value"], trust=True)
+
+    for v in config.get("vars", list()):
+        state[v["key"]] = v["value"]
+
     state.update(data)
 
     if not state.get(BUCKET):

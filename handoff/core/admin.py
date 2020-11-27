@@ -130,6 +130,11 @@ def _read_project_remote() -> Dict:
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
+    account_id = platform.login()
+    if not account_id:
+        raise Exception("Failed to login to cloud account. " +
+                        "Did you forget set credentials such as AWS_PROFILE?")
+
     config_str = platform.get_parameter("config")
     if not config_str:
         raise Exception("config not found in the remote parameter store.\n" +

@@ -14,7 +14,7 @@ SECRETS_DIR = ".secrets"
 SECRETS_FILE = "secrets.yml"
 
 BUCKET_CURRENT_PREFIX = "last"
-BUCKET_ARCHIVE_PREFIX = "runs"
+BUCKET_ARCHIVE_PREFIX = "archives"
 
 ENV_PREFIX = "HO_"
 

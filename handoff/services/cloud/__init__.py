@@ -43,14 +43,14 @@ def _get_platform(
 def _assume_role(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     state = get_state()
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
-    role_arn = data.get("role_arn")
-    target_account_id = data.get("target_account_id")
-    external_id = data.get("external_id")
+    role_arn = vars.get("role_arn")
+    target_account_id = vars.get("target_account_id")
+    external_id = vars.get("external_id")
     platform.assume_role(role_arn=role_arn,
                          target_account_id=target_account_id,
                          external_id=external_id)
@@ -59,90 +59,90 @@ def _assume_role(
 def _get_platform_auth_env(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> Dict:
     platform = _get_platform()
-    return platform.get_platform_auth_env(data)
+    return platform.get_platform_auth_env(vars)
 
 
 def role_create(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud role create -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
+    """`handoff cloud role create -p <project_directory> -v external_id=<id> grantee_account_id=<grantee_id>`
     Create the role with deployment privilege.
     """
     state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
-    if not data.get("grantee_account_id"):
+    if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
-        LOGGER.warn("-d grantee_account_id=xxxx")
-    if not data.get("external_id"):
+        LOGGER.warn("-v grantee_account_id=xxxx")
+    if not vars.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff cloud create_role -p <project-dir> " +
-                         "-d external_id=yyyy")
+                         "handoff cloud create_role -p <project-vir> " +
+                         "-v external_id=yyyy")
 
     platform.create_role(
-        grantee_account_id=data.get("grantee_account_id", account_id),
-        external_id=data.get("external_id")
+        grantee_account_id=vars.get("grantee_account_id", account_id),
+        external_id=vars.get("external_id")
     )
 
 
 def role_update(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud role update -p <project_directory> -d external_id=<id> grantee_account_id=<grantee_id>`
+    """`handoff cloud role update -p <project_directory> -v external_id=<id> grantee_account_id=<grantee_id>`
     Update the role privilege information.
     """
     state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
-    if not data.get("grantee_account_id"):
+    if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
-        LOGGER.warn("-d grantee_account_id=xxxx")
-    if not data.get("external_id"):
+        LOGGER.warn("-v grantee_account_id=xxxx")
+    if not vars.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff cloud create_role -p <project-dir> " +
-                         "-d external_id=yyyy")
+                         "handoff cloud create_role -p <project-vir> " +
+                         "-v external_id=yyyy")
 
     platform.update_role(
-        grantee_account_id=data.get("grantee_account_id", account_id),
-        external_id=data.get("external_id")
+        grantee_account_id=vars.get("grantee_account_id", account_id),
+        external_id=vars.get("external_id")
     )
 
 
 def role_delete(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud role delete -p <project_directory> -d grantee_account_id=<grantee_id>`
+    """`handoff cloud role delete -p <project_directory> -v grantee_account_id=<grantee_id>`
     Delete the role.
     """
     state = get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
-    if not data.get("grantee_account_id"):
+    if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
-        LOGGER.warn("-d grantee_account_id=xxxx")
-    if not data.get("external_id"):
+        LOGGER.warn("-v grantee_account_id=xxxx")
+    if not vars.get("external_id"):
         raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff cloud create_role -p <project-dir> " +
-                         "-d external_id=yyyy")
+                         "handoff cloud create_role -p <project-vir> " +
+                         "-v external_id=yyyy")
 
     platform.delete_role(
-        grantee_account_id=data.get("grantee_account_id", account_id),
-        external_id=data.get("external_id")
+        grantee_account_id=vars.get("grantee_account_id", account_id),
+        external_id=vars.get("external_id")
     )
 
 
@@ -195,7 +195,7 @@ def resources_create(
 
     AWS:
     - Please refer to the
-      [CloudFormation template](https://github.com/anelendata/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
+      [CloudFormation template](https://github.com/anelenvars/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
     """
     state = get_state()
     platform = _get_platform()
@@ -236,7 +236,7 @@ def resources_delete(
 def task_create(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task create -p <project_directory>`
     Create the task
@@ -244,13 +244,13 @@ def task_create(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.create_task(data.get("spec_file"))
+    platform.create_task(vars.get("spec_file"))
 
 
 def task_update(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task update -p <project_directory>`
     Update the task
@@ -258,7 +258,7 @@ def task_update(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.update_task(data.get("spec_file"))
+    platform.update_task(vars.get("spec_file"))
 
 
 def task_delete(
@@ -280,12 +280,12 @@ def run(
     envs: Dict = {},
     extras: str = None,
     **kwargs) -> None:
-    """`handoff cloud run -d resource_group=<resource_group_name> task=<task_name> -e DATA='key1=val1 key2=val2...'`
+    """`handoff cloud run -v resource_group=<resource_group_name> task=<task_name> -e vars='key1=val1 key2=val2...'`
     Run a task once in the platform
 
-    If the environment variable DATA is specified via -e option, it will be
+    If the environment variable vars is specified via -e option, it will be
     used as:
-    `handoff run -d $(eval echo $DATA)`
+    `handoff run -v $(eval echo $vars)`
     """
     state = get_state()
     platform = _get_platform()
@@ -304,17 +304,17 @@ def schedule(
     project_dir: str,
     workspace_dir: str,
     envs: Dict = {},
-    data: Dict = {},
+    vars: Dict = {},
     extras: str = None,
     **kwargs) -> None:
-    """`handoff cloud schedule -d target_id=<target_id> cron="<cron_format>" -e DATA='key1=val1 key2=val2...'`
+    """`handoff cloud schedule -v target_id=<target_id> cron="<cron_format>" -e vars='key1=val1 key2=val2...'`
     Schedule a task named <target_id> at the recurring scheduled specified
     as <cron_format>. An example of cron-format string is "10 01 * * ? *"
     for every day at 01:10 (1:10AM)
 
-    If the environment variable DATA is specified via -e option, it will be
+    If the environment variable vars is specified via -e option, it will be
     used as:
-    `handoff run -d $(eval echo $DATA)`
+    `handoff run -v $(eval echo $vars)`
     """
     state = get_state()
     platform = _get_platform()
@@ -322,10 +322,10 @@ def schedule(
     state.validate_env()
     schedules = config.get("schedules")
     if not schedules:
-        if not data.get("target_id") or not data.get("cron"):
-            raise Exception("Forgot to set '-d target_id=<ID> cron=<CRON>' ?")
-        target_id = str(data["target_id"])
-        cronexp = "cron(" + data["cron"] + ")"
+        if not vars.get("target_id") or not vars.get("cron"):
+            raise Exception("Forgot to set '-v target_id=<ID> cron=<CRON>' ?")
+        target_id = str(vars["target_id"])
+        cronexp = "cron(" + vars["cron"] + ")"
         extras_obj = None
         if extras:
             with open(extras, "r") as f:
@@ -348,15 +348,15 @@ def schedule(
 def unschedule(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud unschedule -d target_id=<target_id>`
+    """`handoff cloud unschedule -v target_id=<target_id>`
     Unschedule a task named <target_id>
     """
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    target_id = str(data["target_id"])
+    target_id = str(vars["target_id"])
     platform.unschedule_task(target_id)
 
 
@@ -376,11 +376,11 @@ def schedule_list(
 def logs(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud logs -d start_time=<start_time> end_time=<end_time> follow=<True/False>`
+    """`handoff cloud logs -v start_time=<start_time> end_time=<end_time> follow=<True/False>`
     Show logs
-    Use --data (-d) option to:
+    Use --vars (-v) option to:
     - start_time: ISO 8086 formatted date time to indicate the start time
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
@@ -388,4 +388,4 @@ def logs(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.print_logs(**data)
+    platform.print_logs(**vars)

@@ -53,23 +53,23 @@ def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix)
                         (os.path.join(src_bucket, k), os.path.join(dest_bucket, dest_path)))
 
 
-def download_dir(bucket_name, prefix, local):
+def download_dir(bucket_name, local_dir_path, remote_dir_path):
     """
     params:
     - bucket_name: s3 bucket name (without s3://) with target contents
-    - prefix: pattern to match in s3
-    - local: local path to folder in which to place files
+    - local_dir_path: local path to folder in which to place files
+    - remote_dir_path: pattern to match in s3
 
     Modified from: https://stackoverflow.com/a/56267603
     """
     client = get_client()
-    logger.info("GET s3://" + bucket_name + "/" + prefix)
+    logger.info("GET s3://" + bucket_name + "/" + remote_dir_path)
     keys = []
     dirs = []
     next_token = ""
     base_kwargs = {
         "Bucket": bucket_name,
-        "Prefix": prefix,
+        "Prefix": remote_dir_path,
     }
     while next_token is not None:
         kwargs = base_kwargs.copy()
@@ -92,22 +92,22 @@ def download_dir(bucket_name, prefix, local):
 
     for d in dirs:
         # Don't create root directory. Do local="./<prefix>" if you want it.
-        dest_pathname = d[len(prefix):]
-        dest_pathname = os.path.join(local, dest_pathname)
+        dest_pathname = d[len(remote_dir_path):]
+        dest_pathname = os.path.join(local_dir_path, dest_pathname)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
 
     for k in keys:
-        dest_pathname = k[len(prefix):]
+        dest_pathname = k[len(remote_dir_path):]
         if dest_pathname[0] == "/":
             dest_pathname = dest_pathname[1:]
-        dest_pathname = os.path.join(local, dest_pathname)
+        dest_pathname = os.path.join(local_dir_path, dest_pathname)
         if not os.path.exists(os.path.dirname(dest_pathname)):
             os.makedirs(os.path.dirname(dest_pathname))
         client.download_file(bucket_name, k, dest_pathname)
 
 
-def upload_dir(source, bucket_name, prefix):
+def upload_dir(bucket_name, local_dir_path, remote_dir_path):
     """
     References:
     - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
@@ -119,17 +119,17 @@ def upload_dir(source, bucket_name, prefix):
     # raise if bucket does not exist
     s3.meta.client.head_bucket(Bucket=bucket_name)
 
-    logger.info("Uploading %s to bucket %s" % (source, bucket_name))
+    logger.info("Uploading %s to bucket %s" % (local_dir_path, bucket_name))
 
     # construct the upload file list
     upload_file_names = []
-    for root, dirs, files in os.walk(source, topdown=False):
-       for name in files:
-          fname = os.path.join(root, name)
-          upload_file_names.append(fname)
+    for root, dirs, files in os.walk(local_dir_path, topdown=False):
+        for name in files:
+            fname = os.path.join(root, name)
+            upload_file_names.append(fname)
 
     if not upload_file_names:
-        logger.info("Nothing found in " + source)
+        logger.info("Nothing found in " + local_dir_path)
         return
 
     logger.info("Files to be uploaded: %s" % upload_file_names)
@@ -137,29 +137,13 @@ def upload_dir(source, bucket_name, prefix):
     # start uploading
     for filename in upload_file_names:
         source_path = filename
-        dest_path = os.path.join(prefix, filename[len(source) + 1:])
+        dest_path = os.path.join(remote_dir_path,
+                                 filename[len(local_dir_path) + 1:])
         logger.info("Uploading %s to Amazon S3 bucket %s" % (source_path, os.path.join(bucket_name, dest_path)))
         client.upload_file(source_path, bucket_name, dest_path)
 
 
-def delete_object(bucket_name, key):
-    """
-    References:
-    - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
-    """
-    client = get_client()
-
-    # check if the bucket exists
-    s3 = boto3.resource("s3")
-    # raise if bucket does not exist
-    s3.meta.client.head_bucket(Bucket=bucket_name)
-
-    logger.info("Deleting %s from bucket %s" % (key, bucket_name))
-
-    client.upload_file(bucket_name, key)
-
-
-def delete_recurse(bucket_name, prefix=None):
+def delete_recurse(bucket_name, prefix):
     """Recursively delete objects in the bucket under prefix
     params:
     - bucket_name: s3 bucket name (without s3://) with target contents
@@ -196,3 +180,31 @@ def delete_recurse(bucket_name, prefix=None):
         client.delete_objects(Bucket=bucket_name, Delete={"Objects": objects})
 
     logger.info("Deleted %s" % objects)
+
+
+def download_file(bucket_name, local_path, remote_path):
+    client = get_client()
+    client.download_file(bucket_name, remote_path, local_path)
+
+
+def upload_file(bucket_name, local_path, remote_path):
+    client = get_client()
+    client.upload_file(local_path, bucket_name, remote_path)
+
+
+def delete_file(bucket_name, key):
+    """
+    References:
+    - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
+    """
+    client = get_client()
+
+    # check if the bucket exists
+    s3 = boto3.resource("s3")
+    # raise if bucket does not exist
+    s3.meta.client.head_bucket(Bucket=bucket_name)
+
+    logger.info("Deleting %s from bucket %s" % (key, bucket_name))
+
+    client.delete_objects(Bucket=bucket_name,
+                          Delete={"Objects": [{"Key": key}]})

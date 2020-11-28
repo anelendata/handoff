@@ -25,21 +25,21 @@ def _envs(
 def build(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     """Build Docker image
-    If you want to feed a custom Dockerfile, use --data option:
-      --data docker_file="/path_to/Dockerfile"
+    If you want to feed a custom Dockerfile, use --vars (-v) option:
+      --vars docker_file="/path_to/Dockerfile"
     If you have extra files to copy to the image's workspace directory,
-    use --data option. Every file under the directory will be copied:
-      --data files_dir="/path_to/extra_files_dir"
+    use --vars option. Every file under the directory will be copied:
+      --vars files_dir="/path_to/extra_files_dir"
     """
-    _envs(project_dir, workspace_dir, data=data, **kwargs)
+    _envs(project_dir, workspace_dir, vars=vars, **kwargs)
     state = config.get_state()
     state.validate_env([CONTAINER_IMAGE])
-    files_dir = data.get("files_dir")
-    docker_file = data.get("docker_file")
-    new_version = data.get("version")
+    files_dir = vars.get("files_dir")
+    docker_file = vars.get("docker_file")
+    new_version = vars.get("version")
     if docker_file:
         LOGGER.info("Using Dockerfile at: " + docker_file)
     impl.build(project_dir, docker_file=docker_file, files_dir=files_dir,

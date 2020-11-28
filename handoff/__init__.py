@@ -33,6 +33,7 @@ def _strip_outer_quotes(string: str) -> str:
         string = string.strip("'")
     return string
 
+
 def _load_param_list(arg_list: List) -> Dict:
     data = {}
     new_arg_list = []
@@ -52,7 +53,8 @@ def _load_param_list(arg_list: List) -> Dict:
         value = _strip_outer_quotes(a[pos + 1:])
 
         if not key or not value:
-            raise ValueError("data argument list format error: %s %s" % (key, value))
+            raise ValueError("data argument list format error: %s %s"
+                             % (key, value))
 
         if value.lower() in ["true", "t"]:
             value = True
@@ -388,10 +390,12 @@ def main() -> None:
     parser.add_argument("-s", "--stage", type=str, default=DEFAULT_STAGE,
                         help=("Stage (default '" + DEFAULT_STAGE +
                               "'). Sets env var _stage, but keeps _stage blank when --stage 'prod'"))
-    parser.add_argument("-d", "--data", type=str, nargs="*", default="",
-                        help="Extra data for the command. List after this option like: -d key1=value1 key2=value2...")
     parser.add_argument("-e", "--envs", type=str, nargs="*", default="",
-                        help="Define environment variables. List after this option like: -d key1=value1 key2=value2...")
+                        help="Define environment variables. List after this option like: -e key1=value1 key2=value2...")
+    parser.add_argument("-v", "--vars", type=str, nargs="*", default="",
+                        help="Extra variables for the command. List after this option like: -v key1=value1 key2=value2...")
+    parser.add_argument("-y", "--yes", action="store_true",
+                        help="Skip confirmations")
 
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-l", "--log-level", type=str, default="info",
@@ -439,7 +443,7 @@ handoff <command> -h for more help.\033[0m
 
     LOGGER.setLevel(args.log_level.upper())
 
-    args.data = _load_param_list(args.data)
+    args.vars = _load_param_list(args.vars)
     args.envs = _load_param_list(args.envs)
 
     kwargs = dict(vars(args))

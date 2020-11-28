@@ -238,34 +238,58 @@ def set_env_var_from_ssm(project, name):
     state.set_env(name, value, trust=True)
 
 
-def download_dir(remote_dir, local_dir):
+def download_file(local_path, remote_path):
     state = get_state()
-    remote_dir = os.path.join(state.get(TASK), remote_dir)
-    s3.download_dir(state.get(BUCKET), remote_dir, local_dir)
+    bucket = state.get(BUCKET)
+    remote_path = os.path.join(state.get(TASK), remote_path)
+    s3.download_file(bucket, local_path, remote_path)
 
 
-def upload_dir(src_dir_name, dest_prefix):
+def upload_file(local_path, remote_path):
+    state = get_state()
+    bucket = state.get(BUCKET)
+    remote_path = os.path.join(state.get(TASK), remote_path)
+    s3.upload_file(bucket, local_path, remote_path)
+
+
+def delete_file(remote_path):
+    state = get_state()
+    bucket = state.get(BUCKET)
+    remote_path = os.path.join(state.get(TASK), remote_path)
+    s3.delete_file(bucket, remote_path)
+
+
+def download_dir(local_dir_path, remote_dir_path):
+    state = get_state()
+    bucket = state.get(BUCKET)
+    remote_dir_path = os.path.join(state.get(TASK), remote_dir_path)
+    s3.download_dir(bucket, local_dir_path, remote_dir_path)
+
+
+def upload_dir(local_dir_path, remote_dir_path):
     state = get_state()
     state.validate_env([BUCKET, "AWS_REGION"])
-    dest_prefix = os.path.join(state.get(TASK), dest_prefix)
     bucket = state.get(BUCKET)
-    s3.upload_dir(src_dir_name, bucket, dest_prefix)
+    dest_prefix = os.path.join(state.get(TASK), remote_dir_path)
+    s3.upload_dir(bucket, local_dir_path, dest_prefix)
     LOGGER.info(("See the files at https://s3.console.aws.amazon.com/s3/" +
                  "buckets/%s/%s/") % (bucket, dest_prefix))
 
 
-def delete_dir(remote_dir):
+def delete_dir(remote_dir_path):
     state = get_state()
-    remote_dir = os.path.join(state.get(TASK), remote_dir)
-    s3.delete_recurse(state.get(BUCKET), remote_dir)
+    bucket = state.get(BUCKET)
+    remote_dir = os.path.join(state.get(TASK), remote_dir_path)
+    s3.delete_recurse(bucket, remote_dir)
 
 
 def copy_dir_to_another_bucket(src_dir, dest_dir):
     state = get_state()
+    bucket = state.get(BUCKET)
     src_prefix = os.path.join(state.get(TASK), src_dir)
     dest_prefix = os.path.join(state.get(TASK), dest_dir)
-    s3.copy_dir_to_another_bucket(state.get(BUCKET), src_prefix,
-                                  state.get(BUCKET), dest_prefix)
+    s3.copy_dir_to_another_bucket(bucket, src_prefix,
+                                  bucket, dest_prefix)
 
 
 def get_account_id():

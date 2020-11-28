@@ -51,7 +51,7 @@ def get_latest_version(image_name, ignore=["latest"]):
 
 
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,
-          nocache=False):
+          nocache=False, yes=False):
     state = get_state()
     cli = docker_api_client()
     image_name = state[CONTAINER_IMAGE]
@@ -69,10 +69,12 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
         else:
             new_version = "0.1"
 
-    sys.stdout.write("Build %s:%s (y/N)? " % (image_name, new_version))
-    response = input()
-    if response.lower() not in ["y", "yes"]:
-        return
+    if not yes:
+        sys.stdout.write("Build %s:%s (y/N)? " % (image_name, new_version))
+        response = input()
+        if response.lower() not in ["y", "yes"]:
+            return
+
     logger.info("Building %s:%s" % (image_name, new_version))
 
     with tempfile.TemporaryDirectory() as build_dir:
@@ -123,7 +125,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                     logger.info(msg["stream"])
 
 
-def run(version=None, extra_env=dict()):
+def run(version=None, extra_env=dict(), yes=False):
     state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
@@ -135,10 +137,11 @@ def run(version=None, extra_env=dict()):
     if not version:
         version = get_latest_version(image_name)
 
-    sys.stdout.write("Run %s:%s (y/N)? " % (image_name, version))
-    response = input()
-    if response.lower() not in ["y", "yes"]:
-        return
+    if not yes:
+        sys.stdout.write("Run %s:%s (y/N)? " % (image_name, version))
+        response = input()
+        if response.lower() not in ["y", "yes"]:
+            return
 
     client = docker.from_env()
     for line in client.containers.run(image_name + ":" + version,
@@ -147,7 +150,7 @@ def run(version=None, extra_env=dict()):
         print(line.decode("utf-8"))
 
 
-def push(username, password, registry, version=None):
+def push(username, password, registry, version=None, yes=False):
     state = get_state()
     image_name = state[CONTAINER_IMAGE]
     if not version:
@@ -156,11 +159,12 @@ def push(username, password, registry, version=None):
     if not version:
         raise Exception("Image %s not found" % image_name)
 
-    sys.stdout.write("Push %s:%s to %s (y/N)? " %
-                     (image_name, version, registry))
-    response = input()
-    if response.lower() not in ["y", "yes"]:
-        return
+    if not yes:
+        sys.stdout.write("Push %s:%s to %s (y/N)? " %
+                         (image_name, version, registry))
+        response = input()
+        if response.lower() not in ["y", "yes"]:
+            return
 
     client = docker.from_env()
 

@@ -28,13 +28,3 @@ def run_local(config, **kwargs):
     Run the task locally.
     """
     return run(config, **kwargs)
-
-
-def show_commands(config, data={}, **kwargs):
-    """`handoff show commands -p <project_directory>`
-    Show the shell commands that drives the task.
-    """
-    pass
-#    commands = _get_commands(config, data)
-#    for command in commands:
-#        print(command)

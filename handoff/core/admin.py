@@ -40,7 +40,7 @@ def _make_python_venv(venv_path: str) -> None:
             path = "/".join(paths[0:i])
             if not os.path.exists(path):
                 os.mkdir(path)
-        # https://github.com/anelendata/handoff/issues/25#issuecomment-667945434
+        # https://github.com/anelenvars/handoff/issues/25#issuecomment-667945434
         builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
         _install("pip install wheel", venv_path)
@@ -80,7 +80,7 @@ def _get_secret(key: str) -> str:
 
 def _update_state(
     config: Dict,
-    data: Dict = {}) -> None:
+    vars: Dict = {}) -> None:
     """Set environment variable and in-memory variables
     Warning: environment variables are inherited to subprocess. The sensitive
     information may be compromised by a bad subprocess.
@@ -100,7 +100,7 @@ def _update_state(
     for v in config.get("vars", list()):
         state[v["key"]] = v["value"]
 
-    state.update(data)
+    state.update(vars)
 
     if not state.get(BUCKET):
         try:
@@ -121,7 +121,7 @@ def _update_state(
                        BUCKET)
 
 
-def _read_project_remote() -> Dict:
+def _read_project_remote(workspace_dir) -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
@@ -135,11 +135,10 @@ def _read_project_remote() -> Dict:
         raise Exception("Failed to login to cloud account. " +
                         "Did you forget set credentials such as AWS_PROFILE?")
 
-    config_str = platform.get_parameter("config")
-    if not config_str:
-        raise Exception("config not found in the remote parameter store.\n" +
-                        "Check resource_group and task and do config push.")
-    config = json.loads(config_str)
+    project_file_path = os.path.join(workspace_dir, PROJECT_FILE)
+    platform.download_file(project_file_path, PROJECT_FILE)
+    with open(project_file_path, "r") as f:
+        config = yaml.load(f)
     return config
 
 
@@ -194,7 +193,7 @@ def _secrets_get(
 def _secrets_get_local(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> Dict:
     """Load secrets from local file
 
@@ -202,8 +201,8 @@ def _secrets_get_local(
     """
     global SECRETS
     SECRETS = {}
-    if data.get("secrets_dir"):
-        secrets_dir = data["secrets_dir"]
+    if vars.get("secrets_dir"):
+        secrets_dir = vars["secrets_dir"]
     else:
         secrets_dir = os.path.join(project_dir, SECRETS_DIR)
     secrets_file = os.path.join(secrets_dir, SECRETS_FILE)
@@ -241,12 +240,13 @@ def _secrets_get_local(
 def secrets_push(
     project_dir: str,
     workspace_dir: str,
+    yes=False,
     **kwargs) -> None:
     """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
 
     Push the contents of <secrets_file> to remote parameter store
 
-    --data file (.secrets/secrets.yml): The YAML file storing secrets
+    --vars file (.secrets/secrets.yml): The YAML file storing secrets
     with format:
     ```
     - key: key1
@@ -277,10 +277,12 @@ def secrets_push(
             skip_msg = " SKIP PUSH"
         print("  - " + key + " (" + secrets[key].get("level", "task") +
               " level)" + skip_msg)
-    response = input("Proceed? (y/N)")
-    if response.lower() not in ["yes", "y"]:
-        print("aborting")
-        return
+
+    if not yes:
+        response = input("Proceed? (y/N)")
+        if response.lower() not in ["yes", "y"]:
+            print("aborting")
+            return
 
     for key in secrets:
         if not secrets[key].get("push", True):
@@ -386,10 +388,11 @@ def artifacts_archive(
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    dest_dir = os.path.join(BUCKET_ARCHIVE_PREFIX,
+    dest_dir = os.path.join(ARTIFACTS_DIR,
+                            BUCKET_ARCHIVE_PREFIX,
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(
-        os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR), dest_dir)
+        os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX), dest_dir)
 
 
 def artifacts_get(
@@ -414,9 +417,9 @@ def artifacts_get(
                                    platform_name=state.get(CLOUD_PLATFORM))
 
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
-    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    remote_dir = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
 
-    platform.download_dir(remote_dir, artifacts_dir)
+    platform.download_dir(artifacts_dir, remote_dir)
 
 
 def artifacts_push(
@@ -441,7 +444,7 @@ def artifacts_push(
                                    platform_name=state.get(CLOUD_PLATFORM))
 
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    prefix = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.upload_dir(artifacts_dir, prefix)
 
 
@@ -463,7 +466,7 @@ def artifacts_delete(
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
 
-    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, ARTIFACTS_DIR)
+    dir_name = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.delete_dir(dir_name)
 
 
@@ -493,7 +496,7 @@ def files_get(
     # in the workspace files directory.
     files_dir = os.path.join(workspace_dir, FILES_DIR)
     # Remote files are templates that can contain variables.
-    remote_dir = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    remote_dir = FILES_DIR
     templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
     platform.download_dir(remote_dir, templates_dir)
     # Parse and save to workspace/files
@@ -538,11 +541,27 @@ def files_push(
     platform = cloud._get_platform()
 
     files_dir = os.path.join(project_dir, FILES_DIR)
-    prefix = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
+    prefix = FILES_DIR
     platform.upload_dir(files_dir, prefix)
 
 
 def files_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff files delete -p <project_directory>`
+    Delete files and templates from the remote storage
+    """
+    state = get_state()
+    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
+                        BUCKET])
+
+    platform = cloud._get_platform()
+    dir_name = FILES_DIR
+    platform.delete_dir(dir_name)
+
+
+def files_deleteold(
     project_dir: str,
     workspace_dir: str,
     **kwargs) -> None:
@@ -561,17 +580,17 @@ def files_delete(
 def _config_get(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> Dict:
     """Read configs from remote parameter store and copy them to workspace dir
     """
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     LOGGER.info("Reading configurations from remote parameter store.")
-    precompiled_config = _read_project_remote()
+    precompiled_config = _read_project_remote(workspace_dir)
 
     _secrets_get(project_dir, workspace_dir, **kwargs)
-    _update_state(precompiled_config, data=data)
+    _update_state(precompiled_config, vars=vars)
 
     return precompiled_config
 
@@ -579,7 +598,7 @@ def _config_get(
 def _config_get_local(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> Dict:
     """ Compile configuration JSON file from the project.yml
 
@@ -618,10 +637,10 @@ def _config_get_local(
     if not project_dir:
         raise Exception("Project directory is not set")
     config = dict()
-    project = _read_project_local(os.path.join(project_dir, "project.yml"))
+    project = _read_project_local(os.path.join(project_dir, PROJECT_FILE))
     config.update(project)
 
-    _update_state(config, data=data)
+    _update_state(config, vars=vars)
 
     return config
 
@@ -629,28 +648,28 @@ def _config_get_local(
 def config_push(
     project_dir: str,
     workspace_dir: str,
-    data: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff config push -p <project_directory>`
     Push project.yml and the contents of project_dir/config as a secure
     parameter key.
     """
-    LOGGER.info("Compiling config from %s" % project_dir)
-    config_obj = _config_get_local(project_dir, workspace_dir, data=data,
-                                   **kwargs)
-    config_obj["version"] = VERSION
-    config = json.dumps(config_obj)
-
-    allow_advanced_tier = data.get("allow_advanced_tier", False)
-    if type(allow_advanced_tier) is not bool:
-        raise Exception("allow_advanced_tier must be True/False")
-
     platform = cloud._get_platform()
-    platform.push_parameter("config", config,
-                            allow_advanced_tier=allow_advanced_tier)
+    platform.upload_file(PROJECT_FILE, PROJECT_FILE)
 
 
 def config_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff config delete -p <project_directory>`
+    Delete the project configuration from the remote parameter store.
+    """
+    platform = cloud._get_platform()
+    platform.delete_file(PROJECT_FILE)
+
+
+def config_deleteold(
     project_dir: str,
     workspace_dir: str,
     **kwargs) -> None:
@@ -668,7 +687,7 @@ def config_print(
     """`handoff config print -p <project_directory>`
     Print the project configuration in the remote parameter store.
     """
-    print(json.dumps(_config_get(project_dir, workspace_dir)))
+    print(yaml.dump(_config_get(project_dir, workspace_dir)))
 
 
 def project_push(

@@ -20,7 +20,11 @@ def run(config: Dict, **kwargs) -> None:
     for pipe in config["pipelines"]:
         if not pipe.get("active", True):
             continue
-        _run_pipeline(pipe, state, ARTIFACTS_DIR)
+        stdout, stderr, return_code= _run_pipeline(pipe, state, ARTIFACTS_DIR)
+        LOGGER.info("Pipeline %s exited with code %d" %
+                    (pipe.get("name", ""), return_code))
+        if return_code != 0:
+            break
 
 
 def run_local(config, **kwargs):

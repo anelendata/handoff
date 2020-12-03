@@ -494,11 +494,11 @@ def files_get(
 
     # First download to the local templates directory, then parse to save
     # in the workspace files directory.
+    templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
     files_dir = os.path.join(workspace_dir, FILES_DIR)
     # Remote files are templates that can contain variables.
     remote_dir = FILES_DIR
-    templates_dir = os.path.join(workspace_dir, TEMPLATES_DIR)
-    platform.download_dir(remote_dir, templates_dir)
+    platform.download_dir(templates_dir, remote_dir)
     # Parse and save to workspace/files
     _parse_template_files(templates_dir, files_dir)
 

@@ -6,7 +6,7 @@ from jinja2 import Template as _Template
 
 from handoff import utils
 from handoff.config import get_state, ARTIFACTS_DIR
-from handoff.core.operators import _run_pipeline
+from handoff.core.operators import _run_task
 
 
 LOGGER = utils.get_logger(__name__)
@@ -17,13 +17,19 @@ def run(config: Dict, **kwargs) -> None:
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
     state = get_state()
-    for pipe in config["pipelines"]:
+    for pipe in config["tasks"]:
         if not pipe.get("active", True):
             continue
-        stdout, stderr, return_code= _run_pipeline(pipe, state, ARTIFACTS_DIR)
+        kill_downstream_on_fail = not pipe.get(
+            "run_downstream_on_fail", False)
+
+        stdout, stderr, exit_code = _run_task(
+            pipe, state, ARTIFACTS_DIR,
+            kill_downstream_on_fail=kill_downstream_on_fail)
+
         LOGGER.info("Pipeline %s exited with code %d" %
-                    (pipe.get("name", ""), return_code))
-        if return_code != 0:
+                    (pipe.get("name", ""), exit_code))
+        if exit_code != 0:
             break
 
 

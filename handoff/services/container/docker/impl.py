@@ -51,7 +51,7 @@ def get_latest_version(image_name, ignore=["latest"]):
 
 
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,
-          nocache=False, yes=False):
+          nocache=False, yes=False, **kwargs):
     state = get_state()
     cli = docker_api_client()
     image_name = state[CONTAINER_IMAGE]
@@ -125,7 +125,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                     logger.info(msg["stream"])
 
 
-def run(version=None, extra_env=dict(), yes=False):
+def run(version=None, extra_env=dict(), yes=False, **kwargs):
     state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
@@ -150,7 +150,7 @@ def run(version=None, extra_env=dict(), yes=False):
         print(line.decode("utf-8"))
 
 
-def push(username, password, registry, version=None, yes=False):
+def push(username, password, registry, version=None, yes=False, **kwargs):
     state = get_state()
     image_name = state[CONTAINER_IMAGE]
     if not version:

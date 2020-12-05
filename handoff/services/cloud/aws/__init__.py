@@ -493,7 +493,11 @@ def create_task(template_file=None, update=False):
 
 
 def update_task(template_file=None):
-    create_task(template_file, update=True)
+    try:
+        create_task(template_file, update=True)
+    except botocore.exceptions.ClientError as e:
+        LOGGER.error(e)
+        exit(1)
 
 
 def delete_task():

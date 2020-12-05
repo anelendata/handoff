@@ -448,6 +448,7 @@ handoff <command> -h for more help.\033[0m
 
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help
+    kwargs["yes"] = args.yes
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):

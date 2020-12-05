@@ -43,7 +43,7 @@ def build(
     if docker_file:
         LOGGER.info("Using Dockerfile at: " + docker_file)
     impl.build(project_dir, docker_file=docker_file, files_dir=files_dir,
-               new_version=new_version)
+               new_version=new_version, **kwargs)
 
 
 def run(
@@ -59,7 +59,7 @@ def run(
                                        envs=envs, **kwargs)
     env.update(envs)
     try:
-        impl.run(extra_env=env)
+        impl.run(extra_env=env, **kwargs)
     except Exception as e:
         LOGGER.critical(str(e).replace("\\n", "\n"))
         raise
@@ -68,6 +68,7 @@ def run(
 def push(
     project_dir: str,
     workspace_dir: str,
+    yes=False,
     **kwargs) -> None:
     _envs(project_dir, workspace_dir, **kwargs)
     state = config.get_state()
@@ -79,15 +80,16 @@ def push(
     try:
         platform.get_repository_images(image_name)
     except Exception:
-        sys.stdout.write("Repository %s does not exist. Create? (y/N)" %
-                         image_name)
-        response = input()
-        if response.lower() not in ["y", "yes"]:
-            return
+        if not yes:
+            sys.stdout.write("Repository %s does not exist. Create (y/N)?" %
+                             image_name)
+            response = input()
+            if response.lower() not in ["y", "yes"]:
+                return
         LOGGER.info("Creating repository " + image_name)
         platform.create_repository()
 
-    impl.push(username, password, registry)
+    impl.push(username, password, registry, yes=yes, **kwargs)
 
 
 def get_latest_image_version(

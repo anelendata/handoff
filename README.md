@@ -9,7 +9,7 @@ Deploy configurable unix pipeline jobs serverlessly.
 - Version 0.3.0 has been released!
   See [HISTORY.md](https://github.com/anelendata/handoff/blob/v0.3/HISTORY.md)
 
-<img src="https://github.com/anelendata/handoff/raw/master/assets/handoff_landscape_transparent.png"/>
+<img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
 
 ## What is it?
 

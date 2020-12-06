@@ -1,0 +1,15 @@
+tasks:
+- name: fork_test
+  descripton: cat file.txt | tee >(pbcopy) | grep errors
+  pipeline:
+    - command: cat
+      args: "files/in.txt"
+    - fork:
+      - name: child1
+        pipeline:
+        - command: cat
+          args: "> artifacts/out1.txt"
+      - name: child2
+        pipeline:
+        - command: cat
+          args: "> artifacts/out2.txt"

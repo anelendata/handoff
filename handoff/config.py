@@ -98,8 +98,11 @@ class State(dict):
         v = super(State, self).get(key, self.get_env(key))
         return v
 
-    def get(self, key):
-        return self.__getitem__(key)
+    def get(self, key, sub=None):
+        ret = self.__getitem__(key)
+        if not ret:
+            ret = sub
+        return ret
 
     def unset(self, key):
         """Erases both from memoery and env var

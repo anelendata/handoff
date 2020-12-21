@@ -50,6 +50,7 @@ def run(
     project_dir: str,
     workspace_dir: str,
     envs: Dict = {},
+    vars: Dict = {},
     **kwargs) -> None:
     _envs(project_dir, workspace_dir, envs=envs, **kwargs)
     state = config.get_state()
@@ -58,6 +59,7 @@ def run(
     env = cloud._get_platform_auth_env(project_dir, workspace_dir,
                                        envs=envs, **kwargs)
     env.update(envs)
+    kwargs.update(vars)
     try:
         impl.run(extra_env=env, **kwargs)
     except Exception as e:

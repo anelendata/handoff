@@ -1,4 +1,5 @@
 VERSION = "0.3.0"
+VERSION_MINOR = ".".join(VERSION.split(".")[0:2])
 
 import os, re
 from handoff import utils
@@ -156,11 +157,15 @@ class State(dict):
                                 (env, self._mandatory_envs[env], value))
                 invalid.append(env)
         if invalid:
-            LOGGER.critical("Invalid environment variables: %s\n" % invalid +
-                            "Check if necessary variables are defined in " +
-                            "the project file.\nSee " +
-                            "https://dev.handoff.cloud/en/latest/" +
-                            "project_file.html")
+            print("Invalid environment variables: %s\n" % invalid +
+                  "1. Check if you properly defined environment variables " +
+                  "  such as AWS_PROFILE.\n" +
+                  f"  https://dev.handoff.cloud/en/v{VERSION_MINOR}" +
+                  "/guided_tour.html#setting-up-an-aws-account-and-profile\n" +
+                  "2. Check if necessary variables are defined in " +
+                  "the project file.\n" +
+                  f"  https://dev.handoff.cloud/en/v{VERSION_MINOR}" +
+                  "/quick_reference.html")
             exit(1)
 
 

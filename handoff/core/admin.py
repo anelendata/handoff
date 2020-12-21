@@ -138,7 +138,7 @@ def _read_project_remote(workspace_dir) -> Dict:
     project_file_path = os.path.join(workspace_dir, PROJECT_FILE)
     platform.download_file(project_file_path, PROJECT_FILE)
     with open(project_file_path, "r") as f:
-        config = yaml.load(f)
+        config = yaml.load(f, Loader=yaml.FullLoader)
     return config
 
 
@@ -733,11 +733,14 @@ def workspace_install(
 
     project = _read_project_local(os.path.join(project_dir, PROJECT_FILE))
 
+    if not project.get("installs"):
+        raise Exception("installs section is not defined")
+
     os.chdir(workspace_dir)
     for install in project["installs"]:
         if install.get("venv"):
             _make_python_venv(install["venv"])
-        _install(install["command"], install["venv"])
+        _install(install["command"], install.get("venv"))
 
 
 def version(

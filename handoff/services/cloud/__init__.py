@@ -240,11 +240,13 @@ def task_create(
     **kwargs) -> None:
     """`handoff cloud task create -p <project_directory>`
     Create the task
+    Optionally,
+    -v cpu=256, memory=512
     """
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.create_task(vars.get("spec_file"))
+    platform.create_task(**vars)
 
 
 def task_update(
@@ -254,11 +256,13 @@ def task_update(
     **kwargs) -> None:
     """`handoff cloud task update -p <project_directory>`
     Update the task
+    Optionally,
+    -v cpu=256, memory=512
     """
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.update_task(vars.get("spec_file"))
+    platform.update_task(**vars)
 
 
 def task_delete(

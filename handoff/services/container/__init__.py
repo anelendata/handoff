@@ -33,8 +33,9 @@ def build(
     project_dir: str,
     workspace_dir: str,
     **kwargs) -> None:
-    """`handoff container build -p <project_directory>`
+    """`handoff container build -p <project_directory> -v docker_file=<docker_file> files_dir=<addtnl_files_dir>`
     Build the container image
+    Optionally, use docker_file to specify own Dockerfile
     """
     _get_platform().build(project_dir, workspace_dir, **kwargs)
 

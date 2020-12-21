@@ -29,18 +29,18 @@ def _log_stack_info(response):
     state = get_state()
     params = {"stack_id": response["StackId"],
               "region": state["AWS_REGION"]}
-    LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
-                 "cloudformation/home?region={region}#/stacks/stackinfo" +
-                 "?viewNested=true&hideStacks=false" +
-                 "&stackId={stack_id}").format(**params))
+    print(("Check the progress at https://console.aws.amazon.com/" +
+           "cloudformation/home?region={region}#/stacks/stackinfo" +
+           "?viewNested=true&hideStacks=false" +
+           "&stackId={stack_id}").format(**params))
 
 
 def _log_stack_filter(stack_name):
     state = get_state()
     params = {"stack_name": stack_name, "region": state["AWS_REGION"]}
-    LOGGER.info(("Check the progress at https://console.aws.amazon.com/" +
-                 "cloudformation/home?region={region}#/stacks/stackinfo" +
-                 "?filteringText={stack_name}").format(**params))
+    print(("Check the progress at https://console.aws.amazon.com/" +
+           "cloudformation/home?region={region}#/stacks/stackinfo" +
+           "?filteringText={stack_name}").format(**params))
 
 
 def _log_task_run_filter(task_name, response):
@@ -51,8 +51,8 @@ def _log_task_run_filter(task_name, response):
     params = {"task": task_name,
               "region": state["AWS_REGION"],
               "task_id": task_id}
-    LOGGER.info(("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
-                 "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
+    print(("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
+           "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
 def login(profile=None):
@@ -439,7 +439,7 @@ def create_resources(template_file=None, update=False):
     else:
         response = cloudformation.update_stack(stack_name, template_file)
 
-    LOGGER.info(response)
+    print(yaml.dump(response))
     _log_stack_info(response)
 
 
@@ -456,7 +456,8 @@ def delete_resources():
     _log_stack_filter(resource_group)
 
 
-def create_task(template_file=None, update=False):
+def create_task(template_file=None, update=False, memory=512,
+                cpu=256, **kwargs):
     state = get_state()
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
@@ -474,7 +475,11 @@ def create_task(template_file=None, update=False):
         {"ParameterKey": "ImageName",
          "ParameterValue": container_image},
         {"ParameterKey": "ImageVersion",
-         "ParameterValue": image_version}
+         "ParameterValue": image_version},
+        {"ParameterKey": "AllocatedCpu",
+         "ParameterValue": str(cpu)},
+        {"ParameterKey": "AllocatedMemory",
+         "ParameterValue": str(memory)}
     ]
 
     if not template_file:
@@ -488,13 +493,13 @@ def create_task(template_file=None, update=False):
         response = cloudformation.update_stack(stack_name, template_file,
                                                parameters)
 
-    LOGGER.info(response)
+    print(yaml.dump(response))
     _log_stack_info(response)
 
 
-def update_task(template_file=None):
+def update_task(**kwargs):
     try:
-        create_task(template_file, update=True)
+        create_task(update=True, **kwargs)
     except botocore.exceptions.ClientError as e:
         LOGGER.error(e)
         exit(1)
@@ -521,7 +526,7 @@ def run_task(env=[], extras=None):
     response = ecs.run_fargate_task(task_stack, resource_group_stack,
                                     container_image, region, extra_env,
                                     extras=extras)
-    LOGGER.info(response)
+    print(yaml.dump(response))
     _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)
 
 
@@ -559,15 +564,15 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
         LOGGER.critical(str(e))
         return
 
-    LOGGER.info(response)
+    print(yaml.dump(response))
     params = {
         "region": state.get("AWS_REGION"),
         "resource_group": state.get(RESOURCE_GROUP),
         "task": state.get(TASK)
     }
-    LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
-                 "home?region={region}#/clusters/{resource_group}-resources" +
-                 "/scheduledTasks").format(**params))
+    print(("Check the status at https://console.aws.amazon.com/ecs/" +
+           "home?region={region}#/clusters/{resource_group}-resources" +
+           "/scheduledTasks").format(**params))
 
 
 def unschedule_task(target_id):
@@ -576,15 +581,15 @@ def unschedule_task(target_id):
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     response = events.unschedule_task(task_stack, resource_group_stack,
                                       target_id)
-    LOGGER.info(response)
+    print(yaml.dump(response))
     params = {
         "region": state.get("AWS_REGION"),
         "resource_group": state.get(RESOURCE_GROUP),
         "task": state.get(TASK)
     }
-    LOGGER.info(("Check the status at https://console.aws.amazon.com/ecs/" +
-                 "home?region={region}#/clusters/{resource_group}-resources" +
-                 "/scheduledTasks").format(**params))
+    print(("Check the status at https://console.aws.amazon.com/ecs/" +
+           "home?region={region}#/clusters/{resource_group}-resources" +
+           "/scheduledTasks").format(**params))
 
 
 def list_schedules():

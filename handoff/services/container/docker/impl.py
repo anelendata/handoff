@@ -125,7 +125,8 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                     logger.info(msg["stream"])
 
 
-def run(version=None, extra_env=dict(), yes=False, **kwargs):
+def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
+        interactive=False, **kwargs):
     state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
@@ -143,12 +144,25 @@ def run(version=None, extra_env=dict(), yes=False, **kwargs):
         if response.lower() not in ["y", "yes"]:
             return
 
-    client = docker.from_env()
-    for line in client.containers.run(image_name + ":" + version,
-                                      environment=env,
-                                      stream=True, detach=False):
-        print(line.decode("utf-8"))
+    if interactive:
+        stdin_open = True
+        tty = True
+    else:
+        stdin_open = False
+        tty = False
 
+    client = docker.from_env()
+
+    try:
+        # TODO: Streaming log is not working :(
+        for line in client.containers.run(image_name + ":" + version,
+                                          command=command, environment=env,
+                                          stream=True, detach=detach,
+                                          stdin_open=stdin_open, tty=tty):
+            logger.info(line.decode("utf-8").replace("\\n", "\n"))
+    except Exception as e:
+        print(str(e).replace("\\n", "\n"))
+        exit(1)
 
 def push(username, password, registry, version=None, yes=False, **kwargs):
     state = get_state()

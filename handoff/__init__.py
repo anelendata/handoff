@@ -254,6 +254,10 @@ def do(
         return
 
     if module_name == "container":
+        if show_help:
+            _run_subcommand(container, sub_command, project_dir, workspace_dir,
+                            show_help, **kwargs)
+            return
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
         _run_subcommand(container, sub_command, project_dir, workspace_dir,
                         show_help, **kwargs)
@@ -264,7 +268,6 @@ def do(
             _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
                             show_help, **kwargs)
             return
-
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
         if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = container._get_latest_image_version(
@@ -277,6 +280,12 @@ def do(
         return
 
     if module_name in plugin_modules.keys():
+        if show_help:
+            _run_subcommand(plugin_modules[module_name], sub_command,
+                            project_dir, workspace_dir,
+                            show_help, **kwargs)
+            return
+
         if project_dir:
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
         _run_subcommand(plugin_modules[module_name], sub_command, project_dir,

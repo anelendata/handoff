@@ -61,12 +61,19 @@ def _parse_template_files(
             if not os.path.exists(full_path):
                 os.mkdir(full_path)
         for fn in files:
+            is_binary = False
             LOGGER.debug("template: " + fn)
             with open(os.path.join(root, fn), "r") as f:
-                tf = f.read().replace('"', "\"")
+                try:
+                    tf = f.read().replace('"', "\"")
+                except UnicodeDecodeError:
+                    is_binary = True
+            full_path = os.path.join(ws_root, fn)
+            if is_binary:
+                shutil.copyfile(os.path.join(root, fn), full_path)
+                continue
             template = _Template(tf)
             parsed = template.render(**state)
-            full_path = os.path.join(ws_root, fn)
             with open(full_path, "w") as f:
                 f.write(parsed)
 

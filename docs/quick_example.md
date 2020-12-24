@@ -37,11 +37,15 @@ The project file defines the commands to be executed as a pipeline:
 ```
 > cat projects/project.yml
 
-commands:
+
+tasks:
+- name: word_count
+  description: This task will be executed as 'cat <file_path> | wc -w'
+  pipeline:
   - command: cat
-    args: "./files/the_great_dictator_speech.txt"
+    args: ./files/the_great_dictator_speech.txt
   - command: wc
-    args: "-w"
+    args: -w
 ```
 
 This project file defines a shell-script equivalent of
@@ -49,7 +53,7 @@ This project file defines a shell-script equivalent of
 
 Try runing:
 ```
-handoff -p projects/01_word_count -w workspace run local
+handoff -p projects/01_word_count -w workspace run local -l info
 ```
 
 You get console outputs like this:

@@ -67,4 +67,4 @@ deployment.
 
 ## Get started easily
 
-Check out [the super quick example](https://dev.handoff.cloud/en/latest/quick_example.html)
+Check out [the super quick example](https://dev.handoff.cloud/en/v0.3/quick_example.html)

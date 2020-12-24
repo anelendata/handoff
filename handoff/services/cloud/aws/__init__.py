@@ -439,8 +439,8 @@ def create_resources(template_file=None, update=False):
     else:
         response = cloudformation.update_stack(stack_name, template_file)
 
-    print(yaml.dump(response))
     _log_stack_info(response)
+    return response
 
 
 def update_resources(template_file=None):
@@ -526,8 +526,8 @@ def run_task(env=[], extras=None):
     response = ecs.run_fargate_task(task_stack, resource_group_stack,
                                     container_image, region, extra_env,
                                     extras=extras)
-    print(yaml.dump(response))
     _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)
+    return response
 
 
 def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
@@ -564,7 +564,6 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
         LOGGER.critical(str(e))
         return
 
-    print(yaml.dump(response))
     params = {
         "region": state.get("AWS_REGION"),
         "resource_group": state.get(RESOURCE_GROUP),
@@ -573,6 +572,7 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     print(("Check the status at https://console.aws.amazon.com/ecs/" +
            "home?region={region}#/clusters/{resource_group}-resources" +
            "/scheduledTasks").format(**params))
+    return response
 
 
 def unschedule_task(target_id):
@@ -581,7 +581,6 @@ def unschedule_task(target_id):
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     response = events.unschedule_task(task_stack, resource_group_stack,
                                       target_id)
-    print(yaml.dump(response))
     params = {
         "region": state.get("AWS_REGION"),
         "resource_group": state.get(RESOURCE_GROUP),
@@ -590,6 +589,7 @@ def unschedule_task(target_id):
     print(("Check the status at https://console.aws.amazon.com/ecs/" +
            "home?region={region}#/clusters/{resource_group}-resources" +
            "/scheduledTasks").format(**params))
+    return response
 
 
 def list_schedules():
@@ -618,11 +618,11 @@ def list_schedules():
     yml_clean = re.sub(r"'([a-zA-Z_]*)':",
                        "\\1:",
                        yaml.dump({"schedules": schedules}, default_style="'"))
-    print(yml_clean)
+    return yaml.load(yml_clean, Loader=yaml.FullLoader)
 
 
-def print_logs(start_time=None, end_time=None, format_=None, follow=False,
-               wait=2.5, last_timestamp=None, **extras):
+def write_logs(file_descriptor, start_time=None, end_time=None, format_=None,
+               follow=False, wait=2.5, last_timestamp=None, **extras):
     state = get_state()
     log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
 
@@ -648,7 +648,7 @@ def print_logs(start_time=None, end_time=None, format_=None, follow=False,
                 show = True
                 wait = 2.5
                 last_timestamp = e["timestamp"]
-                print(format_.format(**e))
+                file_descriptor.write(format_.format(**e) + "\n")
 
         next_token = response.get("nextToken")
         while next_token:
@@ -662,7 +662,7 @@ def print_logs(start_time=None, end_time=None, format_=None, follow=False,
                     show = True
                     wait = 2.5
                     last_timestamp = e["timestamp"]
-                    print(format_.format(**e))
+                    file_descriptor.write(format_.format(**e) + "\n")
             next_token = response.get("nextToken")
 
         if not follow:

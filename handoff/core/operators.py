@@ -121,6 +121,7 @@ def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
     for task in tasks:
         _wait_for_pipeline(task, state, artifacts_dir=artifacts_dir,
                            kill_downstream_on_fail=kill_downstream_on_fail)
+    return None
 
 
 def _run_commands(task: Dict, state: Dict, artifacts_dir="artifacts",

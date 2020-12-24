@@ -86,7 +86,7 @@ def role_create(
                          "handoff cloud create_role -p <project-vir> " +
                          "-v external_id=yyyy")
 
-    platform.create_role(
+    return platform.create_role(
         grantee_account_id=vars.get("grantee_account_id", account_id),
         external_id=vars.get("external_id")
     )
@@ -113,7 +113,7 @@ def role_update(
                          "handoff cloud create_role -p <project-vir> " +
                          "-v external_id=yyyy")
 
-    platform.update_role(
+    return platform.update_role(
         grantee_account_id=vars.get("grantee_account_id", account_id),
         external_id=vars.get("external_id")
     )
@@ -140,7 +140,7 @@ def role_delete(
                          "handoff cloud create_role -p <project-vir> " +
                          "-v external_id=yyyy")
 
-    platform.delete_role(
+    return platform.delete_role(
         grantee_account_id=vars.get("grantee_account_id", account_id),
         external_id=vars.get("external_id")
     )
@@ -156,7 +156,7 @@ def bucket_create(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.create_bucket()
+    return platform.create_bucket()
 
 
 def bucket_update(
@@ -169,7 +169,7 @@ def bucket_update(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.update_bucket()
+    return platform.update_bucket()
 
 
 def bucket_delete(
@@ -182,7 +182,7 @@ def bucket_delete(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.delete_bucket()
+    return platform.delete_bucket()
 
 
 def resources_create(
@@ -200,7 +200,7 @@ def resources_create(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.create_resources()
+    return platform.create_resources()
 
 
 def resources_update(
@@ -215,7 +215,7 @@ def resources_update(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.update_resources()
+    return platform.update_resources()
 
 
 def resources_delete(
@@ -230,7 +230,7 @@ def resources_delete(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.delete_resources()
+    return platform.delete_resources()
 
 
 def task_create(
@@ -246,7 +246,7 @@ def task_create(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.create_task(**vars)
+    return platform.create_task(**vars)
 
 
 def task_update(
@@ -262,7 +262,7 @@ def task_update(
     state = get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
-    platform.update_task(**vars)
+    return platform.update_task(**vars)
 
 
 def task_delete(
@@ -301,7 +301,7 @@ def run(
             extras_obj = yaml.load(f)
 
     envs[STAGE] = state[STAGE]
-    platform.run_task(env=envs, extras=extras_obj)
+    return platform.run_task(env=envs, extras=extras_obj)
 
 
 def schedule(
@@ -338,30 +338,34 @@ def schedule(
                       "extras_obj": extras_obj}]
     envs[STAGE] = state[STAGE]
 
+    responses = []
     for s in schedules:
         e = dict()
         e.update(envs)
         for e1 in s.get("envs", list()):
             e[e1["key"]] = e1["value"]
-        platform.schedule_task(
+        r = platform.schedule_task(
             s["target_id"], "cron(" + s["cron"] + ")",
             env=e,
             extras=s.get("extras_obj"))
+        responses.append(r)
+    return responses
 
 
-def unschedule(
+
+def schedule_delete(
     project_dir: str,
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud unschedule -v target_id=<target_id>`
+    """`handoff cloud schedule delete -v target_id=<target_id>`
     Unschedule a task named <target_id>
     """
     state = get_state()
     platform = _get_platform()
     state.validate_env()
     target_id = str(vars["target_id"])
-    platform.unschedule_task(target_id)
+    return platform.unschedule_task(target_id)
 
 
 def schedule_list(
@@ -374,12 +378,13 @@ def schedule_list(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.list_schedules()
+    return platform.list_schedules()
 
 
 def logs(
     project_dir: str,
     workspace_dir: str,
+    file_descriptor=sys.stdout,
     vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud logs -v start_time=<start_time> end_time=<end_time> follow=<True/False>`
@@ -392,4 +397,4 @@ def logs(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.print_logs(**vars)
+    platform.write_logs(file_descriptor, **vars)

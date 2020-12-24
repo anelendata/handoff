@@ -51,7 +51,7 @@ def get_latest_version(image_name, ignore=["latest"]):
 
 
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,
-          nocache=False, yes=False, **kwargs):
+          nocache=False, yes=False, file_descriptor=sys.stdout, **kwargs):
     state = get_state()
     cli = docker_api_client()
     image_name = state[CONTAINER_IMAGE]
@@ -122,11 +122,11 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                 except json.decoder.JSONDecodeError:
                     continue
                 if msg.get("stream") and msg["stream"] != "\n":
-                    logger.info(msg["stream"])
+                    file_descriptor.write(msg["stream"] + "\n")
 
 
 def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
-        interactive=False, **kwargs):
+        interactive=False, file_descriptor=sys.stdout, **kwargs):
     state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
@@ -159,12 +159,13 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
                                           command=command, environment=env,
                                           stream=True, detach=detach,
                                           stdin_open=stdin_open, tty=tty):
-            logger.info(line.decode("utf-8").replace("\\n", "\n"))
+            file_descriptor.write(line.decode("utf-8").replace("\\n", "\n"))
     except Exception as e:
         print(str(e).replace("\\n", "\n"))
         exit(1)
 
-def push(username, password, registry, version=None, yes=False, **kwargs):
+def push(username, password, registry, version=None, yes=False,
+         file_descriptor=sys.stdout, **kwargs):
     state = get_state()
     image_name = state[CONTAINER_IMAGE]
     if not version:
@@ -200,7 +201,7 @@ def push(username, password, registry, version=None, yes=False, **kwargs):
         block = msg.get("id")
         if block and status[block] != msg.get("status"):
             status[block] = msg.get("status")
-            logger.info("id: %s status: %s" % (block, status[block]))
+            file_descriptor.write("id: %s status: %s\n" % (block, status[block]))
         if msg.get("progressDetail"):
             total = msg["progressDetail"].get("total")
             current= msg["progressDetail"].get("current")
@@ -209,4 +210,4 @@ def push(username, password, registry, version=None, yes=False, **kwargs):
                 current_progress = int(100 * current / total)
                 if current_progress - progress[block] > 5:
                     progress[block] = current_progress
-                    logger.info("id: %s %s" % (block, progress_bar))
+                    file_descriptor.write("id: %s %s\n" % (block, progress_bar))

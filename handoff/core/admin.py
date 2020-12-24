@@ -247,7 +247,7 @@ def _secrets_get_local(
 def secrets_push(
     project_dir: str,
     workspace_dir: str,
-    yes=False,
+    yes: bool =False,
     **kwargs) -> None:
     """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
 
@@ -288,8 +288,7 @@ def secrets_push(
     if not yes:
         response = input("Proceed? (y/N)")
         if response.lower() not in ["yes", "y"]:
-            print("aborting")
-            return
+            return "abort"
 
     for key in secrets:
         if not secrets[key].get("push", True):
@@ -299,11 +298,13 @@ def secrets_push(
             key, SECRETS[key],
             resource_group_level=(level.lower().strip() == "resource group"),
             **kwargs)
+    return "success"
 
 
 def secrets_delete(
     project_dir: str,
     workspace_dir: str,
+    yes: bool = False,
     **kwargs):
     """`handoff secrets delete -p <project_directory> -d file=<secrets_file>`
 
@@ -327,10 +328,10 @@ def secrets_delete(
         print("  - " + key + " (" + secrets[key].get("level", "task") +
               " level)" + skip_msg)
 
-    response = input("Proceed? (y/N)")
-    if response.lower() not in ["yes", "y"]:
-        print("aborting")
-        return
+    if not yes:
+        response = input("Proceed? (y/N)")
+        if response.lower() not in ["yes", "y"]:
+            return "abort"
 
     for key in secrets:
         if not secrets[key].get("push", True):
@@ -345,6 +346,7 @@ def secrets_delete(
         except Exception:
             LOGGER.warning("%s does not exist in remote parameter store." %
                            key)
+    return "success"
 
 
 def secrets_print(
@@ -374,7 +376,7 @@ def secrets_print(
             "level": level,
             "value": params[key]["value"]
         })
-    print(yaml.dump(secret_list))
+    return secret_list
 
 
 def artifacts_archive(
@@ -400,6 +402,7 @@ def artifacts_archive(
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(
         os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX), dest_dir)
+    return "success"
 
 
 def artifacts_get(
@@ -427,6 +430,7 @@ def artifacts_get(
     remote_dir = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
 
     platform.download_dir(artifacts_dir, remote_dir)
+    return "success"
 
 
 def artifacts_push(
@@ -453,6 +457,7 @@ def artifacts_push(
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     prefix = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.upload_dir(artifacts_dir, prefix)
+    return "success"
 
 
 def artifacts_delete(
@@ -475,6 +480,7 @@ def artifacts_delete(
 
     dir_name = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.delete_dir(dir_name)
+    return "success"
 
 
 def files_get(
@@ -508,6 +514,7 @@ def files_get(
     platform.download_dir(templates_dir, remote_dir)
     # Parse and save to workspace/files
     _parse_template_files(templates_dir, files_dir)
+    return "success"
 
 
 def files_get_local(
@@ -536,6 +543,7 @@ def files_get_local(
         if os.path.exists(files_dir):
             shutil.rmtree(files_dir)
         _parse_template_files(project_files_dir, files_dir)
+    return "success"
 
 
 def files_push(
@@ -550,6 +558,7 @@ def files_push(
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = FILES_DIR
     platform.upload_dir(files_dir, prefix)
+    return "success"
 
 
 def files_delete(
@@ -566,22 +575,7 @@ def files_delete(
     platform = cloud._get_platform()
     dir_name = FILES_DIR
     platform.delete_dir(dir_name)
-
-
-def files_deleteold(
-    project_dir: str,
-    workspace_dir: str,
-    **kwargs) -> None:
-    """`handoff files delete -p <project_directory>`
-    Delete files and templates from the remote storage
-    """
-    state = get_state()
-    state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
-                        BUCKET])
-
-    platform = cloud._get_platform()
-    dir_name = os.path.join(BUCKET_CURRENT_PREFIX, FILES_DIR)
-    platform.delete_dir(dir_name)
+    return "success"
 
 
 def _config_get(
@@ -663,6 +657,7 @@ def config_push(
     """
     platform = cloud._get_platform()
     platform.upload_file(PROJECT_FILE, PROJECT_FILE)
+    return "success"
 
 
 def config_delete(
@@ -674,6 +669,7 @@ def config_delete(
     """
     platform = cloud._get_platform()
     platform.delete_file(PROJECT_FILE)
+    return "success"
 
 
 def config_deleteold(
@@ -685,6 +681,7 @@ def config_deleteold(
     """
     platform = cloud._get_platform()
     platform.delete_parameter("config")
+    return "success"
 
 
 def config_print(
@@ -694,7 +691,7 @@ def config_print(
     """`handoff config print -p <project_directory>`
     Print the project configuration in the remote parameter store.
     """
-    print(yaml.dump(_config_get(project_dir, workspace_dir)))
+    return _config_get(project_dir, workspace_dir)
 
 
 def project_push(
@@ -707,6 +704,7 @@ def project_push(
     config_push(project_dir, workspace_dir, **kwargs)
     files_push(project_dir, workspace_dir, **kwargs)
     secrets_push(project_dir, workspace_dir, **kwargs)
+    return "success"
 
 
 def workspace_init(
@@ -724,6 +722,7 @@ def workspace_init(
         os.mkdir(artifacts_dir)
     if not os.path.isdir(files_dir):
         os.mkdir(files_dir)
+    return "success"
 
 
 def workspace_install(
@@ -748,7 +747,7 @@ def workspace_install(
         if install.get("venv"):
             _make_python_venv(install["venv"])
         _install(install["command"], install.get("venv"))
-
+    return "sucess"
 
 def version(
     project_dir: str,
@@ -756,4 +755,4 @@ def version(
     **kwargs) -> None:
     """Print handoff version
     """
-    print(VERSION)
+    return VERSION

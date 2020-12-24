@@ -123,7 +123,7 @@ def _run_subcommand(module: ModuleType,
 
         if workspace_dir:
             admin.workspace_init(project_dir, workspace_dir, **kwargs)
-        commands[command](project_dir, workspace_dir, **kwargs)
+        response = commands[command](project_dir, workspace_dir, **kwargs)
     else:
         if command:
             print("Invalid command")
@@ -134,6 +134,7 @@ def _run_subcommand(module: ModuleType,
         print("'handoff %s <command>'--help for more info" %
               module.__name__.split(".")[-1])
     os.chdir(prev_wd)
+    return response
 
 
 def _run_task_subcommand(
@@ -226,48 +227,48 @@ def do(
     # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):
         try:
-            _run_task_subcommand(command, project_dir, workspace_dir, **kwargs)
+            response = _run_task_subcommand(command, project_dir, workspace_dir,
+                                            **kwargs)
         except Exception as e:
             raise e
-        return
+        return response
 
     admin_commands = _list_commands(admin)
     if command == "version":
-        admin_commands[command](project_dir, workspace_dir, **kwargs)
-        return
+        response = admin_commands[command](project_dir, workspace_dir, **kwargs)
+        return response
     if command in admin_commands:
         prev_wd = os.getcwd()
         if show_help:
-            print(admin_commands[command].__doc__,
-                  "No help doc available for " + command)
+            response = (admin_commands[command].__doc__ or
+                        "No help doc available for " + command)
             os.chdir(prev_wd)
-            return
+            return response
 
         if workspace_dir:
             admin.workspace_init(project_dir, workspace_dir, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        admin_commands[command](project_dir, workspace_dir, **kwargs)
+        response = admin_commands[command](project_dir, workspace_dir, **kwargs)
 
         os.chdir(prev_wd)
+
+        # TODO: Clean up the print out logic
         print_update()
         print_announcements()
-        return
+        return response
 
     if module_name == "container":
         if show_help:
-            _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                            show_help, **kwargs)
-            return
+            return _run_subcommand(container, sub_command, project_dir, workspace_dir,
+                                   show_help, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                        show_help, **kwargs)
-        return
+        return _run_subcommand(container, sub_command, project_dir, workspace_dir,
+                               show_help, **kwargs)
 
     if module_name == "cloud":
         if show_help:
-            _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                            show_help, **kwargs)
-            return
+            return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
+                                   show_help, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
         if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
             image_version = container._get_latest_image_version(
@@ -275,24 +276,21 @@ def do(
             if image_version:
                 state.set_env(IMAGE_VERSION, image_version)
 
-        _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                        show_help, **kwargs)
-        return
+        return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
+                               show_help, **kwargs)
 
     if module_name in plugin_modules.keys():
         if show_help:
-            _run_subcommand(plugin_modules[module_name], sub_command,
-                            project_dir, workspace_dir,
-                            show_help, **kwargs)
-            return
+            return _run_subcommand(plugin_modules[module_name], sub_command,
+                                   project_dir, workspace_dir,
+                                   show_help, **kwargs)
 
         if project_dir:
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        _run_subcommand(plugin_modules[module_name], sub_command, project_dir,
-                        workspace_dir, show_help, **kwargs)
-        return
+        return _run_subcommand(plugin_modules[module_name], sub_command, project_dir,
+                               workspace_dir, show_help, **kwargs)
 
-    print("Unrecognized command %s. Run handoff -h for help." % command)
+    return("Unrecognized command %s. Run handoff -h for help." % command)
 
 
 def check_update() -> None:
@@ -407,9 +405,10 @@ def main() -> None:
                         help="Skip confirmations")
 
     parser.add_argument("-h", "--help", action="store_true")
-    parser.add_argument("-l", "--log-level", type=str, default="info",
-                        help="Set log level (DEBUG, INFO, WARNING, ERROR," +
-                        "CRITICAL)")
+    parser.add_argument("-l", "--log-level", type=str, default=None,
+                        help="Set log level (debug, info, warning, error," +
+                        "critical). Default: error for non-task commands," +
+                        "info for task commands")
 
     parser.add_argument("--cloud-provider", type=str, default="aws",
                         help="Cloud provider name")
@@ -450,6 +449,10 @@ handoff <command> -h for more help.\033[0m
 
     args = parser.parse_args()
 
+    if args.log_level is None:
+        args.log_level = "error"
+        if args.command[0] == "task":
+            args.log_level = "info"
     LOGGER.setLevel(args.log_level.upper())
 
     args.vars = _load_param_list(args.vars)
@@ -470,7 +473,13 @@ handoff <command> -h for more help.\033[0m
 
     command = (" ".join(args.command)).strip()
     kwargs.pop("command")
-    do(command, **kwargs)
+    response = do(command, **kwargs)
+
+    if response:
+        if isinstance(response, dict) or isinstance(response, list):
+            print(yaml.dump(response))
+        else:
+            print(response)
 
 
 if __name__ == "__main__":

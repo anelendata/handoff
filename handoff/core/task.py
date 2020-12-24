@@ -17,6 +17,7 @@ def run(config: Dict, **kwargs) -> None:
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
     state = get_state()
+    exit_code = 0
     for pipe in config["tasks"]:
         if not pipe.get("active", True):
             continue
@@ -31,6 +32,7 @@ def run(config: Dict, **kwargs) -> None:
                     (pipe.get("name", ""), exit_code))
         if exit_code != 0:
             break
+    return exit_code
 
 
 def run_local(config, **kwargs):

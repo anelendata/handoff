@@ -37,7 +37,7 @@ def build(
     Build the container image
     Optionally, use docker_file to specify own Dockerfile
     """
-    _get_platform().build(project_dir, workspace_dir, **kwargs)
+    return _get_platform().build(project_dir, workspace_dir, **kwargs)
 
 
 def run(
@@ -51,7 +51,7 @@ def run(
     used as:
     `handoff run -d $(eval echo $DATA)`
     """
-    _get_platform().run(project_dir, workspace_dir, **kwargs)
+    return _get_platform().run(project_dir, workspace_dir, **kwargs)
 
 
 def push(
@@ -61,4 +61,4 @@ def push(
     """`handoff container push -p <project_directory>`
     Push the container image to remote repository
     """
-    _get_platform().push(project_dir, workspace_dir, **kwargs)
+    return _get_platform().push(project_dir, workspace_dir, **kwargs)

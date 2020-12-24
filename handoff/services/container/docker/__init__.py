@@ -42,8 +42,10 @@ def build(
     new_version = vars.get("version")
     if docker_file:
         LOGGER.info("Using Dockerfile at: " + docker_file)
-    impl.build(project_dir, docker_file=docker_file, files_dir=files_dir,
-               new_version=new_version, **kwargs)
+    response = impl.build(project_dir, docker_file=docker_file,
+                          files_dir=files_dir, new_version=new_version,
+                          file_descriptor=sys.stdout, **kwargs)
+    return response
 
 
 def run(
@@ -61,10 +63,11 @@ def run(
     env.update(envs)
     kwargs.update(vars)
     try:
-        impl.run(extra_env=env, **kwargs)
+        response = impl.run(extra_env=env, file_descriptor=sys.stdout, **kwargs)
     except Exception as e:
         LOGGER.critical(str(e).replace("\\n", "\n"))
         raise
+    return response
 
 
 def push(
@@ -91,7 +94,9 @@ def push(
         LOGGER.info("Creating repository " + image_name)
         platform.create_repository()
 
-    impl.push(username, password, registry, yes=yes, **kwargs)
+    response = impl.push(username, password, registry, yes=yes,
+                         file_descriptor=sys.out, **kwargs)
+    return response
 
 
 def get_latest_image_version(

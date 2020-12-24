@@ -13,6 +13,18 @@ def get_client():
     return cred.get_client("ecs")
 
 
+def describe_tasks(resource_group, region, extras=None):
+    client = get_client()
+    account_id = sts.get_account_id()
+    cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"
+    response = client.list_tasks(cluster=cluster)
+    tasks = [t for t in response["taskArns"]]
+    if not tasks:
+        return None
+    response = client.describe_tasks(cluster=cluster, tasks=tasks)
+    return response
+
+
 def run_fargate_task(task_stack, resource_group_stack, container_image, region,
                      env=[], extras=None):
     """Run a fargate task

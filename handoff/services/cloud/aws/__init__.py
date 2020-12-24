@@ -493,24 +493,55 @@ def create_task(template_file=None, update=False, memory=512,
         response = cloudformation.update_stack(stack_name, template_file,
                                                parameters)
 
-    print(yaml.dump(response))
     _log_stack_info(response)
+    return response
 
 
 def update_task(**kwargs):
     try:
-        create_task(update=True, **kwargs)
+        response = create_task(update=True, **kwargs)
     except botocore.exceptions.ClientError as e:
         LOGGER.error(e)
         exit(1)
+    print("Make sure to run `handoff cloud schedule` command to bump up " +
+          "the task version")
+    return response
 
 
 def delete_task():
     state = get_state()
     stack_name = state.get(TASK)
     response = cloudformation.delete_stack(stack_name)
-    LOGGER.info(response)
     _log_stack_filter(stack_name)
+    return response
+
+
+def list_tasks(full=False, resource_group_level=False):
+    state = get_state()
+    stack_name = state.get(TASK)
+    resource_group = state.get(RESOURCE_GROUP)
+    region = state.get("AWS_REGION")
+    response = ecs.describe_tasks(resource_group + "-resources", region)
+    outputs = []
+    digest = ["taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
+    if not response:
+        return None
+    for task in response["tasks"]:
+        output = {}
+        t = task["taskDefinitionArn"].split(":")[-2].split("/")[-1]
+        if not resource_group_level and t != resource_group + "-" + stack_name:
+            continue
+        if not full:
+            for item in digest:
+                output[item] = task[item]
+        else:
+            output = task
+        if output["lastStatus"] == "RUNNING":
+            output["timeSinceStart"] = str(
+                datetime.datetime.utcnow().replace(
+                    tzinfo=datetime.timezone.utc) - task["startedAt"])
+        outputs.append(output)
+    return outputs
 
 
 def run_task(env=[], extras=None):

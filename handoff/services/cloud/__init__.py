@@ -275,7 +275,24 @@ def task_delete(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
-    platform.delete_task()
+    return platform.delete_task()
+
+
+def task_list(
+    project_dir: str,
+    workspace_dir: str,
+    vars: str = None,
+    **kwargs) -> None:
+    """`handoff cloud task list -p <project_directory> -v full=False resource_group=False`
+    list tasks
+    options:
+    - full: Print the full description
+    - resource_group_level: List all the tasks under the same resource groups
+    """
+    state = get_state()
+    platform = _get_platform()
+    state.validate_env()
+    return platform.list_tasks(**vars)
 
 
 def run(

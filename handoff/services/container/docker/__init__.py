@@ -95,7 +95,7 @@ def push(
         platform.create_repository()
 
     response = impl.push(username, password, registry, yes=yes,
-                         file_descriptor=sys.out, **kwargs)
+                         file_descriptor=sys.stdout, **kwargs)
     return response
 
 

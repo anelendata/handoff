@@ -533,7 +533,7 @@ def list_tasks(full=False, resource_group_level=False):
             continue
         if not full:
             for item in digest:
-                output[item] = task[item]
+                output[item] = task.get(item)
         else:
             output = task
         if output["lastStatus"] == "RUNNING":

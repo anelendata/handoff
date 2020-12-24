@@ -122,7 +122,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                 except json.decoder.JSONDecodeError:
                     continue
                 if msg.get("stream") and msg["stream"] != "\n":
-                    file_descriptor.write(msg["stream"] + "\n")
+                    file_descriptor.write(msg["stream"])
 
 
 def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,

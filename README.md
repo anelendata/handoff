@@ -68,3 +68,7 @@ deployment.
 ## Get started easily
 
 Check out [the super quick example](https://dev.handoff.cloud/en/v0.3/quick_example.html)
+
+## Recipes
+
+We will upload more and more [recipes](https://github.com/anelendata/handoff_recipe) that you can use and learn from!

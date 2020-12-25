@@ -6,8 +6,11 @@
 Deploy configurable unix pipeline jobs serverlessly.
 
 **NEW:**
-- Version 0.3.0 has been released!
-  See [HISTORY.md](https://github.com/anelendata/handoff/blob/v0.3/HISTORY.md)
+- Version 0.3.0 will be released soon.
+  To install the pre-released version, do:
+  ```
+  pip install https://github.com/anelendata/handoff/archive/v0.3.tar.gz#egg=handoff
+  ```
 
 <img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
 

@@ -3,7 +3,7 @@
 
 # handoff.cloud
 
-Deploy configurable unix pipeline jobs serverlessly.
+<img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
 
 **NEW:**
 - Version 0.3.0 will be released soon.
@@ -12,31 +12,17 @@ Deploy configurable unix pipeline jobs serverlessly.
   pip install https://github.com/anelendata/handoff/archive/v0.3.tar.gz#egg=handoff
   ```
 
-<img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
-
 ## What is it?
 
-handoff ([repository](https://github.com/anelendata/handoff))
-is a framework for executing unix-pipeline processes serverlessly.
-It separates the code and run-time configurations, making the deployment
-faster, more flexible, and more secure.
+handoff ([repository](https://github.com/anelendata/handoff/tree/v0.3))
+is a framework for developing and deploying data pipelines serverlessly.
+executing unix-pipeline processes serverlessly.
 
-handoff helps the teams who want to:
-- Automate the ETL/ELT process ([earthquake data ELT example](https://articles.anelen.co/elt-google-cloud-storage-bigquery/))
-- Massively web-crawl and collect data ([market & education data example](https://articles.anelen.co/kinoko_webcrawler/))
-- Relieve the pain of managing Apache Airflow Worker nodes.
+handoff removes the complicated cloud configurations. You can easily take care
+of the essential settings and save time and money with a single command:
 
-...and more!
-
-handoff is an open-source (APLv2) project sponsored by [ANELEN](https://anelen.co).
-
-## Top 10 Features
-
-handoff simplifies the cloud orchestration.
-Developers can enjoy a seamless experience from local devlopment to cloud deployment.
-
-1. Fully managed container orchestration (AWS Elastic Continer Service)
-2. Extended (> 15min) serverless task execution (AWS Fargate)
+1. Container orchestration (AWS Elastic Continer Service)
+2. Extended serverless task execution (AWS Fargate, vs. AWS Lambda's 15min limit) 
 3. CRON Scheduling (AWS EventBridge)
 4. Configuration and secret management (AWS Systems Manager Parameter Store)
 5. Simple switch between production and devlopment stages
@@ -44,9 +30,9 @@ Developers can enjoy a seamless experience from local devlopment to cloud deploy
 7. Artifacts management (AWS Simple Cloud Storage)
 8. Log management (AWS CloudWatch)
 9. Shared resource management (Virtual Private Cloud, Security Group)
-10. No need to pay and maintain a dedicated virtual machine!
+10. No need to pay and maintain a dedicated virtual instances!
 
-Note: With a unified handoff command, we are planning to support multi-cloud
+Note: With the unified handoff command, we are planning to support multi-cloud
 deployment experience (Azure and Google Cloud Platform).
 
 ## How it works
@@ -72,6 +58,6 @@ deployment.
 
 Check out [the super quick example](https://dev.handoff.cloud/en/v0.3/quick_example.html)
 
-## Recipes
+## Open Source handoff Recipes!
 
 We will upload more and more [recipes](https://github.com/anelendata/handoff_recipe) that you can use and learn from!

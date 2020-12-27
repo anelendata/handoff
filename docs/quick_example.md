@@ -53,7 +53,7 @@ This project file defines a shell-script equivalent of
 
 Try runing:
 ```
-handoff -p projects/01_word_count -w workspace run local -l info
+handoff -p projects/01_word_count -w workspace run local
 ```
 
 You get console outputs like this:

@@ -1,9 +1,0 @@
-{
-    "project_id": "replace-me",
-    "dataset_id": "usgs",
-    "table_id": "earthquakes",
-    "stream": false,
-    "partition_by": "_sdc_batched_at",
-    "numeric_type": "FLOAT64"
-}
-

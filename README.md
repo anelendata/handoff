@@ -7,14 +7,14 @@
 
 **NEW:**
 - Version 0.3.0 will be released soon.
-  To install the pre-released version, do:
+  To install the pre-release version, do:
   ```
-  pip install https://github.com/anelendata/handoff/archive/v0.3.tar.gz#egg=handoff
+  pip install https://github.com/anelendata/handoff/archive/master.tar.gz#egg=handoff
   ```
 
 ## What is it?
 
-handoff ([repository](https://github.com/anelendata/handoff/tree/v0.3))
+handoff ([repository](https://github.com/anelendata/handoff))
 is a framework for developing and deploying data pipelines serverlessly.
 executing unix-pipeline processes serverlessly.
 
@@ -56,7 +56,7 @@ deployment.
 
 ## Get started easily
 
-Check out [the super quick example](https://dev.handoff.cloud/en/v0.3/quick_example.html)
+Check out [the super quick example](https://dev.handoff.cloud/en/latest/quick_example.html)
 
 ## Open Source handoff Recipes!
 

@@ -15,7 +15,7 @@ Contents
    :maxdepth: 2
 
    quick_example
-   guided_tour
+   tutorial
    secrets
    quick_reference
    faq

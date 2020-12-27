@@ -1,7 +1,7 @@
 ..  _guided_tour:
 
-A Guided Tour
-=============
+Tutorial
+========
 
 This page is the web version of the interactive commandline tutorial.
 

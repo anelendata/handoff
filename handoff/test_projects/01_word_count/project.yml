@@ -1,8 +1,11 @@
-commands:
+version: 0.3
+description: A simple pipeline to count words from a text file
+
+tasks:
+- name: word_count
+  description: This task will be executed as 'cat <file_path> | wc -w'
+  pipeline:
   - command: cat
-    args: "./files/the_great_dictator_speech.txt"
+    args: files/the_great_dictator_speech.txt
   - command: wc
-    args: "-w"
-envs:
-  - key: TITLE
-    value: "The Great Dictator"
+    args: -w

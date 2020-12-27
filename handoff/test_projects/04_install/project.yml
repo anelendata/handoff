@@ -18,19 +18,12 @@ tasks:
   - command: tap-exchangeratesapi
     args: --config files/tap-config.json
     venv: tap
-  - fork:
-    - name: dump_csv
-      pipeline:
-      - command: target-csv
-        args: --config files/target-config.json
-        venv: target
-    - name: create_series
-      pipeline:
-      - command: python3
-        args: files/create_series.py
-      - command: target-csv
-        args: --config files/target-config.json
-        venv: target
+  - command: python
+    args: files/stats_collector.py
+    venv: tap
+  - command: target-csv
+    args: --config files/target-config.json
+    venv: target
 
 deploy:
   cloud_provider: aws

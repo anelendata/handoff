@@ -1,1 +1,0 @@
-{ "base": "{{ base_currency }}", "start_date": "{{ date }}" }

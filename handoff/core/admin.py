@@ -656,7 +656,7 @@ def config_push(
     parameter key.
     """
     platform = cloud._get_platform()
-    platform.upload_file(PROJECT_FILE, PROJECT_FILE)
+    platform.upload_file(os.path.join(project_dir, PROJECT_FILE), PROJECT_FILE)
     return "success"
 
 

@@ -1,0 +1,34 @@
+version: 0.3
+descriptoin: Commands and variables example
+
+tasks:
+- name: word_count
+  description: This task will be executed as 'cat <file_path> | wc -w'
+  active: False  # This will skip word_count task
+  pipeline:
+  - command: cat
+    args: ./files/the_great_dictator_speech.txt
+  - command: wc
+    args: -w
+  - nulldev:
+    description: "nulldev at the end prevents task from writing out to artifacts/<task_name>_stdout.log"
+    active: False  # You can set active at command level
+
+- name: show_content
+  description: This executes after word_count task completes. Use commands executes non-pipeline manner 'echo $TITLE && head -n 1 <file_path>'
+  stdout: True
+  commands:
+  - command: echo
+    args: $TITLE
+  - command: head
+    args: -n 1 {{ file_path }}
+
+# These are set as in-memory variables in the task execution
+vars:
+  - key: file_path
+    value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
+
+# These are set as environment variables in the task execution
+envs:
+  - key: TITLE
+    value: "The Great Dictator"

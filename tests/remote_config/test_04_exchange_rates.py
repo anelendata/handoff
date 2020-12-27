@@ -9,7 +9,7 @@ TEST_PROJECTS_DIR = "./handoff/test_projects"
 LOGGER = logging.getLogger(__name__)
 
 
-def test_03_exchange_rates():
+def test_04_exchange_rates():
     os.environ[CLOUD_PROVIDER] = os.environ.get(CLOUD_PROVIDER, "aws")
     os.environ[CLOUD_PLATFORM] = os.environ.get(CLOUD_PLATFORM, "fargate")
     os.environ[CONTAINER_PROVIDER] = (
@@ -24,30 +24,24 @@ def test_03_exchange_rates():
     if os.environ.get(BUCKET):
         del os.environ[BUCKET]
 
-    project_name = "03_exchange_rates"
+    project_name = "04_install"
     orig_project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)
 
     data = dict()
     with tempfile.TemporaryDirectory() as root_dir:
         project_dir = os.path.join(root_dir, "project")
         shutil.copytree(orig_project_dir, project_dir)
-        with open(os.path.join(project_dir, FILES_DIR, "tap-config.json"),
-                  "w") as f:
-            config = {"base": "JPY",
-                      "start_date": (datetime.datetime.now() -
-                                     datetime.timedelta(days=7)
-                                     ).isoformat()[:10]}
-            json.dump(config, f)
-
+        base_currency = "JPY"
+        start_date = (datetime.datetime.now() - datetime.timedelta(days=7)
+                      ).isoformat()[:10]
         workspace_dir = os.path.join(root_dir, "workspace")
-
-        data["allow_advanced_tier"] = False
         kwargs = {
             "cloud_provider": "aws",
             "cloud_platform": "fargate",
             "container_provider": "docker",
             "stage": "prod"
         }
+
         handoff.do("config push", project_dir, workspace_dir, data=data,
                    push_artifacts=False, **kwargs)
         handoff.do("files push", project_dir, workspace_dir, data=data,
@@ -57,7 +51,8 @@ def test_03_exchange_rates():
                    push_artifacts=False, **kwargs)
 
         handoff.do("run", project_dir, workspace_dir, data=data,
-                   push_artifacts=True, **kwargs)
+                   push_artifacts=True,
+                   vars={"start_date": start_date, "base_currency": base_currency}, **kwargs)
 
         handoff.do("files delete", project_dir, None, data=data,
                    push_artifacts=False, **kwargs)
@@ -65,22 +60,3 @@ def test_03_exchange_rates():
                    push_artifacts=False, **kwargs)
         handoff.do("config delete", project_dir, None, data=data,
                    push_artifacts=False, **kwargs)
-
-        files = os.listdir(os.path.join(workspace_dir, ARTIFACTS_DIR))
-        rate_file = None
-        for fn in files:
-            if fn[:len("exchange_rate-")] == "exchange_rate-":
-                rate_file = fn
-                break
-        assert rate_file is not None
-        with open(os.path.join(workspace_dir, ARTIFACTS_DIR, rate_file),
-                  "r") as f:
-            rows = csv.DictReader(f)
-            for row in rows:
-                jpy = row["JPY"]
-                assert(float(jpy) == 1.0)
-
-        with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
-                               "collect_stats.json"), "r") as f:
-            stats = json.load(f)
-            assert(stats.get("rows_read") is not None)

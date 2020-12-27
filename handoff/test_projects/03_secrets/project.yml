@@ -1,0 +1,17 @@
+version: 0.3
+descriptoin: Secrets and template example
+
+tasks:
+- name: show_curl_command
+  description: Show curl command with username and password but not actually sending
+  commands:
+  - command: echo
+    args: "curl -u {{ username }}:{{ password }} {{ url }}"
+
+vars:
+  - key: url
+    value: "https://example.com"
+
+envs:
+- key: GOOGLE_APPLICATION_CREDENTIALS
+  value: files/google_client_secret.json

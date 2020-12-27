@@ -1,12 +1,12 @@
-import os, shutil, tempfile
+import json, os, shutil, tempfile
 import handoff
 from handoff.config import ARTIFACTS_DIR
 
 TEST_PROJECTS_DIR = "./handoff/test_projects"
 
 
-def test_01_word_count():
-    project_name = "01_word_count"
+def test_05_foreach():
+    project_name = "05_foreach"
     project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)
     data = dict()
     with tempfile.TemporaryDirectory() as root_dir:
@@ -18,7 +18,7 @@ def test_01_word_count():
                    stage="prod",
                    push_artifacts=False)
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
-                               "word_count_stdout.log"), "r") as f:
-            state = f.read()
+                               "verify_stdout.log")) as f:
+            s = f.readline()
             # TODO: Cannot get stdout when running do() from pytest...
-            # assert(state.strip("\n").strip(" ") == "644")
+            # assert int(s.strip("\n").strip()) == 5

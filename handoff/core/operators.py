@@ -77,19 +77,24 @@ def _get_command_string(command, argstring, params):
 
 def _foreach(foreach_obj, params, stdin,
              kill_downstream_on_fail=True):
+    if isinstance(stdin, int) and stdin == subprocess.PIPE:
+        raise Exception("You cannot nest control flow operators. Dump in a file.")
 
-    # lines = io.TextIOWrapper(stdin.buffer, encoding="utf-8")
     for line in stdin:
         line = line.decode("utf-8").strip()
         params["_line"] = line
+        safe_name = re.sub(r"[^a-zA-Z0-9-_]", "_", line)
 
         for task in foreach_obj:
             if not task.get("active", True):
                 continue
             kill_downstream_on_fail = not task.get(
                 "run_downstream_on_fail", False)
-            stdout, stderr, exit_code = _run_task(
-                task, params, kill_downstream_on_fail=kill_downstream_on_fail)
+            cur_task = {}
+            cur_task.update(task)
+            cur_task["name"] = cur_task["name"] + "_" + safe_name
+            _ = _run_task(cur_task, params,
+                          kill_downstream_on_fail=kill_downstream_on_fail)
 
 
 def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
@@ -98,7 +103,11 @@ def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
     for task in fork_obj:
         if not task.get("pipeline"):
             raise Exception("fork's children must be pipelines")
-        tasks.append(_run_pipeline(task, state, kill_downstream_on_fail,
+        if not task.get("active", True):
+            LOGGER.debug(f'Skipping {task["name"]}')
+            continue
+        tasks.append(_run_pipeline(task, state, artifacts_dir,
+                                   kill_downstream_on_fail,
                                    stdin=subprocess.PIPE))
     first_procs = []
     for task in tasks:
@@ -124,67 +133,64 @@ def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
     return None
 
 
-def _run_commands(task: Dict, state: Dict, artifacts_dir="artifacts",
+def _run_commands(task: Dict, state: Dict,
+                  artifacts_dir: str = "artifacts",
                   kill_downstream_on_fail=True) -> None:
     commands = task["commands"]
     name = task.get("name", "")
+    LOGGER.info("Running commands " + name)
     if state.get("_line"):
         name = name + "_" + state.get("_line")
     env = _get_env()
     stdout = ""
     stderr = ""
     killed = False
-    for command_obj in commands:
-        if not command_obj.get("active", True):
-            continue
-        params = _get_params(state)
-        params["venv"] = command_obj.get("venv", None)
-        command_str = _get_command_string(command_obj["command"],
-                                          command_obj["args"],
-                                          params)
-        proc = subprocess.Popen([command_str], env=env, shell=True)
-        LOGGER.info("Checking return code of pid %d" % proc.pid)
-        exit_code = proc.wait()
-        LOGGER.debug("Process %d (%s) exited with code %d" %
-                     (proc.pid, command_obj["command"], exit_code))
 
-        # This assumes the data is not big. Use stdout, stderr in the last process
-        # only for logging purposes, not passing big data.
-        # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
-        cur_stdout, cur_stderr = proc.communicate()
-        if cur_stdout:
-            stdout += cur_stdout
-        if cur_stderr:
-            stderr += cur_stderr
+    if task.get("stdout", True):
+        stdout_fn = os.path.join(artifacts_dir, name + "_stdout.log")
+    else:
+        stdout_fn = os.devnull
+    if task.get("stderr", True):
+        stderr_fn = os.path.join(artifacts_dir, name + "_stderr.log")
+    else:
+        stderr_fn = os.devnull
 
-        if exit_code > 0:
-            LOGGER.warning("Process %d (%s) exited with code %d" %
-                           (proc.pid, command_obj["command"], exit_code))
-            killed = True
-            break
+    with open(stdout_fn, "w") as stdout, open(stderr_fn, "w") as stderr:
+        for command_obj in commands:
+            if not command_obj.get("active", True):
+                continue
+            params = _get_params(state)
+            params["venv"] = command_obj.get("venv", None)
+            command_str = _get_command_string(command_obj["command"],
+                                              command_obj["args"],
+                                              params)
+            proc = subprocess.Popen([command_str], stdout=stdout, stderr=stderr,
+                                    env=env, shell=True)
+            LOGGER.debug("Checking return code of pid %d" % proc.pid)
+            exit_code = proc.wait()
+            LOGGER.debug("Process %d (%s) exited with code %d" %
+                         (proc.pid, command_obj["command"], exit_code))
 
-    if stdout:
-        stdout = stdout.decode("utf-8").strip("\n").strip(" ")
-    if stderr:
-        stderr = stderr.decode("utf-8").strip("\n").strip(" ")
-
-    if stdout:
-        with open(os.path.join(artifacts_dir, name + "_stdout.log"), "w") as f:
-            f.write(stdout)
-    if stderr:
-        with open(os.path.join(artifacts_dir, name + "_stderr.log"), "w") as f:
-            f.write(stderr)
+            if exit_code > 0:
+                LOGGER.warning("Process %d (%s) exited with code %d" %
+                               (proc.pid, command_obj["command"], exit_code))
+                killed = True
+                break
 
     if killed and kill_downstream_on_fail:
         raise Exception(
             f"Task {name} ended with exit code {exit_code}.")
 
-    return stdout, stderr, exit_code
+    return exit_code
 
 
-def _run_pipeline(task: Dict, state: Dict, kill_downstream_on_fail=True,
+def _run_pipeline(task: Dict, state: Dict,
+                  artifacts_dir: str = "artifacts",
+                  kill_downstream_on_fail=True,
                   stdin=None) -> None:
     pipeline = task["pipeline"]
+    name = task.get("name", "")
+    LOGGER.info("Running pipeline " + name)
     last_proc = None
     env = _get_env()
     for command_obj in pipeline:
@@ -200,15 +206,18 @@ def _run_pipeline(task: Dict, state: Dict, kill_downstream_on_fail=True,
             if stdin is None:
                 raise Exception("foreach requires stdin")
             LOGGER.info("Running foreach loop")
-            _foreach(command_obj["foreach"], params, stdin,
-                     kill_downstream_on_fail)
+            command_obj["proc"] = _foreach(command_obj["foreach"], params, stdin,
+                                           kill_downstream_on_fail)
             break
 
         if command_obj.get("fork"):
             if stdin is None:
                 raise Exception("fork requires stdin")
-            LOGGER.info("Forkng the downstream...")
-            _fork(command_obj["fork"], params, stdin, kill_downstream_on_fail)
+            LOGGER.info("Forking the downstream...")
+            # TODO: It hangs if the parent process errors...
+            command_obj["proc"] = _fork(command_obj["fork"], params, stdin,
+                                        artifacts_dir,
+                                        kill_downstream_on_fail)
             break
 
         command_str = _get_command_string(command_obj["command"],
@@ -219,6 +228,12 @@ def _run_pipeline(task: Dict, state: Dict, kill_downstream_on_fail=True,
             [command_str], stdin=stdin, stdout=subprocess.PIPE, env=env,
             shell=True)
         last_proc = command_obj["proc"]
+
+    if task.get("stdout", True):
+        stdin = last_proc.stdout
+        stdout_fn = os.path.join(artifacts_dir, name + "_stdout.log")
+        with open(stdout_fn, "w") as stdout:
+            subprocess.Popen(["cat"], stdin=stdin, stdout=stdout, shell=True)
 
     return task
 
@@ -248,36 +263,23 @@ def _wait_for_pipeline(task: Dict, state: Dict,
         exit_code = proc.wait()
         last_proc = proc
         LOGGER.debug("Process %d (%s) exited with code %d" %
-                     (proc.pid, command_obj["command"], exit_code))
+                     (proc.pid, str(command_obj.get("command")), exit_code))
         if exit_code > 0:
             LOGGER.warning("Process %d (%s) exited with code %d" %
                            (proc.pid, command_obj["command"], exit_code))
             killed = True
 
     if last_proc and last_proc.stdin and last_proc.stdin.closed:
-        return None, None, exit_code
+        return exit_code
 
-    # This assumes the data is not big. Use stdout, stderr in the last process
-    # only for logging purposes, not passing big data.
-    # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate
-    stdout, stderr = last_proc.communicate() if last_proc else (None, None)
-    if stdout:
-        stdout = stdout.decode("utf-8").strip("\n").strip(" ")
-    if stderr:
-        stderr = stderr.decode("utf-8").strip("\n").strip(" ")
-
-    if stdout:
-        with open(os.path.join(artifacts_dir, name + "_stdout.log"), "w") as f:
-            f.write(stdout)
-    if stderr:
-        with open(os.path.join(artifacts_dir, name + "_stderr.log"), "w") as f:
-            f.write(stderr)
+    if last_proc:
+        last_proc.wait()
 
     if killed and kill_downstream_on_fail:
         raise Exception(
             f"Task {name} ended with exit code {exit_code}.")
 
-    return stdout, stderr, exit_code
+    return exit_code
 
 
 def _run_task(task: Dict, state: Dict, artifacts_dir="artifacts",
@@ -302,32 +304,30 @@ def _run_task(task: Dict, state: Dict, artifacts_dir="artifacts",
     if task.get("tasks"):
         if not task.get("active", True):
             return None, None, 0
-        stdout = None
-        stderr = None
         exit_code = 0
 
         for subtask in task["tasks"]:
             kill_downstream_on_fail = not subtask.get(
                 "run_downstream_on_fail", False)
-            stdout, stderr, exit_code = _run_task(
+            exit_code = _run_task(
                 subtask, state, artifacts_dir=artifacts_dir,
                 kill_downstream_on_fail=kill_downstream_on_fail, stdin=stdin)
-        return stdout, stderr, exit_code
+        return exit_code
 
     if state.get("_line"):
         task_name = task_name + "_" + str(state.get("_line"))
 
-    LOGGER.info("Running task " + task_name)
     if task.get("pipeline"):
-        task_w_process = _run_pipeline(task, state, kill_downstream_on_fail,
+        task_w_process = _run_pipeline(task, state, artifacts_dir,
+                                       kill_downstream_on_fail,
                                        stdin=stdin)
-        stdout, stderr, exit_code = _wait_for_pipeline(
-            task_w_process, state, artifacts_dir, kill_downstream_on_fail)
+        exit_code = _wait_for_pipeline(task_w_process, state, artifacts_dir,
+                                       kill_downstream_on_fail)
     elif task.get("commands"):
-        stdout, stderr, exit_code = _run_commands(task, state, artifacts_dir,
-                                                  kill_downstream_on_fail)
+        exit_code = _run_commands(task, state, artifacts_dir,
+                                  kill_downstream_on_fail)
     else:
         raise Exception(
             "Neither pipline or commands record was found in this task")
 
-    return stdout, stderr, exit_code
+    return exit_code

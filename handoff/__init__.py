@@ -125,6 +125,7 @@ def _run_subcommand(module: ModuleType,
             admin.workspace_init(project_dir, workspace_dir, **kwargs)
         response = commands[command](project_dir, workspace_dir, **kwargs)
     else:
+        response = None
         if command:
             print("Invalid command")
         print("Available commands:")

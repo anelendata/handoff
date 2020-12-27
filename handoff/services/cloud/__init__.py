@@ -8,7 +8,8 @@ from handoff.core import admin
 from handoff.utils import get_logger as _get_logger
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, CONTAINER_IMAGE,
                             IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM,
-                            STAGE, get_state)
+                            STAGE)
+from handoff.config import get_state as _get_state
 
 LOGGER = _get_logger(__name__)
 
@@ -22,7 +23,7 @@ def _get_platform(
     stdout: bool = False,
     cloud_profile: str = None,
     **kwargs) -> ModuleType:
-    state = get_state()
+    state = _get_state()
     if not provider_name:
         provider_name = state.get(CLOUD_PROVIDER)
     if not platform_name:
@@ -45,7 +46,7 @@ def _assume_role(
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> None:
-    state = get_state()
+    state = _get_state()
     state.validate_env([RESOURCE_GROUP])
     platform = _get_platform()
     role_arn = vars.get("role_arn")
@@ -73,7 +74,7 @@ def role_create(
     """`handoff cloud role create -p <project_directory> -v external_id=<id> grantee_account_id=<grantee_id>`
     Create the role with deployment privilege.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -100,7 +101,7 @@ def role_update(
     """`handoff cloud role update -p <project_directory> -v external_id=<id> grantee_account_id=<grantee_id>`
     Update the role privilege information.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -127,7 +128,7 @@ def role_delete(
     """`handoff cloud role delete -p <project_directory> -v grantee_account_id=<grantee_id>`
     Delete the role.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     account_id = platform.login()
     state.validate_env()
@@ -153,7 +154,7 @@ def bucket_create(
     """`handoff cloud bucket create -p <project_directory>`
     Create remote storage bucket. Bucket is attached to the resource group.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.create_bucket()
@@ -166,7 +167,7 @@ def bucket_update(
     """`handoff cloud bucket update -p <project_directory>`
     Update remote storage bucket info
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.update_bucket()
@@ -179,7 +180,7 @@ def bucket_delete(
     """`handoff cloud bucket delete -p <project_directory>`
     Delete remote storage bucket.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.delete_bucket()
@@ -197,7 +198,7 @@ def resources_create(
     - Please refer to the
       [CloudFormation template](https://github.com/anelenvars/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.create_resources()
@@ -212,7 +213,7 @@ def resources_update(
 
     The resources are shared among the tasks under the same resource group.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.update_resources()
@@ -227,7 +228,7 @@ def resources_delete(
 
     The resources are shared among the tasks under the same resource group.
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.delete_resources()
@@ -243,7 +244,7 @@ def task_create(
     Optionally,
     -v cpu=256, memory=512
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     return platform.create_task(**vars)
@@ -259,7 +260,7 @@ def task_update(
     Optionally,
     -v cpu=256, memory=512
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env([IMAGE_VERSION])
     return platform.update_task(**vars)
@@ -272,7 +273,7 @@ def task_delete(
     """`handoff cloud task delete -p <project_directory>`
     Delete the task
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.delete_task()
@@ -289,7 +290,7 @@ def task_list(
     - full: Print the full description
     - resource_group_level: List all the tasks under the same resource groups
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.list_tasks(**vars)
@@ -308,7 +309,7 @@ def run(
     used as:
     `handoff run -v $(eval echo $vars)`
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
 
@@ -337,7 +338,7 @@ def schedule(
     used as:
     `handoff run -v $(eval echo $vars)`
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
@@ -379,7 +380,7 @@ def schedule_delete(
     """`handoff cloud schedule delete -v target_id=<target_id>`
     Unschedule a task named <target_id>
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     if not vars.get("target_id"):
@@ -399,7 +400,7 @@ def schedule_list(
     """`handoff cloud schedule list`
     List the scheduled tasks
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     return platform.list_schedules()
@@ -418,7 +419,7 @@ def logs(
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
     """
-    state = get_state()
+    state = _get_state()
     platform = _get_platform()
     state.validate_env()
     platform.write_logs(file_descriptor, **vars)

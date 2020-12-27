@@ -304,6 +304,30 @@ def check_update() -> None:
     package_list.sort(reverse=True)
     LATEST_AVAILABLE_VERSION = package_list[0][:-len(".tar.gz")]
 
+def print_commands() -> None:
+    admin_command_list = "\n- ".join(_list_commands(admin))
+    task_command_list = "\n- ".join(_list_commands(task))
+    plugin_list = "\n- ".join(_list_plugins().keys())
+
+    print("""Try running:
+    handoff quick_start make
+in a new directory.
+Check out https://dev.handoff.cloud to learn more.
+
+Available admin commands:
+- %s
+
+Availabe run commands:
+- %s
+
+Available subcommands:
+- cloud
+- docker
+- %s
+
+handoff <command> -h for more help.\033[0m
+""" % (admin_command_list, task_command_list, plugin_list))
+
 
 def print_update() -> None:
     global LATEST_AVAILABLE_VERSION
@@ -379,15 +403,12 @@ def print_announcements() -> None:
 
 def main() -> None:
     threading.Thread(target=check_update).start()
-    admin_command_list = "\n- ".join(_list_commands(admin))
-    task_command_list = "\n- ".join(_list_commands(task))
-    plugin_list = "\n- ".join(_list_plugins().keys())
     parser = argparse.ArgumentParser(
         add_help=False,
         description=("handoff %s - Run parameterized Unix pipeline command." %
                      VERSION))
 
-    parser.add_argument("command", type=str, nargs="*", default="",
+    parser.add_argument("command", type=str, nargs="*",
                         help="command string such as 'config push'")
 
     parser.add_argument("-p", "--project-dir", type=str, default=None,
@@ -425,29 +446,17 @@ def main() -> None:
 
     if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
-        print("""Try running:
-    handoff quick_start make
-in a new directory.
-Check out https://dev.handoff.cloud to learn more.
-
-Available admin commands:
-- %s
-
-Availabe run commands:
-- %s
-
-Available subcommands:
-- cloud
-- docker
-- %s
-
-handoff <command> -h for more help.\033[0m
-""" % (admin_command_list, task_command_list, plugin_list))
-
+        print_commands()
         print_update()
         sys.exit(1)
 
     args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help(sys.stderr)
+        print_commands()
+        print_update()
+        sys.exit(1)
 
     if args.log_level is None:
         args.log_level = "error"

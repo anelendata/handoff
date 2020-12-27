@@ -1,9 +1,8 @@
-import argparse, datetime, json, logging, os, sys, threading, time
+import argparse, datetime, json, logging, os, sys, threading, time, types
 from pathlib import Path
 import yaml
 from lxml import html
 import requests
-from types import ModuleType
 from typing import Dict, List
 
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
@@ -96,16 +95,16 @@ def _list_commands(module: Dict) -> Dict:
         if name[0] == "_":
             continue
         obj = getattr(module, name)
+        if not isinstance(obj, types.FunctionType):
+            continue
 
         # Make it "command sub_command" format
         name = name.replace("_", " ")
-
-        if callable(obj):
-            commands[name] = obj
+        commands[name] = obj
     return commands
 
 
-def _run_subcommand(module: ModuleType,
+def _run_subcommand(module: types.ModuleType,
                     command: str,
                     project_dir: str,
                     workspace_dir: str,
@@ -125,15 +124,14 @@ def _run_subcommand(module: ModuleType,
             admin.workspace_init(project_dir, workspace_dir, **kwargs)
         response = commands[command](project_dir, workspace_dir, **kwargs)
     else:
+        module_name = module.__name__.split(".")[-1]
         response = None
-        if command:
-            print("Invalid command")
         print("Available commands:")
         for key in commands.keys():
-            print(" " * 4 + key + ": " +
+            print("- " + module_name + " " + key + ": " +
                   (commands[key].__doc__ or " ").splitlines()[0])
         print("'handoff %s <command>'--help for more info" %
-              module.__name__.split(".")[-1])
+              module_name)
     os.chdir(prev_wd)
     return response
 

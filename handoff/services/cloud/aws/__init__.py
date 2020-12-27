@@ -610,8 +610,11 @@ def unschedule_task(target_id):
     state = get_state()
     task_stack = state.get(TASK)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
-    response = events.unschedule_task(task_stack, resource_group_stack,
-                                      target_id)
+    try:
+        response = events.unschedule_task(task_stack, resource_group_stack,
+                                          target_id)
+    except Exception as e:
+        raise Exception("No schedules found")
     params = {
         "region": state.get("AWS_REGION"),
         "resource_group": state.get(RESOURCE_GROUP),

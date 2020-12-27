@@ -344,7 +344,8 @@ def schedule(
     schedules = config.get("schedules")
     if not schedules:
         if not vars.get("target_id") or not vars.get("cron"):
-            raise Exception("Forgot to set '-v target_id=<ID> cron=<CRON>' ?")
+            print("Forgot to set '-v target_id=<ID> cron=<CRON>' ?")
+            exit(1)
         target_id = str(vars["target_id"])
         cronexp = "cron(" + vars["cron"] + ")"
         extras_obj = None
@@ -381,9 +382,15 @@ def schedule_delete(
     state = get_state()
     platform = _get_platform()
     state.validate_env()
+    if not vars.get("target_id"):
+        print("Forgot to set '-v target_id=<ID>' ?")
+        exit(1)
     target_id = str(vars["target_id"])
-    return platform.unschedule_task(target_id)
-
+    try:
+        response = platform.unschedule_task(target_id)
+    except Exception as e:
+        response = str(e)
+    return response
 
 def schedule_list(
     project_dir: str,

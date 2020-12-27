@@ -38,7 +38,7 @@ def _load_param_list(arg_list: List) -> Dict:
     data = {}
     new_arg_list = []
 
-    # fix the limitation in passing with $(eval echo $DATA)
+    # fix the limitation in passing with $(eval echo $__VARS)
     for a in arg_list:
         if "=" in a:
             new_arg_list.append(a)

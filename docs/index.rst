@@ -16,11 +16,9 @@ Contents
 
    quick_example
    tutorial
-   secrets
    quick_reference
-   faq
    commands
-   grafana
+   advanced_topics
    contributing
    code_of_conduct
    history

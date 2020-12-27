@@ -102,4 +102,4 @@ RUN rm -fr workspace/artifacts
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -w workspace -a -v $(eval echo ${DATA:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a
+CMD handoff ${COMMAND:-run} -w workspace -a -v $(eval echo ${__VARS:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a

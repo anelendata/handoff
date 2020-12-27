@@ -45,7 +45,7 @@ setup(
     handoff=handoff:main
     """,
     packages=["handoff"],
-    package_data = {
+    package_data={
         # Use MANIFEST.ini
     },
     include_package_data=True

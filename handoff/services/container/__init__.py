@@ -44,12 +44,12 @@ def run(
     project_dir: str,
     workspace_dir: str,
     **kwargs) -> None:
-    """`handoff container run -p <project_directory> -e resource_group=<resource_group_name> task=<task_name> DATA='key1=val1 key2=val2...'`
+    """`handoff container run -p <project_directory> -e resource_group=<resource_group_name> task=<task_name> __VARS='key1=val1 key2=val2...'`
     Run the container
 
-    If the environment variable DATA is specified via -e option, it will be
+    If the environment variable __VARS is specified via -e option, it will be
     used as:
-    `handoff run -d $(eval echo $DATA)`
+    `handoff run -d $(eval echo $__VARS)`
     """
     return _get_platform().run(project_dir, workspace_dir, **kwargs)
 

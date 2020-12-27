@@ -29,7 +29,7 @@ The build may take 5~10 minutes.
 .
 .
  - (impl.py:123)
-[2020-11-09 01:51:40,213] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d $(eval echo ${DATA:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a - (impl.py:123)
+[2020-11-09 01:51:40,213] [    INFO] - Step 27/27 : CMD handoff ${COMMAND:-run} -w workspace -a -d $(eval echo ${__VARS:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a - (impl.py:123)
 [2020-11-09 01:51:40,251] [    INFO] -  ---> Running in 440d97606d31
  - (impl.py:123)
 [2020-11-09 01:51:40,378] [    INFO] -  ---> 86c82cd076e6

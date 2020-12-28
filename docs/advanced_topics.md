@@ -33,7 +33,7 @@ evaluated when container/cloud run command runs. You want the command string to 
 'as is' and then evaluated when the **container** executes the `handoff run` command.
 
 `__VARS` is a sepecial environment variable inside the container as defined in
-Dockerfile, the container evaluates `__VARS` and pass to handoff via -d option:
+Dockerfile, the container evaluates `__VARS` and pass to handoff via -v option:
 
 ```
 handoff run -w workspace_dir -v $(eval echo $__VARS)

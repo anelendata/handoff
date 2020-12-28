@@ -15,9 +15,40 @@ which defines both:
 ```
 
 ```shell
-.
-.
-.
+version: 0.3
+description: Fetch foreign exchange rates
+
+installs:
+- venv: tap
+  command: pip install tap-exchangeratesapi
+- venv: target
+  command: pip install target-csv
+
+vars:
+- key: base_currency
+  value: USD
+
+tasks:
+- name: fetch_exchange_rates
+  description: Fetch exchange rates
+  pipeline:
+  - command: tap-exchangeratesapi
+    args: --config files/tap-config.json
+    venv: tap
+  - command: python
+    args: files/stats_collector.py
+    venv: tap
+  - command: target-csv
+    args: --config files/target-config.json
+    venv: target
+
+deploy:
+  cloud_provider: aws
+  cloud_platform: fargate
+  resource_group: handoff-etl
+  container_image: xxxxxxxxv
+  task: exchange-rates-to-csv
+
 schedules:
 - target_id: 1
   cron: "0 0 * * ? *"
@@ -40,20 +71,20 @@ Alternatively, we can pass those values to handoff with `--vars` (`-v` for short
 
 
 ```shell
-> handoff cloud schedule create -p 04_install -v target_id=1 cron='25 08 * * ? *' --envs __VARS='start_date=2020-12-21'
+> handoff cloud schedule create -p 04_install -v target_id=1 cron='24 22 * * ? *' --envs __VARS='start_date=2020-12-21'
 ```
 ```shell
 
+[2020-12-28 22:19:19,499] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:19:20,476] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:19:20,862] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:19:21,243] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
 Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/dev-handoff-etl-resources/scheduledTasks
 - FailedEntries: []
   FailedEntryCount: 0
   ResponseMetadata:
     HTTPHeaders:
       content-length: '41'
-      content-type: application/x-amz-json-1.1
-      date: Mon, 28 Dec 2020 08:20:35 GMT
-      x-amzn-requestid: xxxxxxxxf19f154f
-    HTTPStatusCode: 200
 ```
 
 

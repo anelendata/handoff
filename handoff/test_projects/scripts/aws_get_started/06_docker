@@ -47,8 +47,8 @@ Now let's run the code in the Docker container.
 Command "handoff container run -p 04_install --envs __VARS='start_date=$(date -I -d '-7 day')'"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
-BUCKET=`handoff -p 04_install envs get -v key=HO_BUCKET`
-TASK=`handoff -p 04_install envs get -v key=HO_TASK`
+BUCKET=`handoff -p 04_install envs get -v key=HO_BUCKET -l critical`
+TASK=`handoff -p 04_install envs get -v key=HO_TASK -l critical`
 
 echo '
 Confirm the run by checking the logs. Also check the artifacts on S3:
@@ -74,7 +74,7 @@ AWS Elastic Container Registry. This may take a few minutes.
 
 Command "handoff container push -p 04_install"
 
-REGION=`handoff -p 04_install envs get -v key=AWS_REGION`
+REGION=`handoff -p 04_install envs get -v key=AWS_REGION -l critical`
 echo "
 Confirm that the Docker image has been uploaded to:
 

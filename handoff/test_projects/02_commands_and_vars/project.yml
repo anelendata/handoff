@@ -1,6 +1,16 @@
 version: 0.3
 descriptoin: Commands and variables example
 
+# These are set as in-memory variables in the task execution
+vars:
+- key: file_path
+  value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
+
+# These are set as environment variables in the task execution
+envs:
+- key: TITLE
+  value: "The Great Dictator"
+
 tasks:
 - name: word_count
   description: This task will be executed as 'cat <file_path> | wc -w'
@@ -22,13 +32,3 @@ tasks:
     args: $TITLE
   - command: head
     args: -n 1 {{ file_path }}
-
-# These are set as in-memory variables in the task execution
-vars:
-  - key: file_path
-    value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
-
-# These are set as environment variables in the task execution
-envs:
-  - key: TITLE
-    value: "The Great Dictator"

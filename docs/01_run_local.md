@@ -54,8 +54,9 @@ The example from 01_word_count runs a command line equivalent of:
 cat files/the_great_dictator_speech.txt | wc -w
 ```
 
-cat writes out the content of the file to the stdin, and it is picked up by
-wc command through Unix pipeline and it counts the number of words.
+As indicated by `|`, cat writes out the content of the file to the stdin, and
+it is picked up by wc command through Unix pipeline and it counts the number
+of words.
 
 Now let's run. Try entering this command below:
 
@@ -64,32 +65,19 @@ Now let's run. Try entering this command below:
 ```
 ```shell
 
-Running run local in workspace directory
-Job started at 2020-12-28 08:03:14.818033
-[2020-12-28 08:03:14,818] [    INFO] - Running pipeline word_count - (operators.py:193)
-[2020-12-28 08:03:14,825] [    INFO] - Checking return code of pid 21847 - (operators.py:262)
-[2020-12-28 08:03:14,826] [    INFO] - Checking return code of pid 21848 - (operators.py:262)
-Job ended at 2020-12-28 08:03:14.827343
-Processed in 0:00:00.009310
+[2020-12-28 22:02:09,182] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2020-12-28 22:02:09,297] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:02:09,634] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2020-12-28 22:02:09,639] [    INFO] - Job started at 2020-12-28 22:02:09.639435 - (__init__.py:178)
+[2020-12-28 22:02:09,639] [    INFO] - Running pipeline word_count - (operators.py:193)
+[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2900 - (operators.py:262)
+[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2901 - (operators.py:262)
+[2020-12-28 22:02:09,648] [    INFO] - Pipeline word_count exited with code 0 - (task.py:32)
+[2020-12-28 22:02:09,648] [    INFO] - Job ended at 2020-12-28 22:02:09.648888 - (__init__.py:184)
+[2020-12-28 22:02:09,648] [    INFO] - Processed in 0:00:00.009453 - (__init__.py:186)
 ```
 
-
-If you see the output that looks like:
-
-```shell
-
- Running run local in workspace directory
- Job started at 2020-12-27 22:53:51.190660
- [2020-12-27 22:53:51,190] [ INFO] - Running pipeline word_count - (operators.py:193)
- [2020-12-27 22:53:51,198] [ INFO] - Checking return code of pid 6472 - (operators.py:262)
- [2020-12-27 22:53:51,199] [ INFO] - Checking return code of pid 6473 - (operators.py:262)
- Job ended at 2020-12-27 22:53:51.200250
- Processed in 0:00:00.009590
-
-```
-
-
-Then great! You just ran handoff task locally.
+Great! You just ran handoff task locally.
     
 For now, let's not worry about the warnings in the log such as:
 
@@ -157,7 +145,9 @@ Greed has poisoned men’s souls, has barricaded the world with hate, has goose-
 
 ### Variables
 
-Now to the second example. This time project.yml looks like:
+You can define in-memory and environment variables.
+The second project 02_commands_and_vars is an example.
+This time project.yml looks like:
 
 ```shell
 > cat 02_commands_and_vars/project.yml
@@ -166,6 +156,16 @@ Now to the second example. This time project.yml looks like:
 ```shell
 version: 0.3
 descriptoin: Commands and variables example
+
+# These are set as in-memory variables in the task execution
+vars:
+- key: file_path
+  value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
+
+# These are set as environment variables in the task execution
+envs:
+- key: TITLE
+  value: "The Great Dictator"
 
 tasks:
 - name: word_count
@@ -189,23 +189,13 @@ tasks:
   - command: head
     args: -n 1 {{ file_path }}
 
-# These are set as in-memory variables in the task execution
-vars:
-  - key: file_path
-    value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
-
-# These are set as environment variables in the task execution
-envs:
-  - key: TITLE
-    value: "The Great Dictator"
-
 ```
 
 
 There are a couple of new sections.
-The key-value pairs in vars section are defined as in-memory variables
-during the task execution. Those in envs section are defined as envrionment
-variables.
+`vars` section contains key-value pairs. At run-time they are defined as
+in-memory variables. The key-values in `envs` section will be defined as
+envrionment variables.
 
 
 
@@ -213,6 +203,8 @@ variables.
 
 In this file, there are two tasks: word_count and show_content.
 The first task is the same as the previous example, but it is deactivated.
+You can active and deactivate tasks and commands by setting `active: False`.
+If it is not set, the task or command is active.
 
 The second one has commands instead of pipeline. Instead of running the
 commands as a pipeline, it runs them as independent commands just like:
@@ -222,8 +214,8 @@ echo $TITLE && head -n {{ file_path }}
 ```
 
 
-As indicated by &&, the second command only runs if the first runs successfully,
-exiting with code 0.
+As indicated by `&&`, the second command only runs if the first runs
+successfully, exiting with code 0.
 
 {{ file_path }} will be replaced by the corresponding variable defined in vars.
 
@@ -237,11 +229,14 @@ shorthands for options:
 ```
 ```shell
 
-Running run local in workspace directory
-Job started at 2020-12-28 08:03:15.740124
-[2020-12-28 08:03:15,740] [    INFO] - Running commands show_content - (operators.py:141)
-Job ended at 2020-12-28 08:03:15.746955
-Processed in 0:00:00.006831
+[2020-12-28 22:02:10,090] [ WARNING] - 02_commands_and_vars/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2020-12-28 22:02:10,211] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:02:10,549] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2020-12-28 22:02:10,553] [    INFO] - Job started at 2020-12-28 22:02:10.553625 - (__init__.py:178)
+[2020-12-28 22:02:10,553] [    INFO] - Running commands show_content - (operators.py:141)
+[2020-12-28 22:02:10,560] [    INFO] - Pipeline show_content exited with code 0 - (task.py:32)
+[2020-12-28 22:02:10,560] [    INFO] - Job ended at 2020-12-28 22:02:10.560808 - (__init__.py:184)
+[2020-12-28 22:02:10,560] [    INFO] - Processed in 0:00:00.007183 - (__init__.py:186)
 ```
 
 Let's check out the contents of the second command:
@@ -260,12 +255,12 @@ I’m sorry, but I don’t want to be an emperor. That’s not my business. I do
 
 ### Secrets
 
-We intend the files under project directory to be check in in a code
+We intend the files under project directory to be stored in a code
 repository such as git. So we don't want to store sensitive information such
 as password.
 
-We can define them in a separate file. In the third example project, we have
-.secrets/secrets/yml under the project directory. It looks like:
+.secrets/secrets.yml instead is the place to keep the secrets.
+03_secrets project has the secrets defined and the file looks like this:
 
 ```shell
 > cat 03_secrets/.secrets/secrets.yml
@@ -286,7 +281,7 @@ We can define them in a separate file. In the third example project, we have
 ```
 
 
-Let's see how we can use secrets in the project. project.yml looks like this:
+Let's see how we can use secrets in the project:
 
 ```shell
 > cat 03_secrets/project.yml
@@ -314,20 +309,23 @@ envs:
 ```
 
 You can see {{ username }} and {{ password }} in the curl command. This project
-does not run curl command, but write out the command in the stdout.log file.
+does not actually run curl command. It just writes out the command in
+stdout.log file.
 
 Now let's run.
 
 ```shell
-> handoff run local -p 03_secrets -w workspace -y
+> handoff run local -p 03_secrets -w workspace
 ```
 ```shell
 
-Running run local in workspace directory
-Job started at 2020-12-28 08:03:16.654891
-[2020-12-28 08:03:16,654] [    INFO] - Running commands show_curl_command - (operators.py:141)
-Job ended at 2020-12-28 08:03:16.658682
-Processed in 0:00:00.003791
+[2020-12-28 22:02:11,117] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2020-12-28 22:02:11,467] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2020-12-28 22:02:11,471] [    INFO] - Job started at 2020-12-28 22:02:11.471845 - (__init__.py:178)
+[2020-12-28 22:02:11,471] [    INFO] - Running commands show_curl_command - (operators.py:141)
+[2020-12-28 22:02:11,475] [    INFO] - Pipeline show_curl_command exited with code 0 - (task.py:32)
+[2020-12-28 22:02:11,475] [    INFO] - Job ended at 2020-12-28 22:02:11.475938 - (__init__.py:184)
+[2020-12-28 22:02:11,476] [    INFO] - Processed in 0:00:00.004093 - (__init__.py:186)
 ```
 
 show_curl_command_stdout.log shows the curl command with the actual username
@@ -343,10 +341,13 @@ curl -u my_user_name:xxxxxxxxxxxxxxxxxxxxxxxxto https://example.com
 ```
 
 
-There is one more thing about this project. In files folder, you see
-google_client_secret.json. This is a hypothetical RSA file for Google
+### External secret file
+
+You can refer an external file as the secret value. 03_secrets project's files
+folder contains google_client_secret.json. This is a RSA file for Google
 Cloud Platform's
 [service account](https://cloud.google.com/iam/docs/service-accounts#service_account_keys)
+whose values are replaced with fake ones.
 
 The original file under the project directory  does not contain the value:
 
@@ -390,12 +391,13 @@ The content of workspace directory is created at run-time, and you should not
 submit them in the code repository because sensitive information may be
 inserted.
 
-For an obvious reason, you should not commit .secrets directory to a code
+With a same reason, you should not commit .secrets directory to a code
 repository. The content of secrets.yml will be uploaded to a secure remote
 storage when the task run in the cloud platform such as AWS Fargate. More
 about this later.
 
-We recommand adding "workspace" and ".secrets"to .gitigonore file.
+We recommand adding "workspace" and ".secrets"to .gitigonore file to avoid
+accidentally checking them in.
 
 
 

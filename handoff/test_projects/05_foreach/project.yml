@@ -4,12 +4,12 @@ tasks:
   - command: cat
     args: files/in.txt
   - foreach:
-    - name: do_foreach_test
+    - name: make_id_files
       pipeline:
       - command: touch
         args: "artifacts/out_{{ _line }}.txt"
 
-- name: verify
+- name: verify_result
   pipeline:
   - command: ls
     args: "artifacts/out_*.txt"

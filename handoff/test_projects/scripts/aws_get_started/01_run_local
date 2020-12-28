@@ -44,10 +44,12 @@ The example from 01_word_count runs a command line equivalent of:
 
 Code "cat files/the_great_dictator_speech.txt | wc -w"
 
-echo "
-cat writes out the content of the file to the stdin, and it is picked up by
-wc command through Unix pipeline and it counts the number of words.
+echo '
+As indicated by `|`, cat writes out the content of the file to the stdin, and
+it is picked up by wc command through Unix pipeline and it counts the number
+of words.'
 
+echo "
 Now let's run. Try entering this command below:
 "
 
@@ -59,14 +61,17 @@ echo "
 If you see the output that looks like:
 "
 
-Code "\n
-Running run local in workspace directory\n
-Job started at 2020-12-27 22:53:51.190660\n
-[2020-12-27 22:53:51,190] [    INFO] - Running pipeline word_count - (operators.py:193)\n
-[2020-12-27 22:53:51,198] [    INFO] - Checking return code of pid 6472 - (operators.py:262)\n
-[2020-12-27 22:53:51,199] [    INFO] - Checking return code of pid 6473 - (operators.py:262)\n
-Job ended at 2020-12-27 22:53:51.200250\n
-Processed in 0:00:00.009590\n
+Code "
+[2020-12-28 22:02:09,182] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:223)\n
+[2020-12-28 22:02:09,297] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)\n
+[2020-12-28 22:02:09,634] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)\n
+[2020-12-28 22:02:09,639] [    INFO] - Job started at 2020-12-28 22:02:09.639435 - (__init__.py:178)\n
+[2020-12-28 22:02:09,639] [    INFO] - Running pipeline word_count - (operators.py:193)\n
+[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2900 - (operators.py:262)\n
+[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2901 - (operators.py:262)\n
+[2020-12-28 22:02:09,648] [    INFO] - Pipeline word_count exited with code 0 - (task.py:32)\n
+[2020-12-28 22:02:09,648] [    INFO] - Job ended at 2020-12-28 22:02:09.648888 - (__init__.py:184)\n
+[2020-12-28 22:02:09,648] [    INFO] - Processed in 0:00:00.009453 - (__init__.py:186)\n
 "
 
 Prompt
@@ -134,39 +139,43 @@ Prompt
 echo "
 ### Variables
 
-Now to the second example. This time project.yml looks like:
+You can define in-memory and environment variables.
+The second project 02_commands_and_vars is an example.
+This time project.yml looks like:
 "
 
 Cat 02_commands_and_vars/project.yml
 
 Prompt
 
-echo "
+echo '
 There are a couple of new sections.
-The key-value pairs in vars section are defined as in-memory variables
-during the task execution. Those in envs section are defined as envrionment
-variables.
-"
+`vars` section contains key-value pairs. At run-time they are defined as
+in-memory variables. The key-values in `envs` section will be defined as
+envrionment variables.
+'
 
 Prompt
 
-echo "
+echo '
 ### Commands vs. pipeline
 
 In this file, there are two tasks: word_count and show_content.
 The first task is the same as the previous example, but it is deactivated.
+You can active and deactivate tasks and commands by setting `active: False`.
+If it is not set, the task or command is active.
 
 The second one has commands instead of pipeline. Instead of running the
 commands as a pipeline, it runs them as independent commands just like:
-"
+'
 
 Code 'echo $TITLE && head -n {{ file_path }}'
 
 Prompt
 
 echo '
-As indicated by &&, the second command only runs if the first runs successfully,
-exiting with code 0.
+As indicated by `&&`, the second command only runs if the first runs
+successfully, exiting with code 0.
 
 {{ file_path }} will be replaced by the corresponding variable defined in vars.
 '
@@ -193,12 +202,12 @@ Prompt
 echo "
 ### Secrets
 
-We intend the files under project directory to be check in in a code
+We intend the files under project directory to be stored in a code
 repository such as git. So we don't want to store sensitive information such
 as password.
 
-We can define them in a separate file. In the third example project, we have
-.secrets/secrets/yml under the project directory. It looks like:
+.secrets/secrets.yml instead is the place to keep the secrets.
+03_secrets project has the secrets defined and the file looks like this:
 "
 
 Cat "03_secrets/.secrets/secrets.yml"
@@ -206,19 +215,20 @@ Cat "03_secrets/.secrets/secrets.yml"
 Prompt
 
 echo "
-Let's see how we can use secrets in the project. project.yml looks like this:
+Let's see how we can use secrets in the project:
 "
 
 Cat "03_secrets/project.yml"
 
 echo "
 You can see {{ username }} and {{ password }} in the curl command. This project
-does not run curl command, but write out the command in the stdout.log file.
+does not actually run curl command. It just writes out the command in
+stdout.log file.
 
 Now let's run.
 "
 
-Command "handoff run local -p 03_secrets -w workspace -y" $DIM 0
+Command "handoff run local -p 03_secrets -w workspace" $DIM 0
 
 echo "
 show_curl_command_stdout.log shows the curl command with the actual username
@@ -230,10 +240,13 @@ Cat "workspace/artifacts/show_curl_command_stdout.log"
 Prompt
 
 echo "
-There is one more thing about this project. In files folder, you see
-google_client_secret.json. This is a hypothetical RSA file for Google
+### External secret file
+
+You can refer an external file as the secret value. 03_secrets project's files
+folder contains google_client_secret.json. This is a RSA file for Google
 Cloud Platform's
 [service account](https://cloud.google.com/iam/docs/service-accounts#service_account_keys)
+whose values are replaced with fake ones.
 
 The original file under the project directory  does not contain the value:
 "
@@ -258,12 +271,13 @@ The content of workspace directory is created at run-time, and you should not
 submit them in the code repository because sensitive information may be
 inserted.
 
-For an obvious reason, you should not commit .secrets directory to a code
+With a same reason, you should not commit .secrets directory to a code
 repository. The content of secrets.yml will be uploaded to a secure remote
 storage when the task run in the cloud platform such as AWS Fargate. More
 about this later.
 
-We recommand adding \"workspace\" and \".secrets\"to .gitigonore file.
+We recommand adding \"workspace\" and \".secrets\"to .gitigonore file to avoid
+accidentally checking them in.
 "
 
 Prompt

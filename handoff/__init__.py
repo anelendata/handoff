@@ -173,17 +173,17 @@ def _run_task_subcommand(
 
     os.chdir(workspace_dir)
 
-    print("Running %s in %s directory" % (command, workspace_dir))
+    LOGGER.debug("Running %s in %s directory" % (command, workspace_dir))
     start = datetime.datetime.utcnow()
-    print("Job started at " + str(start))
+    LOGGER.info("Job started at " + str(start))
 
     # Run the command
     commands[command](config, **kwargs)
 
     end = datetime.datetime.utcnow()
-    print("Job ended at " + str(end))
+    LOGGER.info("Job ended at " + str(end))
     duration = end - start
-    print("Processed in " + str(duration))
+    LOGGER.info("Processed in " + str(duration))
 
     os.chdir(prev_wd)
 
@@ -425,7 +425,7 @@ def main() -> None:
                         help="Skip confirmations")
 
     parser.add_argument("-h", "--help", action="store_true")
-    parser.add_argument("-l", "--log-level", type=str, default=None,
+    parser.add_argument("-l", "--log-level", type=str, default="info",
                         help="Set log level (debug, info, warning, error," +
                         "critical). Default: error for non-task commands," +
                         "info for task commands")
@@ -457,10 +457,6 @@ def main() -> None:
         print_update()
         sys.exit(1)
 
-    if args.log_level is None:
-        args.log_level = "error"
-        if args.command[0] == "task":
-            args.log_level = "info"
     LOGGER.setLevel(args.log_level.upper())
 
     args.vars = _load_param_list(args.vars)

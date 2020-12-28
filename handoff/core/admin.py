@@ -25,7 +25,7 @@ def _install(install: str, venv_path: str = None) -> None:
     else:
         venv_switch = ""
     command = f'/bin/bash -c "{venv_switch}{install}"'
-    LOGGER.info("Running %s" % command)
+    LOGGER.debug("Running %s" % command)
     p = subprocess.Popen([command], shell=True)
     p.wait()
 
@@ -88,7 +88,7 @@ def _get_secret(key: str) -> str:
 def _set_bucket_name(resource_group_name, aws_account_id):
     state = get_state()
     state.set_env(BUCKET, (aws_account_id + "-" + resource_group_name))
-    LOGGER.info("Environment variable %s was set autoamtically as %s" %
+    LOGGER.debug("Environment variable %s was set autoamtically as %s" %
                 (BUCKET, state[BUCKET]))
 
 
@@ -100,7 +100,7 @@ def _update_state(
     information may be compromised by a bad subprocess.
     """
     state = get_state()
-    LOGGER.info("Setting environment variables from config.")
+    LOGGER.debug("Setting environment variables from config.")
 
     if SECRETS:
         state.update(SECRETS)
@@ -136,7 +136,7 @@ def _read_project_remote(workspace_dir) -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
-    LOGGER.info("Reading precompiled config from remote.")
+    LOGGER.debug("Reading precompiled config from remote.")
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
@@ -158,7 +158,7 @@ def _read_project_local(project_file: str) -> Dict:
     """Read project.yml file from the local project directory
     """
     state = get_state()
-    LOGGER.info("Reading configurations from " + project_file)
+    LOGGER.debug("Reading configurations from " + project_file)
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -178,7 +178,7 @@ def _read_project_local(project_file: str) -> Dict:
     if cloud_provider_name and cloud_platform_name:
         platform = cloud._get_platform(provider_name=cloud_provider_name,
                                        platform_name=cloud_platform_name)
-        LOGGER.info("Platform: " + platform.NAME)
+        LOGGER.debug("Platform: " + platform.NAME)
 
     return project
 
@@ -194,7 +194,7 @@ def _secrets_get(
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
-    LOGGER.info("Fetching the secrets from the remote parameter store.")
+    LOGGER.debug("Fetching the secrets from the remote parameter store.")
     global SECRETS
     SECRETS = {}
     params = platform.get_all_parameters()
@@ -223,7 +223,7 @@ def _secrets_get_local(
         LOGGER.warning(secrets_file + " does not exsist")
         return None
     with open(secrets_file, "r") as f:
-        LOGGER.info("Reading secrets from local file: " + secrets_file)
+        LOGGER.debug("Reading secrets from local file: " + secrets_file)
         secrets = yaml.load(f, Loader=yaml.FullLoader)
     secrets_dict = dict()
     for secret in secrets:
@@ -367,7 +367,7 @@ def secrets_print(
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
-    LOGGER.info("Fetching the secrets from the remote parameter store.")
+    LOGGER.debug("Fetching the secrets from the remote parameter store.")
     params = platform.get_all_parameters()
     secret_list = list()
     for key in params.keys():
@@ -396,8 +396,8 @@ def artifacts_archive(
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
-    LOGGER.info("Copying the remote artifacts from last to runs " +
-                state.get(BUCKET))
+    LOGGER.debug("Copying the remote artifacts from last to runs " +
+                 state.get(BUCKET))
 
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
@@ -425,8 +425,8 @@ def artifacts_get(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    LOGGER.info("Downloading artifacts from the remote storage " +
-                state.get(BUCKET))
+    LOGGER.debug("Downloading artifacts from the remote storage " +
+                 state.get(BUCKET))
 
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
@@ -453,8 +453,8 @@ def artifacts_push(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    LOGGER.info("Pushing local artifacts to the remote storage " +
-                state.get(BUCKET))
+    LOGGER.debug("Pushing local artifacts to the remote storage " +
+                 state.get(BUCKET))
 
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
@@ -477,8 +477,8 @@ def artifacts_delete(
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
 
-    LOGGER.info("Deleting artifacts from the remote storage " +
-                state.get(BUCKET))
+    LOGGER.debug("Deleting artifacts from the remote storage " +
+                 state.get(BUCKET))
 
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
@@ -504,8 +504,8 @@ def files_get(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    LOGGER.info("Downloading config files from the remote storage " +
-                state.get(BUCKET))
+    LOGGER.debug("Downloading config files from the remote storage " +
+                 state.get(BUCKET))
 
     platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
                                    platform_name=state.get(CLOUD_PLATFORM))
@@ -539,8 +539,8 @@ def files_get_local(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
 
-    LOGGER.info("Copying files from the local project directory " +
-                project_dir)
+    LOGGER.debug("Copying files from the local project directory " +
+                 project_dir)
 
     project_files_dir = os.path.join(project_dir, FILES_DIR)
     if os.path.exists(project_files_dir):
@@ -592,7 +592,7 @@ def _config_get(
     """
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
-    LOGGER.info("Reading configurations from remote parameter store.")
+    LOGGER.debug("Reading configurations from remote parameter store.")
     precompiled_config = _read_project_remote(workspace_dir)
 
     _secrets_get(project_dir, workspace_dir, **kwargs)

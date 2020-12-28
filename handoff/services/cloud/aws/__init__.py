@@ -59,7 +59,7 @@ def login(profile=None):
     state = get_state()
     if profile:
         state.set_env("AWS_PROFILE", profile)
-        LOGGER.info("AWS_PROFILE set to " + state.get("AWS_PROFILE"))
+        LOGGER.debug("AWS_PROFILE set to " + state.get("AWS_PROFILE"))
 
     region = cred.get_region()
     if region:
@@ -67,7 +67,7 @@ def login(profile=None):
 
     try:
         account_id = sts.get_account_id()
-        LOGGER.info("You have the access to AWS resources.")
+        LOGGER.debug("You have the access to AWS resources.")
         return account_id
     except Exception:
         return None
@@ -194,8 +194,8 @@ def push_parameter(key, value, allow_advanced_tier=False,
                       "/" + key)
 
     if allow_advanced_tier:
-        LOGGER.info("Allowing AWS SSM Parameter Store to store with " +
-                    "Advanced tier (max 8KB)")
+        LOGGER.debug("Allowing AWS SSM Parameter Store to store with " +
+                     "Advanced tier (max 8KB)")
     # Parameter Store does not allow {{}}. Escaping.
     value = value.replace("{{", "\{\{").replace("}}", "\}\}")
     tier = "Standard"
@@ -207,8 +207,8 @@ def push_parameter(key, value, allow_advanced_tier=False,
         else:
             raise Exception(("Parameter string is %s > 4096 byte. " +
                              "You must use -d allow_advanced_tier=true option.") % len(value))
-    LOGGER.info("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
-                (prefix_key, tier))
+    LOGGER.debug("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
+                 (prefix_key, tier))
     ssm.put_parameter(prefix_key, value, tier=tier)
     print("See the parameters at https://console.aws.amazon.com/" +
           "systems-manager/parameters/?region=" +
@@ -342,7 +342,6 @@ def create_role(grantee_account_id, external_id, template_file=None,
         response = cloudformation.update_stack(stack_name, template_file,
                                                parameters)
 
-    LOGGER.info(response)
     _log_stack_info(response)
 
     account_id = sts.get_account_id()
@@ -354,7 +353,7 @@ def create_role(grantee_account_id, external_id, template_file=None,
     }
     role_arn = ("arn:aws:iam::{account_id}:" +
                 "role/{role_name}").format(**params)
-    LOGGER.info("""Add this info to ~/.aws/credentials (Linux & Mac)\n
+    print("""Add this info to ~/.aws/credentials (Linux & Mac)\n
 %USERPROFILE%\\.aws\\credentials (Windows)
 
     [<new-profile-name>]
@@ -371,6 +370,7 @@ Learn more about AWS name profiles at
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 """.format(**{"role_arn": role_arn, "external_id": external_id,
               "region": state.get("AWS_REGION")}))
+    return response
 
 
 def update_role(grantee_account_id, external_id, template_file=None):
@@ -382,9 +382,9 @@ def delete_role(grantee_account_id, template_file=None):
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role-" + str(grantee_account_id)
     response = cloudformation.delete_stack(stack_name)
-    LOGGER.info(response)
     _log_stack_filter(stack_name)
-    LOGGER.info("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
+    print("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
+    return response
 
 
 def create_bucket(template_file=None, update=False):
@@ -407,8 +407,8 @@ def create_bucket(template_file=None, update=False):
         LOGGER.error("Error creating/updating %s bucket: %s" %
                      (bucket, str(e)))
     else:
-        LOGGER.info(response)
         _log_stack_info(response)
+        return response
 
 
 def update_bucket(template_file=None):
@@ -422,8 +422,8 @@ def delete_bucket():
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
     response = cloudformation.delete_stack(stack_name)
-    LOGGER.info(response)
     _log_stack_filter(state[BUCKET])
+    return response
 
 
 def create_resources(template_file=None, update=False):
@@ -452,8 +452,8 @@ def delete_resources():
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
     response = cloudformation.delete_stack(stack_name)
-    LOGGER.info(response)
     _log_stack_filter(resource_group)
+    return response
 
 
 def create_task(template_file=None, update=False, memory=512,

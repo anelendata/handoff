@@ -18,7 +18,7 @@ def test_05_foreach():
                    stage="prod",
                    push_artifacts=False)
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
-                               "verify_stdout.log")) as f:
+                               "verify_result_stdout.log")) as f:
             s = f.readline()
             # TODO: Cannot get stdout when running do() from pytest...
             # assert int(s.strip("\n").strip()) == 5

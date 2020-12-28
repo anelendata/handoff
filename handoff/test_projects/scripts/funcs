@@ -32,6 +32,7 @@ if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 echo
 if [[ ! $MODE = "auto" ]]; then echo -e $STYLE$QUOTE; else echo $BEGINQUOTE; fi
 cat $1
+echo
 if [[ ! $MODE = "auto" ]]; then echo -e $QUOTE$RESET; else echo $QUOTE; fi
 }
 

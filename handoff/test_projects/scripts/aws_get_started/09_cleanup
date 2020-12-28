@@ -11,40 +11,46 @@ Let's clean everything up so we won't pay a fraction of penny after forgeting ab
 First unschedule the task:
 "
 
-Command "handoff cloud unschedule -l warning -p 03_exchange_rates -d target_id=1"
+Command "handoff cloud schedule delete -p 04_install -v target_id=1"
 
 echo "
 Then delete the task:
 "
 
-Command "handoff cloud task delete -l warning -p 03_exchange_rates"
+Command "handoff cloud task delete -p 04_install"
 
 echo "
 If there is no other task in the same resource group, we can delete it:
 "
 
-Command "handoff cloud resources delete -l warning -p 03_exchange_rates"
+Command "handoff cloud resources delete -p 04_install"
 
 echo "
 Here is how to delete the configurations from SSM Parameter Store:
 "
 
-Command "handoff config delete -p 03_exchange_rates"
+Command "handoff config delete -p 04_install"
 
 
 echo "
 Here is how to delete the files from S3 bucket:
 "
 
-Command "handoff files delete -p 03_exchange_rates"
+Command "handoff files delete -p 04_install"
+
+echo "
+And here is how to delete the secrets from AWS Systems Manager Parameter Store:
+"
+
+Command "handoff secrets delete -p 04_install"
 
 echo "
 If there is no other task in the same resource group, we can delete the bucket, too:
 "
 
-Command "handoff cloud bucket delete -l warning -p 03_exchange_rates"
+Command "handoff cloud bucket delete -p 04_install"
 
-BUCKET=s3://`handoff -p 03_exchange_rates envs get -d key=HO_BUCKET -l critical`
+BUCKET=s3://`handoff -p 04_install envs get -v key=HO_BUCKET`
 
 echo "
 The previous command only deleted the CloudFormation stack, but not the bucket itself.
@@ -59,7 +65,7 @@ Here is how to delete $BUCKET bucket. The bucket must be empty. This cannot be r
 
 Command "aws s3 rb $BUCKET"
 
-REPO=`handoff -p 03_exchange_rates envs get -d key=HO_CONTAINER_IMAGE -l critical`
+REPO=`handoff -p 04_install envs get -v key=HO_CONTAINER_IMAGE`
 echo "
 Now delete $REPO repository from ECR. This cannot be reversed.
 --force option will ignore that we still have images in the repository.

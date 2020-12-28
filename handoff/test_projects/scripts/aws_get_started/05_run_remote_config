@@ -1,0 +1,188 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
+
+echo "## Running task locally with remotely stored configurations
+
+We will use 04_install example again. But this time, we will
+store the configurations to the remote data store.
+"
+
+Prompt
+
+CheckAws
+
+ChooseAwsProfile
+
+echo "
+Now let's review how 04_install project directory is structured:
+"
+
+Run "tree 04_install"
+
+Prompt
+
+echo "
+In files directory, we have a couple of configuration files:
+
+Let's store project.yml and the project files to the remote store
+(S3 for case of AWS). First we need to create a remote store bucket:
+"
+
+Command "handoff cloud bucket create -p 04_install"
+
+echo '
+Wait for a minute and check here
+
+```shell
+    https://s3.console.aws.amazon.com
+```
+
+to make sure the bucket is created before you proceed.
+'
+
+if [[ $MODE = "auto" ]]; then sleep 3m; fi
+
+Prompt
+
+echo "
+Now it's time to push the project files to the bucket.
+
+Try running these two commands:
+"
+
+Command "handoff config push -p 04_install"
+
+echo "
+and this:
+"
+
+Command "handoff files push -p 04_install"
+
+echo '
+Look at the end of the log that says,
+
+```shell
+    See the files at https://s3.console.aws.amazon.com/s3/...
+```
+
+Grab the link and open in the browswer (AWS login required) to see the files
+directory is uploaded.
+'
+
+Prompt
+
+echo "
+In 03_secrets project, we learned how to use secret variables in the project
+files. 04_install also contains .secrets files although the values are not
+used at run-time. 
+
+We will use 04_install project to learn how to store secrets to
+AWS Systems Manager (SSM) Parameter Store as encrypted (SecuresString) data.
+
+Try running (and enter 'y' to the confirmation):
+"
+
+Command "handoff secrets push -p 04_install"
+
+echo '
+Look at the end of the log that says,
+
+```shell
+    See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=...
+```
+
+Grab the link and open in the browswer (AWS login required) to confirm that
+the parameters are uploaded.
+
+Note that handoff will create all remote sources with *dev* prefix.
+To change the prefix, run handoff commands with --stage (-s) <prefix_name>
+like `--stage test`. To remove prefix, use `--stage prod`.
+'
+
+Prompt
+
+echo "
+Install the workspace as usual:
+"
+
+Command "handoff workspace install -p 04_install -w workspace"
+
+Prompt
+
+echo "
+Now let's run the command by pulling the configurations and files from remote. 
+
+Try running:
+"
+Command 'handoff run -w workspace --envs resource_group=handoff-etl task=exchange-rates-to-csv --push-artifacts -v start_date=$(date -I -d "-7 day")'
+
+echo '
+This time, we are not using the local project definition.
+We are pulling the project configurations from the remote parameter store identified
+by the resource group and task names.
+
+Also notice that we used --push-artifacts option in the last command.
+With this option, we pushed the result to the bucket under
+
+
+```shell
+'
+
+TASK=`handoff -p 04_install envs get -v key=HO_TASK`
+
+echo "    s3://..../$TASK/artifacts/last"
+
+echo '
+```
+
+directory.
+'
+
+echo '
+Also note that artifacts are automatically archived at each run at
+
+```shell
+'
+
+echo "    s3://..../$TASK/artifacts/archives/
+"
+
+echo '
+```
+
+directory.
+'
+
+Prompt
+
+echo "
+Recall 04_install/project.yml looks like:
+"
+
+Cat "04_install/project.yml" $DIM 0
+
+echo "
+The deploy section specifies:
+
+- cloud_provider: Currently only AWS is supported.
+- cloud_platform: The serverless platfor on which the task will run.
+- resource_group: The resource group name, which is used for creating
+remote storage (e.g. AWS S3) names and the remote parameter store's
+namespace. The resource can be shared with multiple tasks.
+- container_image: The container image name given to the current project.
+- task: Task name. Note that multiple tasks with varying configurations can
+be generated from a container image (Docker)
+"
+
+Prompt
+
+Thanks
+
+echo "
+Next step is to prepare a Docker image and test running it locally.
+"
+
+Continue scripts/aws_get_started/06_docker

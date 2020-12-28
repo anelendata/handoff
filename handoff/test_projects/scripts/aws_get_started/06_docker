@@ -6,7 +6,7 @@ source scripts/funcs
 
 echo "## Building, running, and pushing a Docker image
 
-We will continue using 03_exchange_rates example.
+We will continue using 04_install project (exchange rates to CSV).
 Instead of running the task on the host machine, let's run on Docker.
 "
 
@@ -38,17 +38,17 @@ Try running the following command. Enter y when prompted at the beginning.
 The build may take 5~10 minutes.
 "
 
-Command "handoff container build -p 03_exchange_rates"
+Command "handoff container build -p 04_install"
 
 echo "
 Now let's run the code in the Docker container.
 "
 
-Command "handoff container run -p 03_exchange_rates"
+Command "handoff container run -p 04_install --envs __VARS='start_date=$(date -I -d '-7 day')'"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
-BUCKET=`handoff -p 03_exchange_rates envs get -d key=HO_BUCKET -l critical`
-TASK=`handoff -p 03_exchange_rates envs get -d key=HO_TASK -l critical`
+BUCKET=`handoff -p 04_install envs get -v key=HO_BUCKET`
+TASK=`handoff -p 04_install envs get -v key=HO_TASK`
 
 echo '
 Confirm the run by checking the logs. Also check the artifacts on S3:
@@ -56,7 +56,7 @@ Confirm the run by checking the logs. Also check the artifacts on S3:
 '
 
 echo "
-    $BUCKET/$TASK/last/artifacts/
+    $BUCKET/$TASK/artifacts/last
 "
 
 echo '
@@ -72,9 +72,9 @@ Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 "
 
-Command "handoff container push -p 03_exchange_rates"
+Command "handoff container push -p 04_install"
 
-REGION=`handoff -p 03_exchange_rates envs get -d key=AWS_REGION -l critical`
+REGION=`handoff -p 04_install envs get -v key=AWS_REGION`
 echo "
 Confirm that the Docker image has been uploaded to:
 
@@ -90,4 +90,4 @@ Now that the Docker image is prepared, we will finally deploy the task on
 AWS Fargate in the next tutorial.
 "
 
-Continue scripts/aws_get_started/06_fargate
+Continue scripts/aws_get_started/07_fargate

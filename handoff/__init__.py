@@ -173,17 +173,17 @@ def _run_task_subcommand(
 
     os.chdir(workspace_dir)
 
-    LOGGER.info("Running %s in %s directory" % (command, workspace_dir))
+    print("Running %s in %s directory" % (command, workspace_dir))
     start = datetime.datetime.utcnow()
-    LOGGER.info("Job started at " + str(start))
+    print("Job started at " + str(start))
 
     # Run the command
     commands[command](config, **kwargs)
 
     end = datetime.datetime.utcnow()
-    LOGGER.info("Job ended at " + str(end))
+    print("Job ended at " + str(end))
     duration = end - start
-    LOGGER.info("Processed in " + str(duration))
+    print("Processed in " + str(duration))
 
     os.chdir(prev_wd)
 

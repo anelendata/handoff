@@ -17,16 +17,18 @@ Below is the web-version of the tutorial.
 
 .. mdinclude:: ./01_run_local.md
 
-.. mdinclude:: ./02_exchange_rates.md
+.. mdinclude:: ./02_venv_and_install.md
 
-.. mdinclude:: ./03_set_up_aws_account.md
+.. mdinclude:: ./03_control_flow.md
 
-.. mdinclude:: ./04_run_remote_config.md
+.. mdinclude:: ./04_set_up_aws_account.md
 
-.. mdinclude:: ./05_docker.md
+.. mdinclude:: ./05_run_remote_config.md
 
-.. mdinclude:: ./06_fargate.md
+.. mdinclude:: ./06_docker.md
 
-.. mdinclude:: ./07_schedule.md
+.. mdinclude:: ./07_fargate.md
 
-.. mdinclude:: ./08_cleanup.md
+.. mdinclude:: ./08_schedule.md
+
+.. mdinclude:: ./09_cleanup.md

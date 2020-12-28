@@ -13,6 +13,8 @@ using project 01_word_count.
 Prompt "Ready? (Hit q at prompt to quit anytime. Any other key to proceed.)"
 
 echo "
+### project.yml
+
 Each project directory contains:
 "
 
@@ -31,17 +33,21 @@ Prompt
 echo '
 Here,
 
-- `commands` lists the commands and arguments.
-- `envs` lists the environment varaibles.
+- `tasks` is a list defining each task
+- Under the `tasks`, there is a `pipeline`
+- `pipeline` lists commands and their arguments
 '
 
 echo "
 The example from 01_word_count runs a command line equivalent of:
 "
 
-Code "cat ./files/the_great_dictator_speech.txt | wc -w"
+Code "cat files/the_great_dictator_speech.txt | wc -w"
 
 echo "
+cat writes out the content of the file to the stdin, and it is picked up by
+wc command through Unix pipeline and it counts the number of words.
+
 Now let's run. Try entering this command below:
 "
 
@@ -54,19 +60,21 @@ If you see the output that looks like:
 "
 
 Code "\n
-INFO - 2020-08-03 04:51:01,971 - handoff.config - Reading configurations from 01_word_count/project.yml\n
-...\n
-INFO - 2020-08-03 04:51:02,690 - handoff.config - Processed in 0:00:00.005756\n
+Running run local in workspace directory\n
+Job started at 2020-12-27 22:53:51.190660\n
+[2020-12-27 22:53:51,190] [    INFO] - Running pipeline word_count - (operators.py:193)\n
+[2020-12-27 22:53:51,198] [    INFO] - Checking return code of pid 6472 - (operators.py:262)\n
+[2020-12-27 22:53:51,199] [    INFO] - Checking return code of pid 6473 - (operators.py:262)\n
+Job ended at 2020-12-27 22:53:51.200250\n
+Processed in 0:00:00.009590\n
 "
 
 Prompt
 
 echo "
-Then great! You just ran the first local test.
+Then great! You just ran handoff task locally.
     
 For now, let's not worry about the warnings in the log such as:
-
-- .secrets files not found:
 "
 
 Code "\n
@@ -74,9 +82,8 @@ Code "\n
 "
 
 echo "
-This is for using handoff Template feature with secret variables.
+This is for using handoff's template feature with secret variables.
 
-- Environment variables not set:
 "
 
 Code "\n
@@ -91,16 +98,18 @@ I will explain in the later section.
 Prompt
 
 echo "
+### Output in workspace directory
+
 The previous run created a workspace directory that looks like:
 "
 
 ListDir workspace
 
 echo "
-And the word count is stored at workspace/artifacts/stdout.log. Here is the content:
+And the word count is stored at workspace/artifacts/word_count_stdout.log. Here is the content:
 "
 
-Cat " workspace/artifacts/stdout.log"
+Cat "workspace/artifacts/word_count_stdout.log"
 
 Prompt
 
@@ -123,40 +132,53 @@ Run "head -n 4 01_word_count/files/the_great_dictator_speech.txt" $BLUE 0
 Prompt
 
 echo "
+### Variables
+
 Now to the second example. This time project.yml looks like:
 "
 
-Cat 02_collect_stats/project.yml
+Cat 02_commands_and_vars/project.yml
 
 Prompt
 
 echo "
-...which is shell equivalent to
-"
-
-Code "cat ./files/the_great_dictator_speech.txt | python ./files/stats_collector.py | wc -w"
-
-echo "
-The script for the second command stats_collector.py can be found in
-02_collect_stats/files directory and it is a Python script that looks like:
-"
-
-Prompt
-
-Cat "02_collect_stats/files/stats_collector.py"
-
-echo "
-The script reads from stdin and counts the lines while passing the raw input to stdout.
-The raw text is then processed by the third command (wc -w) and it conts the number of words.
+There are a couple of new sections.
+The key-value pairs in vars section are defined as in-memory variables
+during the task execution. Those in envs section are defined as envrionment
+variables.
 "
 
 Prompt
 
 echo "
-Now let's run. Try entering this command below:
+### Commands vs. pipeline
+
+In this file, there are two tasks: word_count and show_content.
+The first task is the same as the previous example, but it is deactivated.
+
+The second one has commands instead of pipeline. Instead of running the
+commands as a pipeline, it runs them as independent commands just like:
 "
 
-Command "handoff run local --project 02_collect_stats --workspace workspace" $DIM 0
+Code 'echo $TITLE && head -n {{ file_path }}'
+
+Prompt
+
+echo '
+As indicated by &&, the second command only runs if the first runs successfully,
+exiting with code 0.
+
+{{ file_path }} will be replaced by the corresponding variable defined in vars.
+'
+
+Prompt
+
+echo "
+Now let's run. Try entering this command below. Notice that I'm using
+shorthands for options:
+"
+
+Command "handoff run local -p 02_commands_and_vars -w workspace" $DIM 0
 
 echo "
 Let's check out the contents of the second command:
@@ -164,16 +186,94 @@ Let's check out the contents of the second command:
 
 Prompt
 
-Cat "workspace/artifacts/collect_stats.json" $DIM 0
+Cat "workspace/artifacts/show_content_stdout.log" $DIM 0
+
+Prompt
+
+echo "
+### Secrets
+
+We intend the files under project directory to be check in in a code
+repository such as git. So we don't want to store sensitive information such
+as password.
+
+We can define them in a separate file. In the third example project, we have
+.secrets/secrets/yml under the project directory. It looks like:
+"
+
+Cat "03_secrets/.secrets/secrets.yml"
+
+Prompt
+
+echo "
+Let's see how we can use secrets in the project. project.yml looks like this:
+"
+
+Cat "03_secrets/project.yml"
+
+echo "
+You can see {{ username }} and {{ password }} in the curl command. This project
+does not run curl command, but write out the command in the stdout.log file.
+
+Now let's run.
+"
+
+Command "handoff run local -p 03_secrets -w workspace -y" $DIM 0
+
+echo "
+show_curl_command_stdout.log shows the curl command with the actual username
+and password:
+"
+
+Cat "workspace/artifacts/show_curl_command_stdout.log"
+
+Prompt
+
+echo "
+There is one more thing about this project. In files folder, you see
+google_client_secret.json. This is a hypothetical RSA file for Google
+Cloud Platform's
+[service account](https://cloud.google.com/iam/docs/service-accounts#service_account_keys)
+
+The original file under the project directory  does not contain the value:
+"
+
+Cat "03_secrets/files/google_client_secret.json"
+
+Prompt
+
+echo "
+During the run, google_client_secret.json is copied to workspace/files. When that happens,
+{{ google_client_secret }} is replaced with the actual values:
+"
+
+Cat "workspace/files/google_client_secret.json"
+
+Prompt
+
+echo "
+**Important:**
+
+The content of workspace directory is created at run-time, and you should not
+submit them in the code repository because sensitive information may be
+inserted.
+
+For an obvious reason, you should not commit .secrets directory to a code
+repository. The content of secrets.yml will be uploaded to a secure remote
+storage when the task run in the cloud platform such as AWS Fargate. More
+about this later.
+
+We recommand adding \"workspace\" and \".secrets\"to .gitigonore file.
+"
 
 Prompt
 
 Thanks
 
 echo "
-In the next section, we will try pullin the currency exchange rate data.
+In the next section, we will try pulling the currency exchange rate data.
 You will also learn how to create Python virtual enviroments for each command
-and pip-install commands.
+and install programs.
 "
 
-Continue scripts/aws_get_started/02_exchange_rates
+Continue scripts/aws_get_started/02_venv_and_install

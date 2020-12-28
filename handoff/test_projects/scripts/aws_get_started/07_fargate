@@ -26,7 +26,7 @@ We will first need to create a cluster.
 To make this process easy, handoff packed everything up in a command:
 "
 
-Command "handoff cloud resources create -p 03_exchange_rates"
+Command "handoff cloud resources create -p 04_install"
 
 echo '
 
@@ -52,7 +52,7 @@ echo "
 Now it's time to deploy the task and here is the command:
 "
 
-Command "handoff cloud task create -p 03_exchange_rates"
+Command "handoff cloud task create -p 04_install"
 
 echo '
 
@@ -78,7 +78,7 @@ Once the task is created, try running on Fargate.
 To do so, run this command:
 "
 
-Command "handoff cloud run -p 03_exchange_rates"
+Command "handoff cloud run -p 04_install --envs __VARS='start_date=$(date -I -d '-7 day')'"
 
 echo '
 At the end of the log, you should see a line like:
@@ -110,7 +110,7 @@ At the bottom of the page, you see:
 
 | Name              | Container Runtime ID | Status       | Image | ..... |
 | :---------------- | :------------------- | :----------- | :---- | :---- |
-| singer_excha...   | 1371....             | PROVISIONING | xxxxx | ..... |
+| tap-exchange...   | 1371....             | PROVISIONING | xxxxx | ..... |
 
 Expand the section by clicking on a dark side-way trible ">" by the  Task name.
 
@@ -132,15 +132,25 @@ if [[ $MODE = "auto" ]]; then sleep 5m; fi
 Prompt
 
 echo "
-Another way to check the log is to use handoff's built in command:
+Another way to check the task status and log is to use handoff's built in command.
+
+To check the status of the task, do:
 "
 
-Command "handoff cloud logs -p 03_exchange_rates"
+Command "handoff cloud task status -p 04_install"
+
+Prompt
+
+echo "
+To view the log, do:
+"
+
+Command "handoff cloud logs -p 04_install"
 
 echo '
 The log can also take the parameters such as start_time, end_time, and follow:
 ```
-handoff cloud logs -p 03_exchange_rates -d follow=true start_time="2020-09-15 07:18:00"
+handoff cloud logs -p 04_install -v follow=true start_time="2020-09-15 07:18:00"
 ```
 
 follow=true will wait for more logs to be produced. ctrl-C to quit.
@@ -156,4 +166,4 @@ Now let's go to the next section to learn how to schedule the task
 so it runs periodically.
 "
 
-Continue scripts/aws_get_started/07_schedule
+Continue scripts/aws_get_started/08_schedule

@@ -1,0 +1,97 @@
+#!/bin/bash
+MODE=$1
+if [[ -z $2 ]];then HEADTAIL_LIMIT=0; else HEADTAIL_LIMIT=$2;fi
+cd "$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../.."
+source scripts/funcs
+
+echo "## Virtual environment and install
+
+In this section, we will retrieve currency exchange rates and write out to CSV
+file.
+
+We will install singer.io (https://singer.io), a data collection framework,
+in Python vitual environment.
+"
+
+Prompt "Ready? (Hit q at prompt to quit anytime. Any other key to proceed.)"
+
+echo "
+We will use 04_install project. project.yml looks like:
+"
+
+Cat "04_install/project.yml" $DIM 0
+
+Prompt
+
+echo "
+What's new here is the installs section that lists the shell command to
+install the necessary program for this project.
+
+For each install, you can set venv key to set the name of the Python virtual
+environment. This helps avoid the dependency conflicts among Python programs.
+
+(The deploy section in the file is irrelevant and unnecessary for now.
+We will use it in the later exercise.)
+"
+
+Prompt
+
+echo "
+The project runs a pipeline that is a shell equivalent to
+
+    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+"
+
+Prompt
+
+echo '
+Before we can run this, we need to install tap-exchangeratesapi and target-csv.
+The instructions for the install are listed in install section of project.yml.
+
+Notice `venv` entries for each command. handoff can create Python virtual
+enviroment for each command to avoid conflicting dependencies among the
+commands.
+
+To install everything, run this command:
+'
+
+Command "handoff workspace install -p 04_install -w workspace_04"
+
+Prompt
+
+echo "Now, if you look at tap-config.json,
+"
+
+Cat "04_install/files/tap-config.json"
+
+echo "You will notice {{ start_date }} variable but it is not defined in
+project.yml. That is because I did not hardcode this value. If I did, you would
+have to fetch a lot of data. Instead, let's set it when you run handoff run command.
+
+Try this to get the last 7 days of the data:
+"
+
+Command 'handoff run local -p 04_install -w workspace_04 -v start_date=$(date -I -d "-7 day")'
+
+Prompt
+
+echo "
+
+This process should have created a CSV file in artifacts directory:
+"
+
+Run "ls workspace_04/artifacts | grep csv" $DIM 0
+
+Prompt
+
+Thanks
+
+echo "
+We learned how to install Python command in a virtual environment and run
+in this section. The exchange rate application is a realistic use of fetching
+the data from an API and store the data to the destination store.
+In the next section, we will learn a little more advanced flow logic
+such as foreach and fork.
+"
+
+Continue scripts/aws_get_started/03_control_flow

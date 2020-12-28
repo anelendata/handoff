@@ -85,6 +85,13 @@ def _get_secret(key: str) -> str:
     return SECRETS.get(key)
 
 
+def _set_bucket_name(resource_group_name, aws_account_id):
+    state = get_state()
+    state.set_env(BUCKET, (aws_account_id + "-" + resource_group_name))
+    LOGGER.info("Environment variable %s was set autoamtically as %s" %
+                (BUCKET, state[BUCKET]))
+
+
 def _update_state(
     config: Dict,
     vars: Dict = {}) -> None:
@@ -117,10 +124,7 @@ def _update_state(
             pass
         else:
             if state.get(RESOURCE_GROUP):
-                state.set_env(BUCKET, (aws_account_id + "-" +
-                                       state[RESOURCE_GROUP]))
-                LOGGER.info("Environment variable %s was set autoamtically as %s" %
-                            (BUCKET, state[BUCKET]))
+                _set_bucket_name(state[RESOURCE_GROUP], aws_account_id)
 
     if not state.get(BUCKET):
         LOGGER.warning(("Environment variable %s is not set. " +
@@ -141,7 +145,8 @@ def _read_project_remote(workspace_dir) -> Dict:
     if not account_id:
         raise Exception("Failed to login to cloud account. " +
                         "Did you forget set credentials such as AWS_PROFILE?")
-
+    if not state.get(BUCKET):
+        _set_bucket_name(state[RESOURCE_GROUP], account_id)
     project_file_path = os.path.join(workspace_dir, PROJECT_FILE)
     platform.download_file(project_file_path, PROJECT_FILE)
     with open(project_file_path, "r") as f:

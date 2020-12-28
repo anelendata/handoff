@@ -279,13 +279,13 @@ def task_delete(
     return platform.delete_task()
 
 
-def task_list(
+def task_status(
     project_dir: str,
     workspace_dir: str,
     vars: str = None,
     **kwargs) -> None:
-    """`handoff cloud task list -p <project_directory> -v full=False resource_group=False`
-    list tasks
+    """`handoff cloud task status -p <project_directory> -v full=False resource_group=False`
+    list task status
     options:
     - full: Print the full description
     - resource_group_level: List all the tasks under the same resource groups
@@ -322,14 +322,14 @@ def run(
     return platform.run_task(env=envs, extras=extras_obj)
 
 
-def schedule(
+def schedule_create(
     project_dir: str,
     workspace_dir: str,
     envs: Dict = {},
     vars: Dict = {},
     extras: str = None,
     **kwargs) -> None:
-    """`handoff cloud schedule -v target_id=<target_id> cron="<cron_format>" -e vars='key1=val1 key2=val2...'`
+    """`handoff cloud schedule create -v target_id=<target_id> cron="<cron_format>" -e vars='key1=val1 key2=val2...'`
     Schedule a task named <target_id> at the recurring scheduled specified
     as <cron_format>. An example of cron-format string is "10 01 * * ? *"
     for every day at 01:10 (1:10AM)
@@ -343,28 +343,38 @@ def schedule(
     config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
     schedules = config.get("schedules")
+
+    target_id = vars.get("target_id")
+    cronexp = vars.get("cron")
+    extras_obj = None
+    if extras:
+        with open(extras, "r") as f:
+            extras_obj = yaml.load(f)
     if not schedules:
-        if not vars.get("target_id") or not vars.get("cron"):
-            print("Forgot to set '-v target_id=<ID> cron=<CRON>' ?")
-            exit(1)
-        target_id = str(vars["target_id"])
-        cronexp = "cron(" + vars["cron"] + ")"
-        extras_obj = None
-        if extras:
-            with open(extras, "r") as f:
-                extras_obj = yaml.load(f)
         schedules = [{"target_id": target_id, "cron": cronexp,
                       "extras_obj": extras_obj}]
+
+    if not schedules and (not target_id or not cronexp):
+        print("Schedules not found in project.yml. You can also set " +
+              "'-v target_id=<ID> cron=<CRON>'")
+        exit(1)
+
     envs[STAGE] = state[STAGE]
 
     responses = []
     for s in schedules:
+        if target_id is not None and str(s["target_id"]) != str(target_id):
+            continue
+        if target_id is not None and cronexp:
+            s["cron"] = cronexp
+
         e = dict()
-        e.update(envs)
         for e1 in s.get("envs", list()):
             e[e1["key"]] = e1["value"]
+        # priority of the values schedule section < envs section < command line
+        e.update(envs)
         r = platform.schedule_task(
-            s["target_id"], "cron(" + s["cron"] + ")",
+            str(s["target_id"]), "cron(" + s["cron"] + ")",
             env=e,
             extras=s.get("extras_obj"))
         responses.append(r)

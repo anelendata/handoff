@@ -210,11 +210,11 @@ def push_parameter(key, value, allow_advanced_tier=False,
     LOGGER.info("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
                 (prefix_key, tier))
     ssm.put_parameter(prefix_key, value, tier=tier)
-    LOGGER.info("See the parameters at https://console.aws.amazon.com/" +
-                "systems-manager/parameters/?region=" +
-                state.get("AWS_REGION") +
-                "&tab=Table#list_parameter_filters=Name:Contains:" +
-                prefix_key)
+    print("See the parameters at https://console.aws.amazon.com/" +
+          "systems-manager/parameters/?region=" +
+          state.get("AWS_REGION") +
+          "&tab=Table#list_parameter_filters=Name:Contains:" +
+          prefix_key)
 
 
 def delete_parameter(key, resource_group_level=False, **kwargs):
@@ -272,8 +272,8 @@ def upload_dir(local_dir_path, remote_dir_path):
     bucket = state.get(BUCKET)
     dest_prefix = os.path.join(state.get(TASK), remote_dir_path)
     s3.upload_dir(bucket, local_dir_path, dest_prefix)
-    LOGGER.info(("See the files at https://s3.console.aws.amazon.com/s3/" +
-                 "buckets/%s/%s/") % (bucket, dest_prefix))
+    print(("See the files at https://s3.console.aws.amazon.com/s3/" +
+             "buckets/%s/%s/") % (bucket, dest_prefix))
 
 
 def delete_dir(remote_dir_path):

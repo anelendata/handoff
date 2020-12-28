@@ -116,4 +116,4 @@ Now that we have set up the AWS account, let's store the configurations
 in the cloud in the next section.
 "
 
-Continue scripts/aws_get_started/04_run_remote_config
+Continue scripts/aws_get_started/05_run_remote_config

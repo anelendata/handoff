@@ -30,9 +30,11 @@ deploy:
   cloud_platform: fargate
   resource_group: handoff-etl
   container_image: tap-exchange-rates-target-csv
-  task: exchange-rates
+  task: exchange-rates-to-csv
 
-schedule:
-  target_id: 1
+schedules:
+- target_id: 1
   cron: "0 0 * * ? *"
-  envs: []
+  envs:
+  - key: __VARS
+    value: 'start_date=$(date -I -d "-7 day")'

@@ -16,11 +16,32 @@ then
 ChooseAwsProfile
 fi
 
-echo '
+echo "
 To schedule a task, use schedule command with parameters target_id and
 cron in [CRON format](https://en.wikipedia.org/wiki/Cron).
 
-We pass those values to handoff with `--data` (`-d` for short) option:
+At the bottom of project.yml of 04_install project, there is a schedule section
+which defines both:
+"
+
+Prompt
+
+Cat 04_install/project.yml
+
+Prompt
+
+echo "
+Also note that __VARS is defined in the section instead of giving at the command line.
+
+With the schedule section presnt, you can simply schedule the task by running:
+"
+
+Code "
+handoff cloud schedule create -p 04_install
+"
+
+echo '
+Alternatively, we can pass those values to handoff with `--vars` (`-v` for short) option:
 '
 
 Prompt "The following command is set to trigger the task 5 minutes later from now:"
@@ -28,7 +49,8 @@ Prompt "The following command is set to trigger the task 5 minutes later from no
 hour=`date -u +"%H"`
 min=`date -u +"%M"`
 min=$(($min + 5))
-Command "handoff cloud schedule -p 03_exchange_rates --data target_id=1 cron='$min $hour * * ? *'"
+
+Command "handoff cloud schedule create -p 04_install -v target_id=1 cron='$min $hour * * ? *' --envs __VARS='start_date=$(date -I -d '-7 day')'"
 
 echo '
 
@@ -57,4 +79,4 @@ Now let's go to the next module to learn how to schedule the task
 so it runs periodically.
 "
 
-Continue scripts/aws_get_started/08_cleanup
+Continue scripts/aws_get_started/09_cleanup

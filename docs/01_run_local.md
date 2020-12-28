@@ -5,6 +5,8 @@ using project 01_word_count.
 
 
 
+### project.yml
+
 Each project directory contains:
 
 ```shell
@@ -24,28 +26,36 @@ project.yml looks like:
 ```
 
 ```shell
-commands:
+version: 0.3
+description: A simple pipeline to count words from a text file
+
+tasks:
+- name: word_count
+  description: This task will be executed as 'cat <file_path> | wc -w'
+  pipeline:
   - command: cat
-    args: "./files/the_great_dictator_speech.txt"
+    args: files/the_great_dictator_speech.txt
   - command: wc
-    args: "-w"
-envs:
-  - key: TITLE
-    value: "The Great Dictator"
+    args: -w
+
 ```
 
 
 Here,
 
-- `commands` lists the commands and arguments.
-- `envs` lists the environment varaibles.
+- `tasks` is a list defining each task
+- Under the `tasks`, there is a `pipeline`
+- `pipeline` lists commands and their arguments
 
 
 The example from 01_word_count runs a command line equivalent of:
 
 ```shell
-cat ./files/the_great_dictator_speech.txt | wc -w
+cat files/the_great_dictator_speech.txt | wc -w
 ```
+
+cat writes out the content of the file to the stdin, and it is picked up by
+wc command through Unix pipeline and it counts the number of words.
 
 Now let's run. Try entering this command below:
 
@@ -54,16 +64,13 @@ Now let's run. Try entering this command below:
 ```
 ```shell
 
-[2020-11-09 01:46:09,363] [    INFO] - Reading configurations from 01_word_count/project.yml - (admin.py:144)
-[2020-11-09 01:46:09,365] [    INFO] - Setting environment variables from config. - (admin.py:92)
-[2020-11-09 01:46:09,487] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-09 01:46:09,764] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
-[2020-11-09 01:46:09,828] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:120)
-[2020-11-09 01:46:09,828] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:206)
-[2020-11-09 01:46:09,828] [    INFO] - Copying files from the local project directory 01_word_count - (admin.py:504)
-[2020-11-09 01:46:09,834] [    INFO] - Running run local in workspace directory - (__init__.py:174)
-[2020-11-09 01:46:09,834] [    INFO] - Job started at 2020-11-09 01:46:09.834693 - (__init__.py:176)
-[2020-11-09 01:46:09,841] [    INFO] - Job ended at 2020-11-09 01:46:09.841836 - (__init__.py:182)
+Running run local in workspace directory
+Job started at 2020-12-28 08:03:14.818033
+[2020-12-28 08:03:14,818] [    INFO] - Running pipeline word_count - (operators.py:193)
+[2020-12-28 08:03:14,825] [    INFO] - Checking return code of pid 21847 - (operators.py:262)
+[2020-12-28 08:03:14,826] [    INFO] - Checking return code of pid 21848 - (operators.py:262)
+Job ended at 2020-12-28 08:03:14.827343
+Processed in 0:00:00.009310
 ```
 
 
@@ -71,27 +78,28 @@ If you see the output that looks like:
 
 ```shell
 
- INFO - 2020-08-03 04:51:01,971 - handoff.config - Reading configurations from 01_word_count/project.yml
- ...
- INFO - 2020-08-03 04:51:02,690 - handoff.config - Processed in 0:00:00.005756
+ Running run local in workspace directory
+ Job started at 2020-12-27 22:53:51.190660
+ [2020-12-27 22:53:51,190] [ INFO] - Running pipeline word_count - (operators.py:193)
+ [2020-12-27 22:53:51,198] [ INFO] - Checking return code of pid 6472 - (operators.py:262)
+ [2020-12-27 22:53:51,199] [ INFO] - Checking return code of pid 6473 - (operators.py:262)
+ Job ended at 2020-12-27 22:53:51.200250
+ Processed in 0:00:00.009590
 
 ```
 
 
-Then great! You just ran the first local test.
+Then great! You just ran handoff task locally.
     
 For now, let's not worry about the warnings in the log such as:
-
-- .secrets files not found:
 
 ```shell
 
  [WARNING] - 01_word_count/.secrets/secrets.yml does not exsist
 ```
 
-This is for using handoff Template feature with secret variables.
+This is for using handoff's template feature with secret variables.
 
-- Environment variables not set:
 
 ```shell
 
@@ -102,6 +110,8 @@ This is for running the task with remotely stored configurations and files.
 I will explain in the later section.
 
 
+
+### Output in workspace directory
 
 The previous run created a workspace directory that looks like:
 
@@ -114,14 +124,16 @@ The previous run created a workspace directory that looks like:
  files
 ```
 
-And the word count is stored at workspace/artifacts/stdout.log. Here is the content:
+And the word count is stored at workspace/artifacts/word_count_stdout.log. Here is the content:
 
 ```shell
-> cat  workspace/artifacts/stdout.log
+> cat workspace/artifacts/word_count_stdout.log
 ```
 
 ```shell
-644```
+644
+
+```
 
 
 By the way, the example text is from the awesome speech by Charlie Chaplin's
@@ -143,104 +155,251 @@ Greed has poisoned men’s souls, has barricaded the world with hate, has goose-
 ```
 
 
+### Variables
+
 Now to the second example. This time project.yml looks like:
 
 ```shell
-> cat 02_collect_stats/project.yml
+> cat 02_commands_and_vars/project.yml
 ```
 
 ```shell
-commands:
+version: 0.3
+descriptoin: Commands and variables example
+
+tasks:
+- name: word_count
+  description: This task will be executed as 'cat <file_path> | wc -w'
+  active: False  # This will skip word_count task
+  pipeline:
   - command: cat
     args: ./files/the_great_dictator_speech.txt
-  - command: python files/stats_collector.py
   - command: wc
     args: -w
+  - nulldev:
+    description: "nulldev at the end prevents task from writing out to artifacts/<task_name>_stdout.log"
+    active: False  # You can set active at command level
+
+- name: show_content
+  description: This executes after word_count task completes. Use commands executes non-pipeline manner 'echo $TITLE && head -n 1 <file_path>'
+  stdout: True
+  commands:
+  - command: echo
+    args: $TITLE
+  - command: head
+    args: -n 1 {{ file_path }}
+
+# These are set as in-memory variables in the task execution
+vars:
+  - key: file_path
+    value: "files/the_great_dictator_speech.txt"  # Relative path to workspace directory
+
+# These are set as environment variables in the task execution
+envs:
+  - key: TITLE
+    value: "The Great Dictator"
+
 ```
 
 
-...which is shell equivalent to
+There are a couple of new sections.
+The key-value pairs in vars section are defined as in-memory variables
+during the task execution. Those in envs section are defined as envrionment
+variables.
+
+
+
+### Commands vs. pipeline
+
+In this file, there are two tasks: word_count and show_content.
+The first task is the same as the previous example, but it is deactivated.
+
+The second one has commands instead of pipeline. Instead of running the
+commands as a pipeline, it runs them as independent commands just like:
 
 ```shell
-cat ./files/the_great_dictator_speech.txt | python ./files/stats_collector.py | wc -w
+echo $TITLE && head -n {{ file_path }}
 ```
 
-The script for the second command stats_collector.py can be found in
-02_collect_stats/files directory and it is a Python script that looks like:
 
+As indicated by &&, the second command only runs if the first runs successfully,
+exiting with code 0.
 
-```shell
-> cat 02_collect_stats/files/stats_collector.py
-```
-
-```shell
-#!/usr/bin/python
-import io, json, logging, sys, os
-
-LOGGER = logging.getLogger()
-
-def collect_stats(outfile):
-    """
-    Read from stdin and count the lines. Output to a file after done.
-    """
-    lines = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
-    output = {"rows_read": 0}
-    for line in lines:
-        try:
-            o = json.loads(line)
-            print(json.dumps(o))
-            if o["type"].lower() == "record":
-                output["rows_read"] += 1
-        except json.decoder.JSONDecodeError:
-            print(line)
-            output["rows_read"] += 1
-    with open(outfile, "w") as f:
-        json.dump(output, f)
-        f.write("\n")
-
-
-if __name__ == "__main__":
-    collect_stats("artifacts/collect_stats.json")
-```
-
-The script reads from stdin and counts the lines while passing the raw input to stdout.
-The raw text is then processed by the third command (wc -w) and it conts the number of words.
+{{ file_path }} will be replaced by the corresponding variable defined in vars.
 
 
 
-Now let's run. Try entering this command below:
+Now let's run. Try entering this command below. Notice that I'm using
+shorthands for options:
 
 ```shell
-> handoff run local --project 02_collect_stats --workspace workspace
+> handoff run local -p 02_commands_and_vars -w workspace
 ```
 ```shell
 
-[2020-11-09 01:46:10,316] [    INFO] - Reading configurations from 02_collect_stats/project.yml - (admin.py:144)
-[2020-11-09 01:46:10,317] [    INFO] - Setting environment variables from config. - (admin.py:92)
-[2020-11-09 01:46:10,442] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-11-09 01:46:10,723] [    INFO] - You have the access to AWS resources. - (__init__.py:69)
-[2020-11-09 01:46:10,788] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:120)
-[2020-11-09 01:46:10,788] [ WARNING] - 02_collect_stats/.secrets/secrets.yml does not exsist - (admin.py:206)
-[2020-11-09 01:46:10,788] [    INFO] - Copying files from the local project directory 02_collect_stats - (admin.py:504)
-[2020-11-09 01:46:10,794] [    INFO] - Running run local in workspace directory - (__init__.py:174)
-[2020-11-09 01:46:10,794] [    INFO] - Job started at 2020-11-09 01:46:10.794303 - (__init__.py:176)
-[2020-11-09 01:46:10,850] [    INFO] - Job ended at 2020-11-09 01:46:10.850371 - (__init__.py:182)
-[2020-11-09 01:46:10,850] [    INFO] - Processed in 0:00:00.056068 - (__init__.py:184)
+Running run local in workspace directory
+Job started at 2020-12-28 08:03:15.740124
+[2020-12-28 08:03:15,740] [    INFO] - Running commands show_content - (operators.py:141)
+Job ended at 2020-12-28 08:03:15.746955
+Processed in 0:00:00.006831
 ```
 
 Let's check out the contents of the second command:
 
 
 ```shell
-> cat workspace/artifacts/collect_stats.json
+> cat workspace/artifacts/show_content_stdout.log
 ```
 
 ```shell
-{"rows_read": 15}
+The Great Dictator
+I’m sorry, but I don’t want to be an emperor. That’s not my business. I don’t want to rule or conquer anyone. I should like to help everyone - if possible - Jew, Gentile - black man - white. We all want to help one another. Human beings are like that. We want to live by each other’s happiness - not by each other’s misery. We don’t want to hate and despise one another. In this world there is room for everyone. And the good earth is rich and can provide for everyone. The way of life can be free and beautiful, but we have lost the way.
+
 ```
 
 
-In the next section, we will try pullin the currency exchange rate data.
+### Secrets
+
+We intend the files under project directory to be check in in a code
+repository such as git. So we don't want to store sensitive information such
+as password.
+
+We can define them in a separate file. In the third example project, we have
+.secrets/secrets/yml under the project directory. It looks like:
+
+```shell
+> cat 03_secrets/.secrets/secrets.yml
+```
+
+```shell
+- key: username
+  value: my_user_name
+- key: password
+  value: xxxxxxxxxxxxxxxxxxxxxxxxto
+
+  # You can also refer external text file. This is handy for stuff like RSA key file:
+- key: google_client_secret
+  file: ./google_client_secret.json
+  # You can share the secrets among the projects within the same resource group
+  level: resource group
+
+```
+
+
+Let's see how we can use secrets in the project. project.yml looks like this:
+
+```shell
+> cat 03_secrets/project.yml
+```
+
+```shell
+version: 0.3
+descriptoin: Secrets and template example
+
+tasks:
+- name: show_curl_command
+  description: Show curl command with username and password but not actually sending
+  commands:
+  - command: echo
+    args: "curl -u {{ username }}:{{ password }} {{ url }}"
+
+vars:
+  - key: url
+    value: "https://example.com"
+
+envs:
+- key: GOOGLE_APPLICATION_CREDENTIALS
+  value: files/google_client_secret.json
+
+```
+
+You can see {{ username }} and {{ password }} in the curl command. This project
+does not run curl command, but write out the command in the stdout.log file.
+
+Now let's run.
+
+```shell
+> handoff run local -p 03_secrets -w workspace -y
+```
+```shell
+
+Running run local in workspace directory
+Job started at 2020-12-28 08:03:16.654891
+[2020-12-28 08:03:16,654] [    INFO] - Running commands show_curl_command - (operators.py:141)
+Job ended at 2020-12-28 08:03:16.658682
+Processed in 0:00:00.003791
+```
+
+show_curl_command_stdout.log shows the curl command with the actual username
+and password:
+
+```shell
+> cat workspace/artifacts/show_curl_command_stdout.log
+```
+
+```shell
+curl -u my_user_name:xxxxxxxxxxxxxxxxxxxxxxxxto https://example.com
+
+```
+
+
+There is one more thing about this project. In files folder, you see
+google_client_secret.json. This is a hypothetical RSA file for Google
+Cloud Platform's
+[service account](https://cloud.google.com/iam/docs/service-accounts#service_account_keys)
+
+The original file under the project directory  does not contain the value:
+
+```shell
+> cat 03_secrets/files/google_client_secret.json
+```
+
+```shell
+{{ google_client_secret }}
+
+```
+
+
+During the run, google_client_secret.json is copied to workspace/files. When that happens,
+{{ google_client_secret }} is replaced with the actual values:
+
+```shell
+> cat workspace/files/google_client_secret.json
+```
+
+```shell
+{
+  "type": "service_account",
+  "project_id": "my_project_id",
+  "private_key_id": "1234567890abcdefg",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIE1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n1234567890abcdefg\n-----END PRIVATE KEY-----\n",
+  "client_email": "service_account@my_project_id.iam.gserviceaccount.com",
+  "client_id": "12345",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bigquery-api-access%40my_project_id.iam.gserviceaccount.com"
+}
+
+```
+
+
+**Important:**
+
+The content of workspace directory is created at run-time, and you should not
+submit them in the code repository because sensitive information may be
+inserted.
+
+For an obvious reason, you should not commit .secrets directory to a code
+repository. The content of secrets.yml will be uploaded to a secure remote
+storage when the task run in the cloud platform such as AWS Fargate. More
+about this later.
+
+We recommand adding "workspace" and ".secrets"to .gitigonore file.
+
+
+
+In the next section, we will try pulling the currency exchange rate data.
 You will also learn how to create Python virtual enviroments for each command
-and pip-install commands.
+and install programs.
 

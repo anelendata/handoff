@@ -162,7 +162,7 @@ def _run_commands(task: Dict, state: Dict,
             params = _get_params(state)
             params["venv"] = command_obj.get("venv", None)
             command_str = _get_command_string(command_obj["command"],
-                                              command_obj["args"],
+                                              command_obj.get("args", ""),
                                               params)
             proc = subprocess.Popen([command_str], stdout=stdout, stderr=stderr,
                                     env=env, shell=True)
@@ -221,7 +221,7 @@ def _run_pipeline(task: Dict, state: Dict,
             break
 
         command_str = _get_command_string(command_obj["command"],
-                                          command_obj["args"],
+                                          command_obj.get("args", ""),
                                           params)
 
         command_obj["proc"] = subprocess.Popen(

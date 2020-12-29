@@ -14,7 +14,7 @@ Core commands
     :members:
     :undoc-members:
 
-Contianer commands
+Container commands
 ------------------
 
 .. automodule:: handoff.services.container

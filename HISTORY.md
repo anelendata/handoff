@@ -1,5 +1,9 @@
 ## History
 
+### 0.3.1 (2020-12-29)
+
+- fixes Mac OS tutorial issue (incompatible date command signature) (#72)
+
 ### 0.3.0 (2020-12-28)
 
 A major release with improved interface and new features.

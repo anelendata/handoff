@@ -1,34 +1,19 @@
 ## History
 
-### 0.3.0 (2020-11-08)
+### 0.3.0 (2020-12-28)
 
-https://github.com/anelendata/handoff/milestone/8?closed=1
+A major release with improved interface and new features.
 
-New features:
-
-- No more _ in the command (e.g. handoff run_local -> handoff run local)
-- Secrets and templates
-- --stage option to specify the stage (e.g. prod, dev...)
-- No more project_dir/config directory. Keep templated files in files and
-  secrets in .secrets/secrets.yml
-- No more JSON after -d option in command. Simply list key1=var1 key2=var2...
-- Create Fargate cluster per resource group, not per task.
-- Reduced the size of the container image: builds/pushes/loads much faster.
-- Honor Parameter Store hierarchical format
-- Show logs from cloud run
-- Specify own network configuration to run AWS Fargate task
-- Custom Dockerfile
-
-Bug fixes:
-
-- container commands (build/push) fails to identify the latest version when the micro version > 9
-- Installing non-Python programs
-- Make sure project and workspace directories are separated
-- Subprocess terminates siliently when the command fails
-
-Documentation:
-
-- "environment variable is not defined" for HO_RESOURCE_GROUP, TASK, BUCKET...
+1. Container orchestration (AWS Elastic Continer Service)
+2. Extended serverless task execution (AWS Fargate, vs. AWS Lambda's 15min limit) 
+3. CRON Scheduling (AWS EventBridge)
+4. Configuration and secret management (AWS Systems Manager Parameter Store)
+5. Simple switch between production and devlopment stages
+6. Docker image management (AWS Elastic Container Registry)
+7. Artifacts management (AWS Simple Cloud Storage)
+8. Log management (AWS CloudWatch)
+9. Shared resource management (Virtual Private Cloud, Security Group)
+10. No need to pay and maintain a dedicated virtual instances!
 
 ### 0.2.0b4 (2020-08-18)
 

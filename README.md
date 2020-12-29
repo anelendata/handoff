@@ -5,13 +5,6 @@
 
 <img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
 
-**NEW:**
-- Version 0.3.0 will be released soon.
-  To install the pre-release version, do:
-  ```
-  pip install https://github.com/anelendata/handoff/archive/master.tar.gz#egg=handoff
-  ```
-
 ## What is it?
 
 handoff ([repository](https://github.com/anelendata/handoff))

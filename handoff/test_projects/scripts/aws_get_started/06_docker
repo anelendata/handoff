@@ -44,7 +44,7 @@ echo "
 Now let's run the code in the Docker container.
 "
 
-Command "handoff container run -p 04_install --envs __VARS='start_date=$(date -I -d '-7 day')'"
+Command "handoff container run -p 04_install --envs __VARS='start_date=\$(date -I -d \"-7 day\")'"
 
 BUCKET_URL=https://s3.console.aws.amazon.com/s3/buckets
 BUCKET=`handoff -p 04_install envs get -v key=HO_BUCKET -l critical`

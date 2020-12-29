@@ -77,7 +77,7 @@ The project runs a pipeline that is a shell equivalent to
 
 
 Before we can run this, we need to install a couple of Python packages:
-tap-exchangeratesapi and target-csv. The `install` section contains the 
+tap-exchangeratesapi and target-csv. The `install` section contains the
 installation commands. Also notice `venv` entries for each command. handoff
 can create Python virtual enviroment for each command to avoid conflicting
 dependencies among the packages.
@@ -147,7 +147,7 @@ The following command, for example, sets the start_date as 7 days ago:
 [2020-12-28 22:02:28,338] [    INFO] - Processed in 0:00:00.630708 - (__init__.py:186)
 ```
 
-
+Note: Mac OS local run should use `-v start_date=$(date -v -7d +%F)` instead of -I option.
 
 This task should have created a CSV file in artifacts directory:
 

@@ -16,7 +16,7 @@ PROMPT_CHAR="> "
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     DATE_MINUS_7='$(date -I -d "-7 day")'
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    DATE_MINUS_7='date -v -7d +%F'
+    DATE_MINUS_7='$(date -v -7d +%F)'
 fi
 
 ListDir() {

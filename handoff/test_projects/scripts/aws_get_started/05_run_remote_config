@@ -117,7 +117,7 @@ Now let's run the command by pulling the configurations and files from remote.
 
 Try running:
 "
-Command 'handoff run -w workspace --envs resource_group=handoff-etl task=exchange-rates-to-csv --push-artifacts -v start_date=$(date -I -d "-7 day")'
+Command "handoff run -w workspace --envs resource_group=handoff-etl task=exchange-rates-to-csv --push-artifacts -v start_date=$DATE_MINUS_7"
 
 echo '
 This time, we are not using the local project definition.

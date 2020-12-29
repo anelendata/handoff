@@ -83,7 +83,7 @@ echo "
 Now let's run:
 "
 
-Command 'handoff run local -p 06_fork -w workspace_06 -v start_date=$(date -I -d "-7 day")'
+Command "handoff run local -p 06_fork -w workspace_06 -v start_date=$DATE_MINUS_7"
 
 echo "
 The long format CSV file looks like this:

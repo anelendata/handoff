@@ -72,7 +72,7 @@ Instead, let's fill a value when we run handoff run command.
 The following command, for example, sets the start_date as 7 days ago:
 "
 
-Command 'handoff run local -p 04_install -w workspace_04 -v start_date=$(date -I -d "-7 day")'
+Command "handoff run local -p 04_install -w workspace_04 -v start_date=$DATE_MINUS_7"
 
 Prompt
 

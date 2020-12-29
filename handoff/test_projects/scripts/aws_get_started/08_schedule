@@ -50,7 +50,7 @@ hour=`date -u +"%H"`
 min=`date -u +"%M"`
 min=$(($min + 5))
 
-Command "handoff cloud schedule create -p 04_install -v target_id=1 cron='$min $hour * * ? *' --envs __VARS='start_date=$(date -I -d '-7 day')'"
+Command "handoff cloud schedule create -p 04_install -v target_id=1 cron='$min $hour * * ? *' --envs __VARS='start_date=\$(date -I -d \"-7 day\")'"
 
 echo '
 

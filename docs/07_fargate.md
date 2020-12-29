@@ -82,7 +82,7 @@ Once the task is created, try running on Fargate.
 To do so, run this command:
 
 ```shell
-> handoff cloud run -p 04_install --envs __VARS='start_date=2020-12-21'
+> handoff cloud run -p 04_install --envs __VARS='$(date -I -d "-7 day")'
 ```
 ```shell
 

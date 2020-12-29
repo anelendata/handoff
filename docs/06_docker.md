@@ -43,7 +43,7 @@ Successfully tagged xxxxxxxxv:0.1
 Now let's run the code in the Docker container.
 
 ```shell
-> handoff container run -p 04_install --envs __VARS='start_date=2020-12-21'
+> handoff container run -p 04_install --envs __VARS='$(date -I -d "-7 day")'
 ```
 ```shell
 
@@ -58,6 +58,9 @@ Run xxxxxxxxv:0.1 (y/N)? [2020-12-28 22:07:01,003] [    INFO] - Found credential
 [2020-12-28 22:07:03,415] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:193)
 [2020-12-28 22:07:03,434] [    INFO] - Checking return code of pid 28 - (operators.py:262)
 ```
+
+Note: Mac OS local run should also use the date command with -I option because
+the command runs inside the container.
 
 Confirm the run by checking the logs. Also check the artifacts on S3:
 ```shell

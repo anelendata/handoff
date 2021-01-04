@@ -1,5 +1,12 @@
 ## History
 
+### 0.3.2 (2021-01-04)
+
+- feature: stop task (#75)
+- feature: include taskArn in task status response
+- fix: exit cleanly on fail and still push aritfacts (#77)
+- fix: Remove unsupported Python2 from Dockerfile
+
 ### 0.3.1 (2020-12-29)
 
 - fixes Mac OS tutorial issue (incompatible date command signature) (#72)

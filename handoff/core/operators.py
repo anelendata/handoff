@@ -83,7 +83,8 @@ def _foreach(foreach_obj, params, stdin,
     for line in stdin:
         line = line.decode("utf-8").strip()
         params["_line"] = line
-        safe_name = re.sub(r"[^a-zA-Z0-9-_]", "_", line)
+        safe_name = re.sub(r"[^a-zA-Z0-9-_.]+", "_", line)
+        params["_line_safe"] = safe_name
 
         for task in foreach_obj:
             if not task.get("active", True):

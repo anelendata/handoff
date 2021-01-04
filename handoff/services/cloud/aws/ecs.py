@@ -25,6 +25,14 @@ def describe_tasks(resource_group, region, extras=None):
     return response
 
 
+def stop_task(resource_group, region, task_id, reason, extras=None):
+    client = get_client()
+    account_id = sts.get_account_id()
+    cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"
+    response = client.stop_task(cluster=cluster, task=task_id, reason=reason)
+    return response
+
+
 def run_fargate_task(task_stack, resource_group_stack, container_image, region,
                      env=[], extras=None):
     """Run a fargate task

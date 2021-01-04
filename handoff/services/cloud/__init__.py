@@ -296,6 +296,22 @@ def task_status(
     return platform.list_tasks(**vars)
 
 
+def task_stop(
+    project_dir: str,
+    workspace_dir: str,
+    vars: str = None,
+    **kwargs) -> None:
+    """`handoff cloud task stop -p <project_directory> -v id=<task_id> reason=<reason>`
+    stop a running task
+    Options:
+    - reason
+    """
+    state = _get_state()
+    platform = _get_platform()
+    state.validate_env()
+    return platform.stop_task(**vars)
+
+
 def run(
     project_dir: str,
     workspace_dir: str,

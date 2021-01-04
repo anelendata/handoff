@@ -544,6 +544,17 @@ def list_tasks(full=False, resource_group_level=False):
     return outputs
 
 
+def stop_task(id=None, reason="Stopped by the user"):
+    if not id:
+        return({"success": False,
+                "message": "You must provide task ID by -v id=<arn or task id>"})
+    state = get_state()
+    resource_group = state.get(RESOURCE_GROUP)
+    region = state.get("AWS_REGION")
+    response = ecs.stop_task(resource_group + "-resources", region, id, reason)
+    return response
+
+
 def run_task(env=[], extras=None):
     state = get_state()
     task_stack = state.get(TASK)

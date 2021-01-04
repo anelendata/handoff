@@ -178,7 +178,12 @@ def _run_task_subcommand(
     LOGGER.info("Job started at " + str(start))
 
     # Run the command
-    commands[command](config, **kwargs)
+    exit_code = 0
+    try:
+        commands[command](config, **kwargs)
+    except Exception as e:
+        LOGGER.error(str(e))
+        exit_code = 1
 
     end = datetime.datetime.utcnow()
     LOGGER.info("Job ended at " + str(end))
@@ -187,7 +192,9 @@ def _run_task_subcommand(
 
     os.chdir(prev_wd)
 
-    if push_artifacts:
+    push_artifacts_on_fail = config.get("deploy", {}).get(
+        "push_artifacts_on_fail", True)
+    if push_artifacts and (exit_code == 0 or push_artifacts_on_fail):
         if not state.get_env(BUCKET):
             raise Exception("Cannot push artifacts. BUCKET environment" +
                             "variable is not set")

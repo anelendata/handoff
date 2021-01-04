@@ -284,7 +284,7 @@ def task_status(
     workspace_dir: str,
     vars: str = None,
     **kwargs) -> None:
-    """`handoff cloud task status -p <project_directory> -v full=False resource_group=False`
+    """`handoff cloud task status -p <project_directory> -v full=False resource_group_level=False`
     list task status
     options:
     - full: Print the full description

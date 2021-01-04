@@ -523,7 +523,7 @@ def list_tasks(full=False, resource_group_level=False):
     region = state.get("AWS_REGION")
     response = ecs.describe_tasks(resource_group + "-resources", region)
     outputs = []
-    digest = ["taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
+    digest = ["taskArn", "taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
     if not response:
         return None
     for task in response["tasks"]:

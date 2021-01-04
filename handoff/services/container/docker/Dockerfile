@@ -20,7 +20,6 @@ ENV LC_MESSAGES en_US.UTF-8
 # Note: Always combine apt-get update and install
 RUN set -ex \
     && buildDeps=' \
-        python-dev \
         python3-dev \
         libkrb5-dev \
         libsasl2-dev \
@@ -36,8 +35,6 @@ RUN set -ex \
         $buildDeps \
         sudo \
         apparmor-utils \
-        python-setuptools \
-        python-pip \
         python3-requests \
         python3-setuptools \
         python3-pip \
@@ -54,13 +51,6 @@ RUN set -ex \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-
-#        vim \
-#        libmysqlclient-dev \
-#         postgresql postgresql-contrib \
-#         mysql-client \
-#        mysql-server \
-
 
 #######
 #  Add tini
@@ -86,9 +76,6 @@ WORKDIR /app
 RUN pip3 install wheel
 
 RUN ./script/install_handoff
-# RUN pip3 install handoff
-
-# RUN python3 /app/setup.py install
 
 # It is recommended to make virtual envs for each process
 RUN handoff workspace install -p project -w workspace
@@ -102,4 +89,4 @@ RUN rm -fr workspace/artifacts
 RUN chmod a+x /usr/local/bin/*
 
 ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -w workspace -a -v $(eval echo ${__VARS:-"dummy=1"}) -s ${HO_STAGE:-"test"} -a
+CMD handoff ${COMMAND:-run} -w workspace -a -v $(eval echo ${__VARS:-"dummy=1"}) -s ${HO_STAGE:-"dev"} -a

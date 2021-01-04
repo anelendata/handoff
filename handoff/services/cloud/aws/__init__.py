@@ -546,7 +546,7 @@ def list_tasks(full=False, resource_group_level=False):
 
 def stop_task(id=None, reason="Stopped by the user"):
     if not id:
-        return({"error": True,
+        return({"success": False,
                 "message": "You must provide task ID by -v id=<arn or task id>"})
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)

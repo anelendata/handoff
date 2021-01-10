@@ -347,7 +347,7 @@ def schedule_create(
     **kwargs) -> None:
     """`handoff cloud schedule create -v target_id=<target_id> cron="<cron_format>" -e vars='key1=val1 key2=val2...'`
     Schedule a task named <target_id> at the recurring scheduled specified
-    as <cron_format>. An example of cron-format string is "10 01 * * ? *"
+    as <cron_format>. An example of cron-format string is `10 01 * * ? *`
     for every day at 01:10 (1:10AM)
 
     If the environment variable vars is specified via -e option, it will be

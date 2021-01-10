@@ -1,7 +1,7 @@
 ..  _commands:
 
 Command Reference
-=============
+=================
 
 Core commands
 -------------
@@ -36,7 +36,7 @@ Envs commands
     :undoc-members:
 
 Quick start commands
-------------------
+--------------------
 
 .. automodule:: handoff.plugins.quick_start
     :members:

@@ -15,20 +15,15 @@ You should be able to finish it in 30 minutes to an hour.
 
 Below is the web-version of the tutorial.
 
-.. mdinclude:: ./01_run_local.md
+.. toctree::
+   :maxdepth: 2
 
-.. mdinclude:: ./02_venv_and_install.md
-
-.. mdinclude:: ./03_control_flow.md
-
-.. mdinclude:: ./04_set_up_aws_account.md
-
-.. mdinclude:: ./05_run_remote_config.md
-
-.. mdinclude:: ./06_docker.md
-
-.. mdinclude:: ./07_fargate.md
-
-.. mdinclude:: ./08_schedule.md
-
-.. mdinclude:: ./09_cleanup.md
+   ./01_run_local.md
+   ./02_venv_and_install.md
+   ./03_control_flow.md
+   ./04_set_up_aws_account.md
+   ./05_run_remote_config.md
+   ./06_docker.md
+   ./07_fargate.md
+   ./08_schedule.md
+   ./09_cleanup.md

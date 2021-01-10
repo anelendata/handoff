@@ -4,7 +4,7 @@
 
 - The project directory `<project_dir>` needs to have `project.yml` at minimum.
 - Supportive files goes to `<project_dir>/files`.
-- [Secrets](/secrets.html) goes to `<project_dir>/.secrets/secrets.yml` by default.
+- [Secrets](/01_run_local.html#secrets) goes to `<project_dir>/.secrets/secrets.yml` by default.
 
 ## project.yml
 

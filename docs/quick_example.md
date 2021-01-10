@@ -74,7 +74,7 @@ cat  ./files/the_great_dictator_speech.txt | wc -w
 ```
 It counted the word in the file.
 
-## A Guided Tour
+## Command-line Tutorial
 
 The project files you just created with `handoff quick_start make` has an
 interactive command-line tutorial. Each section is very short (5~10 minutes
@@ -87,4 +87,4 @@ cd projects
 
 Otherwise, you can browse the same content from the next page:
 
-Next: [A Guided Tour](./guided_tour)
+Next: [Tutorial](./tutorial)

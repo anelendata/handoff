@@ -1,5 +1,9 @@
 ## History
 
+### 0.3.3 (2021-01-09)
+
+- fix: safe char should include period(.) define _line_safe var in foreach (#79)
+
 ### 0.3.2 (2021-01-04)
 
 - feature: stop task (#75)

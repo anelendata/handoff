@@ -9,8 +9,6 @@
 
 handoff ([repository](https://github.com/anelendata/handoff))
 is a framework for developing and deploying data pipelines serverlessly.
-executing unix-pipeline processes serverlessly.
-
 handoff removes the complicated cloud configurations. You can easily take care
 of the essential settings and save time and money with a single command:
 

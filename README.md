@@ -8,9 +8,15 @@
 ## What is it?
 
 handoff ([repository](https://github.com/anelendata/handoff))
-is a framework for developing and deploying data pipelines serverlessly.
-handoff removes the complicated cloud configurations. You can easily take care
-of the essential settings and save time and money with a single command:
+is a single command that let you quickly orchestrate the data pipeline on
+a serverless platform such as AWS Fargate.
+
+Deploying on a serverless platform saves you from the need for managing servers
+and paying for idling virtual machines. The serverless configuration could be
+very complicated, so handoff takes care of it under the hood so you can focus on
+the pipeline logic.
+
+Features and benefits:
 
 1. Container orchestration (AWS Elastic Continer Service)
 2. Extended serverless task execution (AWS Fargate, vs. AWS Lambda's 15min limit) 
@@ -29,6 +35,7 @@ deployment experience (Azure and Google Cloud Platform).
 ## Get started easily
 
 Check out [the super quick example](https://dev.handoff.cloud/en/latest/quick_example.html)
+and [tutorial](https://dev.handoff.cloud/en/latest/tutorial.html).
 
 ## Open Source handoff Recipes!
 

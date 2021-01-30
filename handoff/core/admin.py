@@ -254,11 +254,11 @@ def secrets_push(
     workspace_dir: str,
     yes: bool =False,
     **kwargs) -> None:
-    """`handoff secrets push -p <project_directory> -d file=<secrets_file>`
+    """`handoff secrets push -p <project_directory> -v secrets_dir=<secrets_dir>`
 
     Push the contents of <secrets_file> to remote parameter store
 
-    --vars file (.secrets/secrets.yml): The YAML file storing secrets
+    --vars secrets_dir (.secrets): The directory containing secrets.yml file, which is a YAML file storing secrets
     with format:
     ```
     - key: key1

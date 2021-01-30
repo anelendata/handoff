@@ -516,12 +516,14 @@ def delete_task():
     return response
 
 
-def list_tasks(full=False, resource_group_level=False):
+def list_tasks(full=False, running=True, stopped=True,
+               resource_group_level=False):
     state = get_state()
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
-    response = ecs.describe_tasks(resource_group + "-resources", region)
+    response = ecs.describe_tasks(resource_group + "-resources", region,
+                                  running=running, stopped=stopped)
     outputs = []
     digest = ["taskArn", "taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
     if not response:
@@ -536,10 +538,13 @@ def list_tasks(full=False, resource_group_level=False):
                 output[item] = task.get(item)
         else:
             output = task
-        if output["lastStatus"] == "RUNNING":
+        if output["lastStatus"] in "RUNNING":
             output["timeSinceStart"] = str(
                 datetime.datetime.utcnow().replace(
                     tzinfo=datetime.timezone.utc) - task["startedAt"])
+        elif output["lastStatus"] in "STOPPED":
+            output["duration"] = str(task["executionStoppedAt"] - task["startedAt"])
+
         outputs.append(output)
     return outputs
 
@@ -637,7 +642,7 @@ def unschedule_task(target_id):
     return response
 
 
-def list_schedules():
+def list_schedules(full=False, **kwargs):
     state = get_state()
     task_stack = state.get(TASK)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
@@ -649,6 +654,8 @@ def list_schedules():
             "cron": re.sub(r"cron\((.*)\)", "\\1",
                            r["rule"]["ScheduleExpression"])
         }
+        if full:
+            record.update(r)
         if not r["targets"]:
             LOGGER.warning("Rule %s has no target!" % record["name"])
             continue

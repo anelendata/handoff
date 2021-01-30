@@ -284,11 +284,14 @@ def task_status(
     workspace_dir: str,
     vars: str = None,
     **kwargs) -> None:
-    """`handoff cloud task status -p <project_directory> -v full=False resource_group_level=False`
+    """`handoff cloud task status -p <project_directory> -v full=False running=True stopped=True resource_group_level=False`
     list task status
-    options:
-    - full: Print the full description
-    - resource_group_level: List all the tasks under the same resource groups
+
+    AWS options:
+    - full: When true, print the full description (default: false)
+    - running: When true, include desired status = RUNNING (default: true)
+    - stopped: When true, include desired status = STOPPED (default: true)
+    - resource_group_level: When true, list all the tasks under the same resource groups (default: false)
     """
     state = _get_state()
     platform = _get_platform()
@@ -422,6 +425,7 @@ def schedule_delete(
 def schedule_list(
     project_dir: str,
     workspace_dir: str,
+    vars=None,
     **kwargs) -> None:
     """`handoff cloud schedule list`
     List the scheduled tasks
@@ -429,7 +433,7 @@ def schedule_list(
     state = _get_state()
     platform = _get_platform()
     state.validate_env()
-    return platform.list_schedules()
+    return platform.list_schedules(**vars)
 
 
 def logs(

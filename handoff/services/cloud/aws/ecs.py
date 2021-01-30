@@ -13,12 +13,19 @@ def get_client():
     return cred.get_client("ecs")
 
 
-def describe_tasks(resource_group, region, extras=None):
+def describe_tasks(resource_group, region, running=True, stopped=True,
+                   extras=None):
     client = get_client()
     account_id = sts.get_account_id()
     cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"
-    response = client.list_tasks(cluster=cluster)
-    tasks = [t for t in response["taskArns"]]
+    task_arns = []
+    if stopped:
+        response = client.list_tasks(cluster=cluster, desiredStatus="STOPPED")
+        task_arns = task_arns + response["taskArns"]
+    if running:
+        response = client.list_tasks(cluster=cluster, desiredStatus="RUNNING")
+        task_arns = task_arns + response["taskArns"]
+    tasks = [t for t in task_arns]
     if not tasks:
         return None
     response = client.describe_tasks(cluster=cluster, tasks=tasks)

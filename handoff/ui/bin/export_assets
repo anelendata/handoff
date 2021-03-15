@@ -1,0 +1,4 @@
+cp bsstudio/export/*.html templates
+cp -r bsstudio/export/assets static
+sed -i '' 's/assets/\/assets/g' templates/*.html
+

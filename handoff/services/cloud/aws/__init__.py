@@ -560,7 +560,7 @@ def stop_task(id=None, reason="Stopped by the user"):
     return response
 
 
-def run_task(env=[], extras=None):
+def run_task(env={}, extras=None):
     state = get_state()
     task_stack = state.get(TASK)
     container_image = state.get(CONTAINER_IMAGE)
@@ -673,8 +673,40 @@ def list_schedules(full=False, **kwargs):
     return yaml.load(yml_clean, Loader=yaml.FullLoader)
 
 
-def write_logs(file_descriptor, start_time=None, end_time=None, format_=None,
-               follow=False, wait=2.5, last_timestamp=None, **extras):
+def _find_json(string):
+    pos = string.find("{")
+    if pos > -1:
+        json_str = string[pos:]
+        try:
+            obj = json.loads(json_str)
+        except Exception:
+            return None
+        return obj
+    return None
+
+
+def _write_log(file_descriptor, event, format_):
+    if format_ == "json":
+        obj = _find_json(event["message"])
+        if obj is not None:
+            file_descriptor.write(
+                json.dumps({"datetime": event["datetime"].isoformat(),
+                            "message": obj}) + "\n")
+    else:
+        file_descriptor.write(format_.format(**event) + "\n")
+
+
+def write_logs(
+    file_descriptor,
+    start_time=None,
+    end_time=None,
+    filter_pattern=None,
+    format_=None,
+    follow=False,
+    wait=2.5,
+    last_timestamp=None,
+    **extras
+):
     state = get_state()
     log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
 
@@ -690,6 +722,7 @@ def write_logs(file_descriptor, start_time=None, end_time=None, format_=None,
         response = logs.filter_log_events(log_group_name,
                                           start_time=start_time,
                                           end_time=end_time,
+                                          filter_pattern=filter_pattern,
                                           extras=extras)
 
         show = False
@@ -700,7 +733,7 @@ def write_logs(file_descriptor, start_time=None, end_time=None, format_=None,
                 show = True
                 wait = 2.5
                 last_timestamp = e["timestamp"]
-                file_descriptor.write(format_.format(**e) + "\n")
+                _write_log(file_descriptor, e, format_=format_)
 
         next_token = response.get("nextToken")
         while next_token:
@@ -714,7 +747,7 @@ def write_logs(file_descriptor, start_time=None, end_time=None, format_=None,
                     show = True
                     wait = 2.5
                     last_timestamp = e["timestamp"]
-                    file_descriptor.write(format_.format(**e) + "\n")
+                    _write_log(file_descriptor, e, format_=format_)
             next_token = response.get("nextToken")
 
         if not follow:

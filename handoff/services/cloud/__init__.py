@@ -319,9 +319,10 @@ def run(
     project_dir: str,
     workspace_dir: str,
     envs: Dict = {},
+    vars: Dict = {},
     extras: str = None,
     **kwargs) -> None:
-    """`handoff cloud run -v resource_group=<resource_group_name> task=<task_name> -e vars='key1=val1 key2=val2...'`
+    """`handoff cloud run -v resource_group=<resource_group_name> task=<task_name> target_id=<target_id> -e vars='key1=val1 key2=val2...'`
     Run a task once in the platform
 
     If the environment variable vars is specified via -e option, it will be
@@ -330,6 +331,7 @@ def run(
     """
     state = _get_state()
     platform = _get_platform()
+    config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
 
     extras_obj = None
@@ -337,8 +339,17 @@ def run(
         with open(extras, "r") as f:
             extras_obj = yaml.load(f)
 
-    envs[STAGE] = state[STAGE]
-    return platform.run_task(env=envs, extras=extras_obj)
+    target_id = vars.get("target_id")
+    target_envs = dict()
+    if target_id:
+        for s in config.get("schedules", []):
+            if str(s["target_id"]) == target_id:
+                for e in s.get("envs"):
+                    target_envs[e["key"]] = e["value"]
+                break
+    target_envs.update(envs)
+    target_envs[STAGE] = state[STAGE]
+    return platform.run_task(env=target_envs, extras=extras_obj)
 
 
 def schedule_create(
@@ -439,7 +450,6 @@ def schedule_list(
 def logs(
     project_dir: str,
     workspace_dir: str,
-    file_descriptor=sys.stdout,
     vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud logs -v start_time=<start_time> end_time=<end_time> follow=<True/False>`
@@ -452,4 +462,15 @@ def logs(
     state = _get_state()
     platform = _get_platform()
     state.validate_env()
+    close = False
+    if vars.get("file"):
+        file_descriptor = open(vars.pop("file"), "a")
+        close = True
+    else:
+        file_descriptor = sys.stdout
+
     platform.write_logs(file_descriptor, **vars)
+
+    if close:
+        file_descriptor.close()
+

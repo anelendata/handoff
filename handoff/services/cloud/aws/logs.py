@@ -12,11 +12,21 @@ def get_client():
     return cred.get_client("logs")
 
 
-def filter_log_events(log_group_name, start_time=None, end_time=None,
-                      next_token=None, extras=None):
+def filter_log_events(
+    log_group_name,
+    start_time=None,
+    end_time=None,
+    next_token=None,
+    filter_pattern=None,
+    extras=None,
+):
+    if not filter_pattern:
+        filter_pattern = " "
+
     client = get_client()
     kwargs = {
         "logGroupName": log_group_name,
+        "filterPattern": filter_pattern,
     }
     if start_time:
         if type(start_time) is datetime.datetime:

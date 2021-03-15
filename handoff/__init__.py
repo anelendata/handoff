@@ -5,12 +5,13 @@ from lxml import html
 import requests
 from typing import Dict, List
 
+from handoff import ui
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
                             CONTAINER_IMAGE, IMAGE_VERSION,
                             CLOUD_PROVIDER, CLOUD_PLATFORM,
-                            CONTAINER_PROVIDER, DEFAULT_STAGE,
+                            CONTAINER_PROVIDER, STAGE, DEFAULT_STAGE,
                             get_state, init_state)
 from handoff.core import admin, task
 from handoff.utils import bcolors, get_logger
@@ -209,7 +210,7 @@ def do(
     show_help: bool = False,
     **kwargs) -> None:
     """Determine the command to run"""
-    init_state(kwargs["stage"])
+    init_state(kwargs.get("stage", os.environ.get(STAGE, DEFAULT_STAGE)))
     state = get_state()
 
     envs = kwargs.get("envs", {})
@@ -221,9 +222,18 @@ def do(
             state.set_env(ENV_PREFIX + key.upper(), value)
         except KeyError:
             state.set_env(key.upper(), value, trust=True)
-    state.set_env(CLOUD_PROVIDER, kwargs["cloud_provider"])
-    state.set_env(CLOUD_PLATFORM, kwargs["cloud_platform"])
-    state.set_env(CONTAINER_PROVIDER, kwargs["container_provider"])
+    state.set_env(
+        CLOUD_PROVIDER,
+        kwargs.get("cloud_provider", state.get_env(CLOUD_PROVIDER)))
+    state.set_env(CLOUD_PLATFORM,
+                  kwargs.get("cloud_platform", state.get_env(CLOUD_PLATFORM)))
+    state.set_env(CONTAINER_PROVIDER,
+                  kwargs.get("container_provider",
+                             state.get_env(CONTAINER_PROVIDER)))
+
+    if command == "server":
+        ui.server(**kwargs["vars"])
+        return
 
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]

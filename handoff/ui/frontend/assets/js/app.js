@@ -76,13 +76,11 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
 async function fetchRepositoryList() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', '/api/repositories');
   xhr.onload = function(e) {
     var output = document.getElementById('repositories');
-    xhr.responseText;
     records = JSON.parse(xhr.responseText);
     htmlOut = '';
     records.forEach(function(obj, index) {
@@ -113,34 +111,62 @@ async function fetchProjectList() {
   xhr.send();
 }
 
-async function pollLog() {
+var log_text = '';
+function updateLogArea(text) {
+  log_text = text;
+  var output = document.getElementById('log-area');
+  filter_term = document.getElementById('filter-term').value;
+  logs = text.split('\n').sort();
+  filtered_text = '';  
+  if (filter_term != undefined & filter_term.length > 0) {
+    last = 0;
+    for (i = 0; i < logs.length; i++) {
+        if (logs[i].toLowerCase().includes(filter_term.toLowerCase())) {
+            end_chunk = Math.min(logs.length - 1, i + 10);
+            for (j = Math.max(last, i - 10); j <= end_chunk; j++) {
+                filtered_text += logs[j] + '\n';
+            }
+            if (end_chunk < logs.length - 1) {
+                filtered_text += '...\n...\n...\n';
+            }
+            i = end_chunk;
+            last = end_chunk;
+        }
+    }  
+  } else {
+    for (i = 0; i < logs.length; i++) {
+        filtered_text += logs[i] + '\n'
+    }      
+  }
+  output.textContent = filtered_text;
+  output.parentElement.parentElement.scrollTop = output.parentElement.parentElement.scrollHeight;  
+  // output.textContent = xhr.responseText.replace(/\d{12}/g, '******');    
+}
+
+async function pollLog(startTimestamp, endTimestamp) {
   repository = getRepositoryID();
   if (repository === null) {
     return;
   }
   project = getProjectID();
   if (project === null) return;
-  var logStart = Math.floor(Date.now() / 1000) - 3 * 24 * 60 * 60
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/log?start_time=' + logStart);
+  xhr.open('GET', '/api/' + repository + '/' + project + '/log?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
   xhr.onload = function(e) {
-    var output = document.getElementById('log-area');
-    output.textContent = xhr.responseText;
-    output.parentElement.parentElement.scrollTop = output.parentElement.parentElement.scrollHeight;
+    updateLogArea(xhr.responseText);
   }
   xhr.send();
 }
 
-async function pollStats() {
+async function pollStats(startTimestamp, endTimestamp) {
   repository = getRepositoryID();
   if (repository === null) {
     return;
   }
   project = getProjectID();
   if (project === null) return;
-  var statsStart = Math.floor(Date.now() / 1000) - 14 * 24 * 60 * 60
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/stats?start_time=' + statsStart);
+  xhr.open('GET', '/api/' + repository + '/' + project + '/stats?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
   xhr.onload = function(e) {
     data = new Array();
     records = JSON.parse(xhr.responseText);
@@ -157,6 +183,10 @@ async function pollStats() {
 }
 
 async function runNow(target_id) {
+  var confirm = window.confirm('Run ' + project + ' project target ' + target_id + '?');
+  if (!confirm) {
+    return;
+  }    
   repository = getRepositoryID();
   if (repository === null) {
     return;
@@ -209,13 +239,14 @@ async function getStatus() {
   project = getProjectID()
   if (project === null) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + respository + '/' + project +'/status');
+  xhr.open('GET', '/api/' + repository + '/' + project +'/status');
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';
     if (res === null) return;
     res.forEach(function(s) {
     var h = '<tr><td>' + s['taskArn'] + '</td><td>' +
+    // var h = '<tr><td>' + s['taskArn'].replace(/\d{12}/, '******') + '</td><td>' +        
         s['lastStatus'] + '</td><td>' +
         s['createdAt'] + '</td><td>' +
         s['startedAt'] + '</td><td>' +
@@ -232,14 +263,15 @@ async function getStatus() {
   xhr.send();
 }
 
-function fetchData() {
+function fetchData(startTimestamp, endTimestamp) {
+  if (startTimestamp === undefined) startTimestamp = moment().add(-3, 'day').unix();
+  if (endTimestamp === undefined) endTimestamp = moment().unix();
   fetchRepositoryList();
   fetchProjectList();
+  getStatus();    
   getSchedule();
-  pollLog();
-  pollStats();
-  getStatus();
+  pollLog(startTimestamp, endTimestamp);
+  pollStats(startTimestamp, endTimestamp);
 }
 
 fetchData();
-setInterval(fetchData, 300 * 1000);

@@ -101,15 +101,18 @@ def run(repository, project, target_id=None):
 
 
 @router.get("/api/{repository}/{project}/log", response_class=PlainTextResponse)
-def log(repository, project, start_time=None):
+def log(repository, project, start_time=None, end_time=None):
     file_name = f"./{project}.log"
     if os.path.isfile(file_name):
         os.remove(file_name)
-    start_time = datetime.datetime.fromtimestamp(int(start_time)).isoformat()
+    start_time = datetime.datetime.fromtimestamp(float(start_time)).isoformat()
+    if end_time:
+        end_time = datetime.datetime.fromtimestamp(float(end_time)).isoformat()
     handoff_do(
         os.path.join(repository, "projects", project),
         "cloud logs",
         vars={"start_time": start_time,
+              "end_time": end_time,
               "file": file_name,
               "follow": False,
               },
@@ -123,16 +126,20 @@ def log(repository, project, start_time=None):
 
 
 @router.get("/api/{repository}/{project}/stats")
-def stats(repository, project, start_time=None):
+def stats(repository, project, start_time=None, end_time=None):
     file_name = f"./{repository}/{project}_stats.json"
     if os.path.isfile(file_name):
         os.remove(file_name)
     start_time = datetime.datetime.fromtimestamp(
-        int(start_time)).isoformat()
+        float(start_time)).isoformat()
+    if end_time:
+        end_time = datetime.datetime.fromtimestamp(float(end_time)).isoformat()
+
     handoff_do(
         os.path.join(repository, "projects", project),
         "cloud logs",
         vars={"start_time": start_time,
+              "end_time": end_time,
               "file": file_name,
               "filter_pattern": "count",
               "format_": "json",

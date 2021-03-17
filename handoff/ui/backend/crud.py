@@ -1,4 +1,4 @@
-import os
+import hashlib, os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -96,7 +96,15 @@ async def get_current_user(
     user = get_user_by_username(db, username=token_data.username)
     if user is None:
         raise credentials_exception
+
+    email_md5 = hashlib.md5(user.email.encode("utf-8")).hexdigest()
+    user.profile_url = email_md5
+    user.profile_url = f"https://gravatar.com/avatar/{email_md5}"
     return user
+
+    data = user.__dict__
+    data["profile_url"] = f"https://gravatar.com/avatar/{email_md5}"
+    return data
 
 
 async def get_current_active_user(
@@ -148,3 +156,4 @@ def create_user_organization(
     db.commit()
     db.refresh(db_organization)
     return db_organization
+

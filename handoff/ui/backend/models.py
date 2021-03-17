@@ -34,3 +34,18 @@ class Organization(Base):
     description = Column(String, index=True)
     owner_id = Column(Integer, ForeignKey('user.id'))
     owner = relationship("User", backref="owned_orgs")
+
+
+class AWSCredential(Base):
+    __tablename__ = "aws_credential"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey('user.id'))
+    owner = relationship("User", backref="aws_creds")
+    name = Column(String)
+    masked_key = Column(String)
+    encrypted_key = Column(String)
+    encrypted_secret = Column(String)
+    region = Column(String)
+    external_id = Column(String)
+    deactivated = Column(Boolean, default=False)

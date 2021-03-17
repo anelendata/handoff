@@ -1,3 +1,48 @@
+function login() {    
+  username = $('#inputEmail').val();
+  password = $('#inputPassword').val();
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/token', true);
+  xhr.onload = function(e) {
+    response = JSON.parse(xhr.responseText);
+    if (response['access_token'] != undefined) {
+      token = response['access_token'];
+      postLogin(token);
+      sessionStorage.SessionName = 'handoff';
+      sessionStorage.setItem("token", token);              
+    }
+  }
+  data = new FormData();
+  data.append('username', username);
+  data.append('password', password)
+  xhr.send(data);
+}
+
+function showLoginModal() {
+  $('#login-modal').modal('show');    
+}
+
+function postLogin(token) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/users/me/');
+  xhr.setRequestHeader('accept', 'application/json', false);
+  xhr.setRequestHeader('Authorization', 'Bearer ' + token, false);
+  xhr.onload = function(e) {
+    response = JSON.parse(xhr.responseText);
+    $('#profile-image')[0].src = response['profile_url']
+    $('#login-modal').modal('hide');    
+    document.getElementById('user-menu').innerHTML = 
+      '<a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i> Profile</a><a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i> Settings</a><a class="dropdown-item" href="#"><i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i> Activity log</a><div class="dropdown-divider"></div><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Logout</a>';      
+  }
+  xhr.send();
+}
+
+function logout() {
+    sessionStorage.removeItem("token");
+    document.getElementById('user-menu').innerHTML = '<a class="dropdown-item" id="login" href="#" onclick="showLoginModal()"><i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i> Login</a>';
+    $('#profile-image')[0].src = 'https://gravatar.com/avatar/0';
+}
+
 var path = window.location.pathname.split('/')
 
 var chart = new Highcharts.Chart({
@@ -274,4 +319,12 @@ function fetchData(startTimestamp, endTimestamp) {
   pollStats(startTimestamp, endTimestamp);
 }
 
+function init() {
+  sessionStorage.SessionName = 'handoff';
+  token = sessionStorage.getItem("token");
+  if (token != undefined) {
+      postLogin(token);
+  }    
+}
+init();
 fetchData();

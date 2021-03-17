@@ -1,7 +1,7 @@
 import datetime, re
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, status
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -31,7 +31,10 @@ async def login_for_access_token(
     access_token = crud.create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+      "access_token": access_token,
+      "token_type": "bearer"
+    }
 
 
 @router.post("/users/", response_model=schemas.User)
@@ -107,3 +110,4 @@ def read_organizations(
 ):
     orgs = crud.get_organizations(db, skip=skip, limit=limit)
     return orgs
+

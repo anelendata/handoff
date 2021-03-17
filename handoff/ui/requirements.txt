@@ -12,3 +12,5 @@ passlib==1.7.4
 bcrypt==3.2.0                                                                   
 python-jose==3.2.0
 cryptography==3.4.6
+
+pysqlcipher3==1.0.3

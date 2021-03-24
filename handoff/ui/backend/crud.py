@@ -58,7 +58,8 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    new_user = get_user_by_email(user.email)
+    return new_user
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
@@ -70,7 +71,11 @@ def get_user(db: Session, user_id: int):
 
 
 def get_user_by_email(db: Session, email: str):
-    return db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email).first()
+    email_md5 = hashlib.md5(user.email.encode("utf-8")).hexdigest()
+    user.profile_url = email_md5
+    user.profile_url = f"https://gravatar.com/avatar/{email_md5}"
+    return user
 
 
 def get_user_by_username(db: Session, username: str):
@@ -96,10 +101,6 @@ async def get_current_user(
     user = get_user_by_username(db, username=token_data.username)
     if user is None:
         raise credentials_exception
-
-    email_md5 = hashlib.md5(user.email.encode("utf-8")).hexdigest()
-    user.profile_url = email_md5
-    user.profile_url = f"https://gravatar.com/avatar/{email_md5}"
     return user
 
     data = user.__dict__

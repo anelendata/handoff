@@ -135,7 +135,8 @@ class ExtendedEnvBuilder(venv.EnvBuilder):
                         being processed.
         """
         # url = 'https://raw.github.com/pypa/pip/master/contrib/get-pip.py'
-        url = 'https://raw.githubusercontent.com/pypa/get-pip/master/get-pip.py'
+        # url = 'https://raw.githubusercontent.com/pypa/get-pip/master/get-pip.py'
+        url = 'https://bootstrap.pypa.io/get-pip.py'
         self.install_script(context, 'pip', url)
 
 def main(args=None):

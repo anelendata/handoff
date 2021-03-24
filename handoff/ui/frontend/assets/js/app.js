@@ -19,6 +19,10 @@ function login() {
 }
 
 function showLoginModal() {
+  $("#login-modal").modal({
+    backdrop: 'static',
+    keyboard: false
+  });
   $('#login-modal').modal('show');    
 }
 
@@ -41,6 +45,7 @@ function logout() {
     sessionStorage.removeItem("token");
     document.getElementById('user-menu').innerHTML = '<a class="dropdown-item" id="login" href="#" onclick="showLoginModal()"><i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i> Login</a>';
     $('#profile-image')[0].src = 'https://gravatar.com/avatar/0';
+    showLoginModal();
 }
 
 var path = window.location.pathname.split('/')
@@ -180,7 +185,7 @@ function updateLogArea(text) {
     }  
   } else {
     for (i = 0; i < logs.length; i++) {
-        filtered_text += logs[i] + '\n'
+        filtered_text += logs[i].replace(/[0-9]{8}/, '************') + '\n'
     }      
   }
   output.textContent = filtered_text;
@@ -243,6 +248,7 @@ async function runNow(target_id) {
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     console.info(res);
+    setTimeout(getStatus, 5000);      
   }
   xhr.send();
 }
@@ -260,7 +266,7 @@ async function getSchedule() {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';
     res['schedules'].forEach(function(s) {
-      var h = '<tr><td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#" onclick="runNow(' +
+      var h = '<tr><td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
           s['target_id'] +
           ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td><td>' +
           s['target_id'] + '</td><td>' + s['cron'] + '</td><td>';
@@ -279,6 +285,8 @@ async function getSchedule() {
 async function getStatus() {
   repository = getRepositoryID();
   if (repository === null) {
+    var output = document.getElementById('status');
+    output.innerHTML = "";
     return;
   }
   project = getProjectID()
@@ -290,7 +298,7 @@ async function getStatus() {
     var htmlOut = '';
     if (res === null) return;
     res.forEach(function(s) {
-    var h = '<tr><td>' + s['taskArn'] + '</td><td>' +
+    var h = '<tr><td>' + s['taskArn'].slice(-8) + '</td><td>' +
     // var h = '<tr><td>' + s['taskArn'].replace(/\d{12}/, '******') + '</td><td>' +        
         s['lastStatus'] + '</td><td>' +
         s['createdAt'] + '</td><td>' +
@@ -323,8 +331,13 @@ function init() {
   sessionStorage.SessionName = 'handoff';
   token = sessionStorage.getItem("token");
   if (token != undefined) {
-      postLogin(token);
-  }    
+    postLogin(token);
+    fetchData();  
+  } else {
+    showLoginModal();      
+  }
 }
-init();
-fetchData();
+
+$(document).ready(function(){
+  init();
+});

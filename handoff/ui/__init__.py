@@ -14,7 +14,7 @@ from handoff.ui import backend
 logger = logging.getLogger(__name__)
 
 
-def server(port=8000, **kwargs):
+def server(host="127.0.0.1", port=8000, **kwargs):
     """
     init_state(stage="prod")
     state = get_state()
@@ -31,7 +31,7 @@ def server(port=8000, **kwargs):
         "handoff.ui.backend.main:app",
         reload=True,
         reload_dirs=[CODE_DIR],
-        host="127.0.0.1",
+        host=host,
         port=port,
         log_level="info",
     )

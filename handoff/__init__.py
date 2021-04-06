@@ -5,7 +5,6 @@ from lxml import html
 import requests
 from typing import Dict, List
 
-from handoff import ui
 from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
@@ -230,10 +229,6 @@ def do(
     state.set_env(CONTAINER_PROVIDER,
                   kwargs.get("container_provider",
                              state.get_env(CONTAINER_PROVIDER)))
-
-    if command == "server":
-        ui.server(**kwargs["vars"])
-        return
 
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]

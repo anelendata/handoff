@@ -20,7 +20,7 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratesapi
+  command: pip install tap-exchangeratehost
 - venv: target
   command: pip install target-csv
 
@@ -32,7 +32,7 @@ tasks:
 - name: fetch_exchange_rates
   description: Fetch exchange rates
   pipeline:
-  - command: tap-exchangeratesapi
+  - command: tap-exchangeratehost
     args: --config files/tap-config.json
     venv: tap
   - command: python
@@ -46,7 +46,7 @@ deploy:
   cloud_provider: aws
   cloud_platform: fargate
   resource_group: handoff-etl
-  container_image: xxxxxxxxv
+  container_image: xxxxxxxxcsv
   task: exchange-rates-to-csv
 
 schedules:
@@ -72,12 +72,12 @@ We will use it later.)
 
 The project runs a pipeline that is a shell equivalent to
 
-    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+    tap-exchangeratehost | python files/stats_collector.py | target-csv
 
 
 
 Before we can run this, we need to install a couple of Python packages:
-tap-exchangeratesapi and target-csv. The `install` section contains the
+tap-exchangeratehost and target-csv. The `install` section contains the 
 installation commands. Also notice `venv` entries for each command. handoff
 can create Python virtual enviroment for each command to avoid conflicting
 dependencies among the packages.
@@ -89,28 +89,28 @@ To install, run this command:
 ```
 ```shell
 
-[2020-12-28 22:02:12,049] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:16:09,548] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Requirement already satisfied: wheel in ./tap/lib/python3.6/site-packages (0.36.2)
-Collecting tap-exchangeratesapi
-  Using cached tap_exchangeratesapi-0.1.1-cp36-none-any.whl
-Collecting backoff==1.3.2
-  Using cached backoff-1.3.2-cp36-none-any.whl
-Collecting requests==2.21.0
-  Using cached requests-2.21.0-py2.py3-none-any.whl (57 kB)
-Collecting singer-python==5.3.3
-  Using cached singer_python-5.3.3-cp36-none-any.whl
+Collecting tap-exchangeratehost
+  Using cached tap_exchangeratehost-0.1.0-py3-none-any.whl (8.2 kB)
+Collecting requests>=2.23.0
+  Using cached requests-2.25.1-py2.py3-none-any.whl (61 kB)
+Collecting singer-python>=5.3.0
+  Using cached singer_python-5.12.1-py3-none-any.whl
+Collecting urllib3<1.27,>=1.21.1
+  Using cached urllib3-1.26.4-py2.py3-none-any.whl (153 kB)
 .
 .
 .
-  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
+  Using cached python_dateutil-2.8.1-py2.py3-none-any.whl (227 kB)
 Collecting pytzdata
   Using cached pytzdata-2020.1-py2.py3-none-any.whl (489 kB)
-Collecting tzlocal
-  Using cached tzlocal-2.1-py2.py3-none-any.whl (16 kB)
+Collecting six>=1.5
+  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
 Collecting pytz
-  Using cached pytz-2020.5-py2.py3-none-any.whl (510 kB)
+  Using cached pytz-2021.1-py2.py3-none-any.whl (510 kB)
 Installing collected packages: six, pytz, tzlocal, pytzdata, python-dateutil, simplejson, pendulum, singer-python, jsonschema, target-csv
-Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2020.5 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
+Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2021.1 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
 sucess
 ```
 
@@ -136,24 +136,24 @@ The following command, for example, sets the start_date as 7 days ago:
 ```
 ```shell
 
-[2020-12-28 22:02:27,352] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:27,707] [    INFO] - Job started at 2020-12-28 22:02:27.707674 - (__init__.py:178)
-[2020-12-28 22:02:27,707] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:193)
-[2020-12-28 22:02:27,726] [    INFO] - Checking return code of pid 3033 - (operators.py:262)
-[2020-12-28 22:02:28,313] [    INFO] - Checking return code of pid 3034 - (operators.py:262)
-[2020-12-28 22:02:28,320] [    INFO] - Checking return code of pid 3036 - (operators.py:262)
-[2020-12-28 22:02:28,338] [    INFO] - Pipeline fetch_exchange_rates exited with code 0 - (task.py:32)
-[2020-12-28 22:02:28,338] [    INFO] - Job ended at 2020-12-28 22:02:28.338382 - (__init__.py:184)
-[2020-12-28 22:02:28,338] [    INFO] - Processed in 0:00:00.630708 - (__init__.py:186)
+[2021-04-07 05:16:25,480] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:25,837] [    INFO] - Job started at 2021-04-07 05:16:25.837463 - (__init__.py:178)
+[2021-04-07 05:16:25,837] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:194)
+[2021-04-07 05:16:25,858] [    INFO] - Checking return code of pid 5024 - (operators.py:263)
+[2021-04-07 05:16:26,893] [    INFO] - Checking return code of pid 5025 - (operators.py:263)
+[2021-04-07 05:16:26,901] [    INFO] - Checking return code of pid 5027 - (operators.py:263)
+[2021-04-07 05:16:26,921] [    INFO] - Pipeline fetch_exchange_rates exited with code 0 - (task.py:32)
+[2021-04-07 05:16:26,922] [    INFO] - Job ended at 2021-04-07 05:16:26.921998 - (__init__.py:189)
+[2021-04-07 05:16:26,922] [    INFO] - Processed in 0:00:01.084535 - (__init__.py:191)
 ```
 
-Note: Mac OS local run should use `-v start_date=$(date -v -7d +%F)` instead of -I option.
+
 
 This task should have created a CSV file in artifacts directory:
 
 ```shell
 
-exchange_rate-20201228T220228.csv
+exchange_rate-20210407T051626.csv
 ```
 
 

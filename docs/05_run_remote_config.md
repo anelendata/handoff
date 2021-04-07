@@ -30,15 +30,15 @@ Let's store project.yml and the project files to the remote store
 ```
 ```shell
 
-[2020-12-28 22:02:47,376] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:48,324] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-handoff-etl-bucket/xxxxxxxx85921ccb
+[2021-04-07 05:16:47,604] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:48,621] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-handoff-etl-bucket/xxxxxxxx21cc26bf
 ResponseMetadata:
   HTTPHeaders:
     content-length: '392'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:02:48 GMT
-    x-amzn-requestid: xxxxxxxx7b10873a
+    date: Wed, 07 Apr 2021 05:16:49 GMT
+    x-amzn-requestid: xxxxxxxxab5f78c7
   HTTPStatusCode: 200
 ```
 
@@ -61,8 +61,8 @@ Try running these two commands:
 ```
 ```shell
 
-[2020-12-28 22:05:49,409] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:05:49,769] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:19:49,762] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:19:50,133] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 success
 ```
 
@@ -73,14 +73,14 @@ and this:
 ```
 ```shell
 
-[2020-12-28 22:05:50,740] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:05:51,100] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:05:51,235] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:05:51,527] [    INFO] - Uploading 04_install/files to bucket xxxxxxxx - (s3.py:122)
-[2020-12-28 22:05:51,527] [    INFO] - Files to be uploaded: ['04_install/files/target-config.json', '04_install/files/tap-config.json', '04_install/files/stats_collector.py'] - (s3.py:135)
-[2020-12-28 22:05:51,527] [    INFO] - Uploading 04_install/files/target-config.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/target-config.json - (s3.py:142)
-[2020-12-28 22:05:51,889] [    INFO] - Uploading 04_install/files/tap-config.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/tap-config.json - (s3.py:142)
-[2020-12-28 22:05:52,035] [    INFO] - Uploading 04_install/files/stats_collector.py to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/stats_collector.py - (s3.py:142)
+[2021-04-07 05:19:51,191] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:19:51,565] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:19:51,638] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:19:51,949] [    INFO] - Uploading 04_install/files to bucket xxxxxxxx - (s3.py:122)
+[2021-04-07 05:19:51,949] [    INFO] - Files to be uploaded: ['04_install/files/target-config.json', '04_install/files/tap-config.json', '04_install/files/stats_collector.py'] - (s3.py:135)
+[2021-04-07 05:19:51,949] [    INFO] - Uploading 04_install/files/target-config.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/target-config.json - (s3.py:142)
+[2021-04-07 05:19:52,316] [    INFO] - Uploading 04_install/files/tap-config.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/tap-config.json - (s3.py:142)
+[2021-04-07 05:19:52,476] [    INFO] - Uploading 04_install/files/stats_collector.py to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/files/stats_collector.py - (s3.py:142)
 See the files at https://s3.console.aws.amazon.com/s3/buckets/xxxxxxxx/dev-exchange-rates-to-csv/files/
 success
 ```
@@ -110,12 +110,12 @@ Try running (and enter 'y' to the confirmation):
 ```
 ```shell
 
-[2020-12-28 22:05:52,750] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:19:53,244] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Putting the following keys to remote parameter store:
   - username (task level)
   - password (task level)
   - google_client_secret (resource group level)
-Proceed? (y/N)[2020-12-28 22:05:53,109] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+Proceed? (y/N)[2021-04-07 05:19:53,621] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=us-east-1&tab=Table#list_parameter_filters=Name:Contains:/dev-handoff-etl/dev-exchange-rates-to-csv/username
 See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=us-east-1&tab=Table#list_parameter_filters=Name:Contains:/dev-handoff-etl/dev-exchange-rates-to-csv/password
 See the parameters at https://console.aws.amazon.com/systems-manager/parameters/?region=us-east-1&tab=Table#list_parameter_filters=Name:Contains:/dev-handoff-etl/google_client_secret
@@ -144,28 +144,28 @@ Install the workspace as usual:
 ```
 ```shell
 
-[2020-12-28 22:05:54,296] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:19:54,894] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Requirement already satisfied: wheel in ./tap/lib/python3.6/site-packages (0.36.2)
-Collecting tap-exchangeratesapi
-  Using cached tap_exchangeratesapi-0.1.1-cp36-none-any.whl
-Collecting backoff==1.3.2
-  Using cached backoff-1.3.2-cp36-none-any.whl
-Collecting requests==2.21.0
-  Using cached requests-2.21.0-py2.py3-none-any.whl (57 kB)
-Collecting singer-python==5.3.3
-  Using cached singer_python-5.3.3-cp36-none-any.whl
+Collecting tap-exchangeratehost
+  Using cached tap_exchangeratehost-0.1.0-py3-none-any.whl (8.2 kB)
+Collecting requests>=2.23.0
+  Using cached requests-2.25.1-py2.py3-none-any.whl (61 kB)
+Collecting singer-python>=5.3.0
+  Using cached singer_python-5.12.1-py3-none-any.whl
+Collecting certifi>=2017.4.17
+  Using cached certifi-2020.12.5-py2.py3-none-any.whl (147 kB)
 .
 .
 .
-  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
+  Using cached tzlocal-2.1-py2.py3-none-any.whl (16 kB)
 Collecting pytzdata
   Using cached pytzdata-2020.1-py2.py3-none-any.whl (489 kB)
-Collecting tzlocal
-  Using cached tzlocal-2.1-py2.py3-none-any.whl (16 kB)
+Collecting six>=1.5
+  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
 Collecting pytz
-  Using cached pytz-2020.5-py2.py3-none-any.whl (510 kB)
+  Using cached pytz-2021.1-py2.py3-none-any.whl (510 kB)
 Installing collected packages: six, pytz, tzlocal, pytzdata, python-dateutil, simplejson, pendulum, singer-python, jsonschema, target-csv
-Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2020.5 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
+Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2021.1 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
 sucess
 ```
 
@@ -179,29 +179,29 @@ Try running:
 ```
 ```shell
 
-[2020-12-28 22:06:08,935] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:06:09,305] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:06:09,724] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:06:10,159] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:66)
-[2020-12-28 22:06:10,716] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last - (s3.py:66)
-[2020-12-28 22:06:10,790] [ WARNING] - Nothing found in the location - (s3.py:83)
-[2020-12-28 22:06:10,790] [    INFO] - Job started at 2020-12-28 22:06:10.790266 - (__init__.py:178)
-[2020-12-28 22:06:10,790] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:193)
-[2020-12-28 22:06:10,807] [    INFO] - Checking return code of pid 3410 - (operators.py:262)
-[2020-12-28 22:06:11,409] [    INFO] - Checking return code of pid 3411 - (operators.py:262)
+[2021-04-07 05:20:10,559] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:20:10,943] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:20:11,395] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:20:11,896] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:66)
+[2021-04-07 05:20:12,462] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last - (s3.py:66)
+[2021-04-07 05:20:12,542] [ WARNING] - Nothing found in the location - (s3.py:83)
+[2021-04-07 05:20:12,543] [    INFO] - Job started at 2021-04-07 05:20:12.543068 - (__init__.py:178)
+[2021-04-07 05:20:12,543] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:194)
+[2021-04-07 05:20:12,570] [    INFO] - Checking return code of pid 5414 - (operators.py:263)
+[2021-04-07 05:20:13,673] [    INFO] - Checking return code of pid 5415 - (operators.py:263)
 .
 .
 .
-[2020-12-28 22:06:11,760] [    INFO] - Uploading workspace/artifacts to bucket xxxxxxxx - (s3.py:122)
-[2020-12-28 22:06:11,761] [    INFO] - Files to be uploaded: ['workspace/artifacts/fetch_exchange_rates_stdout.log', 'workspace/artifacts/exchange_rate-20201228T220611.csv', 'workspace/artifacts/collect_stats.json'] - (s3.py:135)
-[2020-12-28 22:06:11,761] [    INFO] - Uploading workspace/artifacts/fetch_exchange_rates_stdout.log to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/fetch_exchange_rates_stdout.log - (s3.py:142)
-[2020-12-28 22:06:11,917] [    INFO] - Uploading workspace/artifacts/exchange_rate-20201228T220611.csv to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20201228T220611.csv - (s3.py:142)
-[2020-12-28 22:06:12,074] [    INFO] - Uploading workspace/artifacts/collect_stats.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/collect_stats.json - (s3.py:142)
+[2021-04-07 05:20:14,038] [    INFO] - Uploading workspace/artifacts to bucket xxxxxxxx - (s3.py:122)
+[2021-04-07 05:20:14,038] [    INFO] - Files to be uploaded: ['workspace/artifacts/fetch_exchange_rates_stdout.log', 'workspace/artifacts/exchange_rate-20210407T052013.csv', 'workspace/artifacts/collect_stats.json'] - (s3.py:135)
+[2021-04-07 05:20:14,038] [    INFO] - Uploading workspace/artifacts/fetch_exchange_rates_stdout.log to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/fetch_exchange_rates_stdout.log - (s3.py:142)
+[2021-04-07 05:20:14,204] [    INFO] - Uploading workspace/artifacts/exchange_rate-20210407T052013.csv to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20210407T052013.csv - (s3.py:142)
+[2021-04-07 05:20:14,372] [    INFO] - Uploading workspace/artifacts/collect_stats.json to Amazon S3 bucket xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/collect_stats.json - (s3.py:142)
 See the files at https://s3.console.aws.amazon.com/s3/buckets/xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/
-[2020-12-28 22:06:12,220] [    INFO] - Copying recursively from s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/* to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/* - (s3.py:17)
-[2020-12-28 22:06:12,483] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/collect_stats.json to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/collect_stats.json - (s3.py:53)
-[2020-12-28 22:06:12,662] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20201228T220611.csv to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/exchange_rate-20201228T220611.csv - (s3.py:53)
-[2020-12-28 22:06:12,855] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/fetch_exchange_rates_stdout.log to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/fetch_exchange_rates_stdout.log - (s3.py:53)
+[2021-04-07 05:20:14,567] [    INFO] - Copying recursively from s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/* to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T05:20:14.567230/* - (s3.py:17)
+[2021-04-07 05:20:14,837] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/collect_stats.json to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T05:20:14.567230/collect_stats.json - (s3.py:53)
+[2021-04-07 05:20:15,019] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20210407T052013.csv to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T05:20:14.567230/exchange_rate-20210407T052013.csv - (s3.py:53)
+[2021-04-07 05:20:15,211] [    INFO] - Copied s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/fetch_exchange_rates_stdout.log to s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T05:20:14.567230/fetch_exchange_rates_stdout.log - (s3.py:53)
 ```
 
 This time, we are not using the local project definition.
@@ -214,7 +214,7 @@ With this option, we pushed the result to the bucket under
 
 ```shell
 
-    s3://..../[2020-12-28 22:06:13,452] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+    s3://..../[2021-04-07 05:20:15,861] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 dev-exchange-rates-to-csv/artifacts/last
 
 ```
@@ -226,7 +226,7 @@ Also note that artifacts are automatically archived at each run at
 
 ```shell
 
-    s3://..../[2020-12-28 22:06:13,452] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+    s3://..../[2021-04-07 05:20:15,861] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 dev-exchange-rates-to-csv/artifacts/archives/
 
 
@@ -248,7 +248,7 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratesapi
+  command: pip install tap-exchangeratehost
 - venv: target
   command: pip install target-csv
 
@@ -260,7 +260,7 @@ tasks:
 - name: fetch_exchange_rates
   description: Fetch exchange rates
   pipeline:
-  - command: tap-exchangeratesapi
+  - command: tap-exchangeratehost
     args: --config files/tap-config.json
     venv: tap
   - command: python
@@ -274,7 +274,7 @@ deploy:
   cloud_provider: aws
   cloud_platform: fargate
   resource_group: handoff-etl
-  container_image: xxxxxxxxv
+  container_image: xxxxxxxxcsv
   task: exchange-rates-to-csv
 
 schedules:

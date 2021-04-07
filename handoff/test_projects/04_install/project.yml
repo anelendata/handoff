@@ -3,7 +3,7 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratesapi
+  command: pip install tap-exchangeratehost
 - venv: target
   command: pip install target-csv
 
@@ -15,7 +15,7 @@ tasks:
 - name: fetch_exchange_rates
   description: Fetch exchange rates
   pipeline:
-  - command: tap-exchangeratesapi
+  - command: tap-exchangeratehost
     args: --config files/tap-config.json
     venv: tap
   - command: python
@@ -29,7 +29,7 @@ deploy:
   cloud_provider: aws
   cloud_platform: fargate
   resource_group: handoff-etl
-  container_image: tap-exchange-rates-target-csv
+  container_image: tap-exchangeratehost-target-csv
   task: exchange-rates-to-csv
 
 schedules:

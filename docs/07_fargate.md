@@ -16,15 +16,15 @@ To make this process easy, handoff packed everything up in a command:
 ```
 ```shell
 
-[2020-12-28 22:08:07,033] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:08:08,023] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-handoff-etl-resources/xxxxxxxx70f6c675
+[2021-04-07 05:22:36,032] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:22:37,698] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-handoff-etl-resources/xxxxxxxx8e67507f
 ResponseMetadata:
   HTTPHeaders:
     content-length: '395'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:08:08 GMT
-    x-amzn-requestid: xxxxxxxx653fb3ca
+    date: Wed, 07 Apr 2021 05:22:38 GMT
+    x-amzn-requestid: xxxxxxxx373c818b
   HTTPStatusCode: 200
 ```
 
@@ -51,16 +51,16 @@ Now it's time to deploy the task and here is the command:
 ```
 ```shell
 
-[2020-12-28 22:11:09,397] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:11:10,436] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:11:10,737] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-exchange-rates-to-csv/xxxxxxxx6fcea8bf
+[2021-04-07 05:25:39,116] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:25:40,223] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:25:40,585] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?viewNested=true&hideStacks=false&stackId=arn:aws:cloudformation:us-east-1:xxxxxxxxxxxx:stack/dev-exchange-rates-to-csv/xxxxxxxxa46f2873
 ResponseMetadata:
   HTTPHeaders:
     content-length: '395'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:11:10 GMT
-    x-amzn-requestid: xxxxxxxx26242316
+    date: Wed, 07 Apr 2021 05:25:40 GMT
+    x-amzn-requestid: xxxxxxxx95b74d11
 ```
 
 
@@ -82,20 +82,20 @@ Once the task is created, try running on Fargate.
 To do so, run this command:
 
 ```shell
-> handoff cloud run -p 04_install --envs __VARS='$(date -I -d "-7 day")'
+> handoff cloud run -p 04_install --envs __VARS='start_date=$(date -I -d "-7 day")'
 ```
 ```shell
 
-[2020-12-28 22:14:11,902] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:14:12,858] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:14:12,893] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/dev-handoff-etl-resources/tasks/xxxxxxxxf4d1
+[2021-04-07 05:28:41,844] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:28:42,903] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:28:42,947] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/dev-handoff-etl-resources/tasks/xxxxxxxx31d8
 ResponseMetadata:
   HTTPHeaders:
-    content-length: '1530'
+    content-length: '1610'
     content-type: application/x-amz-json-1.1
-    date: Mon, 28 Dec 2020 22:14:13 GMT
-    x-amzn-requestid: xxxxxxxx2cd32826
+    date: Wed, 07 Apr 2021 05:28:44 GMT
+    x-amzn-requestid: xxxxxxxx5dd33cb2
 ```
 
 At the end of the log, you should see a line like:
@@ -152,8 +152,16 @@ To check the status of the task, do:
 ```
 ```shell
 
-[2020-12-28 22:19:15,336] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:16,307] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:33:45,436] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:33:46,471] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+- cpu: '256'
+  createdAt: 2021-04-07 05:28:44.757000+00:00
+  duration: '0:00:05.962000'
+  lastStatus: STOPPED
+  memory: '512'
+  startedAt: 2021-04-07 05:29:49.038000+00:00
+  taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/dev-handoff-etl-resources/xxxxxxxx31d8
+  taskDefinitionArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task-definition/xxxxxxxx-rates-to-csv:8
 ```
 
 
@@ -164,16 +172,16 @@ To view the log, do:
 ```
 ```shell
 
-[2020-12-28 22:19:17,233] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:18,246] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-2020-12-28 22:15:08.809000 - [2020-12-28 22:15:08,809] [    INFO] - Found credentials in environment variables. - (credentials.py:1094)
-2020-12-28 22:15:09.100000 - [2020-12-28 22:15:09,100] [    INFO] - Found credentials in environment variables. - (credentials.py:1094)
-2020-12-28 22:15:09.458000 - [2020-12-28 22:15:09,458] [    INFO] - Found credentials in environment variables. - (credentials.py:1094)
-2020-12-28 22:15:09.738000 - [2020-12-28 22:15:09,738] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:66)
-2020-12-28 22:15:09.920000 - [2020-12-28 22:15:09,919] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last - (s3.py:66)
-2020-12-28 22:15:10.090000 - [2020-12-28 22:15:10,090] [    INFO] - Job started at 2020-12-28 22:15:10.090135 - (__init__.py:178)
-2020-12-28 22:15:10.090000 - [2020-12-28 22:15:10,090] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:193)
-2020-12-28 22:15:10.200000 - [2020-12-28 22:15:10,193] [    INFO] - Checking return code of pid 32 - (operators.py:262)
+[2021-04-07 05:33:47,612] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:33:48,680] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+2021-04-07 05:29:50.819000 - [2021-04-07 05:29:50,819] [    INFO] - Found credentials in environment variables. - (credentials.py:1100)
+2021-04-07 05:29:51.039000 - [2021-04-07 05:29:51,038] [    INFO] - Found credentials in environment variables. - (credentials.py:1100)
+2021-04-07 05:29:51.421000 - [2021-04-07 05:29:51,421] [    INFO] - Found credentials in environment variables. - (credentials.py:1100)
+2021-04-07 05:29:51.756000 - [2021-04-07 05:29:51,756] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:66)
+2021-04-07 05:29:51.940000 - [2021-04-07 05:29:51,940] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last - (s3.py:66)
+2021-04-07 05:29:52.116000 - [2021-04-07 05:29:52,116] [    INFO] - Job started at 2021-04-07 05:29:52.116310 - (__init__.py:178)
+2021-04-07 05:29:52.116000 - [2021-04-07 05:29:52,116] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:194)
+2021-04-07 05:29:52.221000 - [2021-04-07 05:29:52,221] [    INFO] - Checking return code of pid 32 - (operators.py:263)
 ```
 
 The log can also take the parameters such as start_time, end_time, and follow:

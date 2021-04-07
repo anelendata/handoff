@@ -54,29 +54,29 @@ Now let's run:
 ```
 ```shell
 
-[2020-12-28 22:02:28,868] [ WARNING] - 05_foreach/.secrets/secrets.yml does not exsist - (admin.py:223)
-[2020-12-28 22:02:28,988] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:29,338] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
-[2020-12-28 22:02:29,342] [    INFO] - Job started at 2020-12-28 22:02:29.342212 - (__init__.py:178)
-[2020-12-28 22:02:29,342] [    INFO] - Running pipeline generate_files - (operators.py:193)
-[2020-12-28 22:02:29,345] [    INFO] - Running foreach loop - (operators.py:208)
-[2020-12-28 22:02:29,346] [    INFO] - Running pipeline make_id_files_1 - (operators.py:193)
-[2020-12-28 22:02:29,351] [    INFO] - Checking return code of pid 3072 - (operators.py:262)
-[2020-12-28 22:02:29,353] [    INFO] - Running pipeline make_id_files_2 - (operators.py:193)
-[2020-12-28 22:02:29,358] [    INFO] - Checking return code of pid 3076 - (operators.py:262)
+[2021-04-07 05:16:27,467] [ WARNING] - 05_foreach/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2021-04-07 05:16:27,598] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:27,957] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2021-04-07 05:16:27,961] [    INFO] - Job started at 2021-04-07 05:16:27.961542 - (__init__.py:178)
+[2021-04-07 05:16:27,961] [    INFO] - Running pipeline generate_files - (operators.py:194)
+[2021-04-07 05:16:27,965] [    INFO] - Running foreach loop - (operators.py:209)
+[2021-04-07 05:16:27,967] [    INFO] - Running pipeline make_id_files_1 - (operators.py:194)
+[2021-04-07 05:16:27,973] [    INFO] - Checking return code of pid 5063 - (operators.py:263)
+[2021-04-07 05:16:27,975] [    INFO] - Running pipeline make_id_files_2 - (operators.py:194)
+[2021-04-07 05:16:27,982] [    INFO] - Checking return code of pid 5067 - (operators.py:263)
 .
 .
 .
-[2020-12-28 22:02:29,372] [    INFO] - Running pipeline make_id_files_5 - (operators.py:193)
-[2020-12-28 22:02:29,378] [    INFO] - Checking return code of pid 3088 - (operators.py:262)
-[2020-12-28 22:02:29,381] [    INFO] - Checking return code of pid 3070 - (operators.py:262)
-[2020-12-28 22:02:29,381] [    INFO] - Pipeline generate_files exited with code 0 - (task.py:32)
-[2020-12-28 22:02:29,381] [    INFO] - Running pipeline verify_result - (operators.py:193)
-[2020-12-28 22:02:29,390] [    INFO] - Checking return code of pid 3094 - (operators.py:262)
-[2020-12-28 22:02:29,390] [    INFO] - Checking return code of pid 3096 - (operators.py:262)
-[2020-12-28 22:02:29,391] [    INFO] - Pipeline verify_result exited with code 0 - (task.py:32)
-[2020-12-28 22:02:29,391] [    INFO] - Job ended at 2020-12-28 22:02:29.391370 - (__init__.py:184)
-[2020-12-28 22:02:29,391] [    INFO] - Processed in 0:00:00.049158 - (__init__.py:186)
+[2021-04-07 05:16:28,000] [    INFO] - Running pipeline make_id_files_5 - (operators.py:194)
+[2021-04-07 05:16:28,007] [    INFO] - Checking return code of pid 5079 - (operators.py:263)
+[2021-04-07 05:16:28,012] [    INFO] - Checking return code of pid 5061 - (operators.py:263)
+[2021-04-07 05:16:28,012] [    INFO] - Pipeline generate_files exited with code 0 - (task.py:32)
+[2021-04-07 05:16:28,012] [    INFO] - Running pipeline verify_result - (operators.py:194)
+[2021-04-07 05:16:28,024] [    INFO] - Checking return code of pid 5085 - (operators.py:263)
+[2021-04-07 05:16:28,024] [    INFO] - Checking return code of pid 5087 - (operators.py:263)
+[2021-04-07 05:16:28,025] [    INFO] - Pipeline verify_result exited with code 0 - (task.py:32)
+[2021-04-07 05:16:28,025] [    INFO] - Job ended at 2021-04-07 05:16:28.025819 - (__init__.py:189)
+[2021-04-07 05:16:28,025] [    INFO] - Processed in 0:00:00.064277 - (__init__.py:191)
 ```
 
 
@@ -84,11 +84,11 @@ You can verify that 5 output files are created:
 
 ```shell
 
--rw-rw-r-- 1 ubuntu ubuntu 0 Dec 28 22:02 workspace_05/artifacts/out_1.txt
--rw-rw-r-- 1 ubuntu ubuntu 0 Dec 28 22:02 workspace_05/artifacts/out_2.txt
--rw-rw-r-- 1 ubuntu ubuntu 0 Dec 28 22:02 workspace_05/artifacts/out_3.txt
--rw-rw-r-- 1 ubuntu ubuntu 0 Dec 28 22:02 workspace_05/artifacts/out_4.txt
--rw-rw-r-- 1 ubuntu ubuntu 0 Dec 28 22:02 workspace_05/artifacts/out_5.txt
+-rw-rw-r-- 1 ubuntu ubuntu 0 Apr  7 05:16 workspace_05/artifacts/out_1.txt
+-rw-rw-r-- 1 ubuntu ubuntu 0 Apr  7 05:16 workspace_05/artifacts/out_2.txt
+-rw-rw-r-- 1 ubuntu ubuntu 0 Apr  7 05:16 workspace_05/artifacts/out_3.txt
+-rw-rw-r-- 1 ubuntu ubuntu 0 Apr  7 05:16 workspace_05/artifacts/out_4.txt
+-rw-rw-r-- 1 ubuntu ubuntu 0 Apr  7 05:16 workspace_05/artifacts/out_5.txt
 ```
 
 ### fork
@@ -109,7 +109,7 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratesapi
+  command: pip install tap-exchangeratehost
 - venv: target
   command: pip install target-csv
 
@@ -121,7 +121,7 @@ tasks:
 - name: fetch_exchange_rates
   description: Fetch exchange rates
   pipeline:
-  - command: tap-exchangeratesapi
+  - command: tap-exchangeratehost
     args: --config files/tap-config.json
     venv: tap
   - fork:
@@ -142,7 +142,7 @@ deploy:
   cloud_provider: aws
   cloud_platform: fargate
   resource_group: handoff-etl
-  container_image: xxxxxxxxv
+  container_image: xxxxxxxxcsv
   task: exchange-rates
 
 schedule:
@@ -168,28 +168,28 @@ Let's verify. First install workpace:
 ```
 ```shell
 
-[2020-12-28 22:02:29,961] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:16:28,607] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Requirement already satisfied: wheel in ./tap/lib/python3.6/site-packages (0.36.2)
-Collecting tap-exchangeratesapi
-  Using cached tap_exchangeratesapi-0.1.1-cp36-none-any.whl
-Collecting backoff==1.3.2
-  Using cached backoff-1.3.2-cp36-none-any.whl
-Collecting requests==2.21.0
-  Using cached requests-2.21.0-py2.py3-none-any.whl (57 kB)
-Collecting singer-python==5.3.3
-  Using cached singer_python-5.3.3-cp36-none-any.whl
+Collecting tap-exchangeratehost
+  Using cached tap_exchangeratehost-0.1.0-py3-none-any.whl (8.2 kB)
+Collecting requests>=2.23.0
+  Using cached requests-2.25.1-py2.py3-none-any.whl (61 kB)
+Collecting singer-python>=5.3.0
+  Using cached singer_python-5.12.1-py3-none-any.whl
+Collecting urllib3<1.27,>=1.21.1
+  Using cached urllib3-1.26.4-py2.py3-none-any.whl (153 kB)
 .
 .
 .
-  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
-Collecting pytzdata
   Using cached pytzdata-2020.1-py2.py3-none-any.whl (489 kB)
-Collecting tzlocal
-  Using cached tzlocal-2.1-py2.py3-none-any.whl (16 kB)
+Collecting python-dateutil
+  Using cached python_dateutil-2.8.1-py2.py3-none-any.whl (227 kB)
+Collecting six>=1.5
+  Using cached six-1.15.0-py2.py3-none-any.whl (10 kB)
 Collecting pytz
-  Using cached pytz-2020.5-py2.py3-none-any.whl (510 kB)
+  Using cached pytz-2021.1-py2.py3-none-any.whl (510 kB)
 Installing collected packages: six, pytz, tzlocal, pytzdata, python-dateutil, simplejson, pendulum, singer-python, jsonschema, target-csv
-Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2020.5 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
+Successfully installed jsonschema-2.6.0 pendulum-1.2.0 python-dateutil-2.8.1 pytz-2021.1 pytzdata-2020.1 simplejson-3.11.1 singer-python-2.1.4 six-1.15.0 target-csv-0.3.0 tzlocal-2.1
 sucess
 ```
 
@@ -200,23 +200,23 @@ Now let's run:
 ```
 ```shell
 
-[2020-12-28 22:02:44,338] [ WARNING] - 06_fork/.secrets/secrets.yml does not exsist - (admin.py:223)
-[2020-12-28 22:02:44,460] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:44,812] [    INFO] - Job started at 2020-12-28 22:02:44.812863 - (__init__.py:178)
-[2020-12-28 22:02:44,813] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:193)
-[2020-12-28 22:02:44,815] [    INFO] - Forking the downstream... - (operators.py:216)
-[2020-12-28 22:02:44,816] [    INFO] - Running pipeline wide-format - (operators.py:193)
-[2020-12-28 22:02:44,822] [    INFO] - Running pipeline long-format - (operators.py:193)
-[2020-12-28 22:02:45,625] [    INFO] - Checking return code of pid 3187 - (operators.py:262)
-[2020-12-28 22:02:45,668] [    INFO] - Checking return code of pid 3191 - (operators.py:262)
-[2020-12-28 22:02:45,668] [    INFO] - Checking return code of pid 3193 - (operators.py:262)
+[2021-04-07 05:16:43,829] [ WARNING] - 06_fork/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2021-04-07 05:16:43,961] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:44,328] [    INFO] - Job started at 2021-04-07 05:16:44.327973 - (__init__.py:178)
+[2021-04-07 05:16:44,328] [    INFO] - Running pipeline fetch_exchange_rates - (operators.py:194)
+[2021-04-07 05:16:44,332] [    INFO] - Forking the downstream... - (operators.py:217)
+[2021-04-07 05:16:44,332] [    INFO] - Running pipeline wide-format - (operators.py:194)
+[2021-04-07 05:16:44,342] [    INFO] - Running pipeline long-format - (operators.py:194)
+[2021-04-07 05:16:45,666] [    INFO] - Checking return code of pid 5178 - (operators.py:263)
+[2021-04-07 05:16:45,707] [    INFO] - Checking return code of pid 5182 - (operators.py:263)
+[2021-04-07 05:16:45,795] [    INFO] - Checking return code of pid 5184 - (operators.py:263)
 .
 .
 .
-[2020-12-28 22:02:45,686] [    INFO] - Checking return code of pid 3186 - (operators.py:262)
-[2020-12-28 22:02:45,687] [    INFO] - Pipeline fetch_exchange_rates exited with code 0 - (task.py:32)
-[2020-12-28 22:02:45,687] [    INFO] - Job ended at 2020-12-28 22:02:45.687229 - (__init__.py:184)
-[2020-12-28 22:02:45,687] [    INFO] - Processed in 0:00:00.874366 - (__init__.py:186)
+[2021-04-07 05:16:45,870] [    INFO] - Checking return code of pid 5177 - (operators.py:263)
+[2021-04-07 05:16:45,870] [    INFO] - Pipeline fetch_exchange_rates exited with code 0 - (task.py:32)
+[2021-04-07 05:16:45,870] [    INFO] - Job ended at 2021-04-07 05:16:45.870886 - (__init__.py:189)
+[2021-04-07 05:16:45,870] [    INFO] - Processed in 0:00:01.542913 - (__init__.py:191)
 ```
 
 The long format CSV file looks like this:
@@ -224,8 +224,8 @@ The long format CSV file looks like this:
 ```shell
 
 date,symbol,rate
-2020-12-21T00:00:00Z,CAD,1.2885895014
-2020-12-21T00:00:00Z,HKD,7.7530600509
+2021-03-31T00:00:00Z,AED,3.6732
+2021-03-31T00:00:00Z,AFN,77.250007
 ```
 
 

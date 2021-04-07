@@ -39,14 +39,14 @@ Prompt
 echo "
 The project runs a pipeline that is a shell equivalent to
 
-    tap-exchangeratesapi | python files/stats_collector.py | target-csv
+    tap-exchangeratehost | python files/stats_collector.py | target-csv
 "
 
 Prompt
 
 echo '
 Before we can run this, we need to install a couple of Python packages:
-tap-exchangeratesapi and target-csv. The `install` section contains the 
+tap-exchangeratehost and target-csv. The `install` section contains the 
 installation commands. Also notice `venv` entries for each command. handoff
 can create Python virtual enviroment for each command to avoid conflicting
 dependencies among the packages.

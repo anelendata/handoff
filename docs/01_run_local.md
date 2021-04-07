@@ -65,19 +65,37 @@ Now let's run. Try entering this command below:
 ```
 ```shell
 
-[2020-12-28 22:02:09,182] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:223)
-[2020-12-28 22:02:09,297] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:09,634] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
-[2020-12-28 22:02:09,639] [    INFO] - Job started at 2020-12-28 22:02:09.639435 - (__init__.py:178)
-[2020-12-28 22:02:09,639] [    INFO] - Running pipeline word_count - (operators.py:193)
-[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2900 - (operators.py:262)
-[2020-12-28 22:02:09,647] [    INFO] - Checking return code of pid 2901 - (operators.py:262)
-[2020-12-28 22:02:09,648] [    INFO] - Pipeline word_count exited with code 0 - (task.py:32)
-[2020-12-28 22:02:09,648] [    INFO] - Job ended at 2020-12-28 22:02:09.648888 - (__init__.py:184)
-[2020-12-28 22:02:09,648] [    INFO] - Processed in 0:00:00.009453 - (__init__.py:186)
+[2021-04-07 05:16:06,537] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2021-04-07 05:16:06,665] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:07,024] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2021-04-07 05:16:07,029] [    INFO] - Job started at 2021-04-07 05:16:07.029844 - (__init__.py:178)
+[2021-04-07 05:16:07,029] [    INFO] - Running pipeline word_count - (operators.py:194)
+[2021-04-07 05:16:07,040] [    INFO] - Checking return code of pid 4894 - (operators.py:263)
+[2021-04-07 05:16:07,041] [    INFO] - Checking return code of pid 4895 - (operators.py:263)
+[2021-04-07 05:16:07,042] [    INFO] - Pipeline word_count exited with code 0 - (task.py:32)
+[2021-04-07 05:16:07,042] [    INFO] - Job ended at 2021-04-07 05:16:07.042805 - (__init__.py:189)
+[2021-04-07 05:16:07,042] [    INFO] - Processed in 0:00:00.012961 - (__init__.py:191)
 ```
 
-Great! You just ran handoff task locally.
+
+If you see the output that looks like:
+
+```shell
+[2020-12-28 22:02:09,182] [ WARNING] - 01_word_count/.secrets/secrets.yml does not exsist - (admin.py:223)
+ [2020-12-28 22:02:09,297] [ INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+ [2020-12-28 22:02:09,634] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+ [2020-12-28 22:02:09,639] [ INFO] - Job started at 2020-12-28 22:02:09.639435 - (__init__.py:178)
+ [2020-12-28 22:02:09,639] [ INFO] - Running pipeline word_count - (operators.py:193)
+ [2020-12-28 22:02:09,647] [ INFO] - Checking return code of pid 2900 - (operators.py:262)
+ [2020-12-28 22:02:09,647] [ INFO] - Checking return code of pid 2901 - (operators.py:262)
+ [2020-12-28 22:02:09,648] [ INFO] - Pipeline word_count exited with code 0 - (task.py:32)
+ [2020-12-28 22:02:09,648] [ INFO] - Job ended at 2020-12-28 22:02:09.648888 - (__init__.py:184)
+ [2020-12-28 22:02:09,648] [ INFO] - Processed in 0:00:00.009453 - (__init__.py:186)
+
+```
+
+
+Then great! You just ran handoff task locally.
     
 For now, let's not worry about the warnings in the log such as:
 
@@ -229,14 +247,14 @@ shorthands for options:
 ```
 ```shell
 
-[2020-12-28 22:02:10,090] [ WARNING] - 02_commands_and_vars/.secrets/secrets.yml does not exsist - (admin.py:223)
-[2020-12-28 22:02:10,211] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:10,549] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
-[2020-12-28 22:02:10,553] [    INFO] - Job started at 2020-12-28 22:02:10.553625 - (__init__.py:178)
-[2020-12-28 22:02:10,553] [    INFO] - Running commands show_content - (operators.py:141)
-[2020-12-28 22:02:10,560] [    INFO] - Pipeline show_content exited with code 0 - (task.py:32)
-[2020-12-28 22:02:10,560] [    INFO] - Job ended at 2020-12-28 22:02:10.560808 - (__init__.py:184)
-[2020-12-28 22:02:10,560] [    INFO] - Processed in 0:00:00.007183 - (__init__.py:186)
+[2021-04-07 05:16:07,498] [ WARNING] - 02_commands_and_vars/.secrets/secrets.yml does not exsist - (admin.py:223)
+[2021-04-07 05:16:07,632] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:07,988] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2021-04-07 05:16:07,992] [    INFO] - Job started at 2021-04-07 05:16:07.992582 - (__init__.py:178)
+[2021-04-07 05:16:07,993] [    INFO] - Running commands show_content - (operators.py:142)
+[2021-04-07 05:16:08,002] [    INFO] - Pipeline show_content exited with code 0 - (task.py:32)
+[2021-04-07 05:16:08,002] [    INFO] - Job ended at 2021-04-07 05:16:08.002890 - (__init__.py:189)
+[2021-04-07 05:16:08,002] [    INFO] - Processed in 0:00:00.010308 - (__init__.py:191)
 ```
 
 Let's check out the contents of the second command:
@@ -319,13 +337,13 @@ Now let's run.
 ```
 ```shell
 
-[2020-12-28 22:02:11,117] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:02:11,467] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
-[2020-12-28 22:02:11,471] [    INFO] - Job started at 2020-12-28 22:02:11.471845 - (__init__.py:178)
-[2020-12-28 22:02:11,471] [    INFO] - Running commands show_curl_command - (operators.py:141)
-[2020-12-28 22:02:11,475] [    INFO] - Pipeline show_curl_command exited with code 0 - (task.py:32)
-[2020-12-28 22:02:11,475] [    INFO] - Job ended at 2020-12-28 22:02:11.475938 - (__init__.py:184)
-[2020-12-28 22:02:11,476] [    INFO] - Processed in 0:00:00.004093 - (__init__.py:186)
+[2021-04-07 05:16:08,582] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:16:08,937] [ WARNING] - Environment variable HO_BUCKET is not set. Remote file read/write will fail. - (admin.py:132)
+[2021-04-07 05:16:08,942] [    INFO] - Job started at 2021-04-07 05:16:08.942319 - (__init__.py:178)
+[2021-04-07 05:16:08,942] [    INFO] - Running commands show_curl_command - (operators.py:142)
+[2021-04-07 05:16:08,947] [    INFO] - Pipeline show_curl_command exited with code 0 - (task.py:32)
+[2021-04-07 05:16:08,947] [    INFO] - Job ended at 2021-04-07 05:16:08.947647 - (__init__.py:189)
+[2021-04-07 05:16:08,947] [    INFO] - Processed in 0:00:00.005328 - (__init__.py:191)
 ```
 
 show_curl_command_stdout.log shows the curl command with the actual username

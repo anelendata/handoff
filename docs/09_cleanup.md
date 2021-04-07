@@ -9,9 +9,9 @@ First unschedule the task:
 ```
 ```shell
 
-[2020-12-28 22:19:22,511] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:23,479] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/dev-handoff-etl-resources/scheduledTasks
+[2021-04-07 04:58:22,666] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:23,699] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+No schedules found
 ```
 
 Then delete the task:
@@ -21,15 +21,15 @@ Then delete the task:
 ```
 ```shell
 
-[2020-12-28 22:19:24,439] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:25,394] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 04:58:24,591] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:25,597] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?filteringText=dev-exchange-rates-to-csv
 ResponseMetadata:
   HTTPHeaders:
     content-length: '212'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:19:25 GMT
-    x-amzn-requestid: xxxxxxxx285d21ed
+    date: Wed, 07 Apr 2021 04:58:25 GMT
+    x-amzn-requestid: xxxxxxxx84dd5d3d
   HTTPStatusCode: 200
 ```
 
@@ -40,15 +40,15 @@ If there is no other task in the same resource group, we can delete it:
 ```
 ```shell
 
-[2020-12-28 22:19:26,423] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:27,374] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 04:58:26,702] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:27,735] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?filteringText=dev-handoff-etl
 ResponseMetadata:
   HTTPHeaders:
     content-length: '212'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:19:26 GMT
-    x-amzn-requestid: xxxxxxxxb32881fa
+    date: Wed, 07 Apr 2021 04:58:27 GMT
+    x-amzn-requestid: xxxxxxxxcb90d89f
   HTTPStatusCode: 200
 ```
 
@@ -59,10 +59,10 @@ Here is how to delete the configurations from SSM Parameter Store:
 ```
 ```shell
 
-[2020-12-28 22:19:28,530] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:28,887] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:28,940] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:29,232] [    INFO] - Deleting dev-exchange-rates-to-csv/project.yml from bucket xxxxxxxx - (s3.py:207)
+[2021-04-07 04:58:28,900] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:29,269] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:29,507] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:29,830] [    INFO] - Deleting dev-exchange-rates-to-csv/project.yml from bucket xxxxxxxx - (s3.py:207)
 success
 ```
 
@@ -73,10 +73,10 @@ Here is how to delete the files from S3 bucket:
 ```
 ```shell
 
-[2020-12-28 22:19:30,125] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:30,482] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:30,516] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:155)
-[2020-12-28 22:19:30,957] [    INFO] - Deleted [{'Key': 'dev-exchange-rates-to-csv/files/stats_collector.py'}, {'Key': 'dev-exchange-rates-to-csv/files/tap-config.json'}, {'Key': 'dev-exchange-rates-to-csv/files/target-config.json'}] - (s3.py:182)
+[2021-04-07 04:58:30,710] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:31,077] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:31,127] [    INFO] - GET s3://xxxxxxxx/dev-exchange-rates-to-csv/files - (s3.py:155)
+[2021-04-07 04:58:31,542] [    INFO] - Deleted [{'Key': 'dev-exchange-rates-to-csv/files/stats_collector.py'}, {'Key': 'dev-exchange-rates-to-csv/files/tap-config.json'}, {'Key': 'dev-exchange-rates-to-csv/files/target-config.json'}] - (s3.py:182)
 success
 ```
 
@@ -87,12 +87,12 @@ And here is how to delete the secrets from AWS Systems Manager Parameter Store:
 ```
 ```shell
 
-[2020-12-28 22:19:31,524] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 04:58:32,133] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Deleting the following keys to remote parameter store:
   - username (task level)
   - password (task level)
   - google_client_secret (resource group level)
-Proceed? (y/N)[2020-12-28 22:19:31,889] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+Proceed? (y/N)[2021-04-07 04:58:32,509] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 success
 ```
 
@@ -103,16 +103,16 @@ If there is no other task in the same resource group, we can delete the bucket, 
 ```
 ```shell
 
-[2020-12-28 22:19:33,123] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:34,087] [ WARNING] - This will only delete the CloudFormation stack. The bucket xxxxxxxx will be retained. - (__init__.py:421)
-[2020-12-28 22:19:34,103] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 04:58:33,806] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 04:58:34,823] [ WARNING] - This will only delete the CloudFormation stack. The bucket xxxxxxxx will be retained. - (__init__.py:421)
+[2021-04-07 04:58:34,837] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Check the progress at https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/stackinfo?filteringText=xxxxxxxx
 ResponseMetadata:
   HTTPHeaders:
     content-length: '212'
     content-type: text/xml
-    date: Mon, 28 Dec 2020 22:19:33 GMT
-    x-amzn-requestid: xxxxxxxx8e808ac4
+    date: Wed, 07 Apr 2021 04:58:34 GMT
+    x-amzn-requestid: xxxxxxxxd719bc59
 ```
 
 The previous command only deleted the CloudFormation stack, but not the bucket itself.
@@ -123,26 +123,29 @@ Here is how to delete all the files in s3://xxxxxxxx bucket. This cannot be reve
 ```
 ```shell
 
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:07:05.020533/exchange_rate-20201228T220703.csv
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:15:12.784517/exchange_rate-20201228T221511.csv
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/collect_stats.json
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/exchange_rate-20201228T220611.csv
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:06:12.220644/fetch_exchange_rates_stdout.log
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:15:12.784517/collect_stats.json
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:15:12.784517/fetch_exchange_rates_stdout.log
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:15:12.784517/exchange_rate-20201228T220703.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:45:53.451784/exchange_rate-20210407T044432.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:44:34.289110/fetch_exchange_rates_stdout.log
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:54:21.040265/exchange_rate-20210407T044549.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:54:21.040265/fetch_exchange_rates_stdout.log
 delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/collect_stats.json
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20201228T220611.csv
-.
-.
-.
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20201228T220703.csv
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20201228T221511.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:44:34.289110/collect_stats.json
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20210407T044432.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:54:21.040265/exchange_rate-20210407T045419.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/exchange_rate-20210407T044549.csv
 delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/last/fetch_exchange_rates_stdout.log
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:07:05.020533/collect_stats.json
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:15:12.784517/exchange_rate-20201228T220611.csv
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:07:05.020533/fetch_exchange_rates_stdout.log
-delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2020-12-28T22:07:05.020533/exchange_rate-20201228T220611.csv
+.
+.
+.
+delete: s3://xxxxxxxx/xxxxxxxxse/files/schema/earthquakes.json
+delete: s3://xxxxxxxx/xxxxxxxxse/files/custom_spec.json
+delete: s3://xxxxxxxx/xxxxxxxxse/files/tap_config.json
+delete: s3://xxxxxxxx/xxxxxxxxse/files/target_config.json
+delete: s3://xxxxxxxx/xxxxxxxxse/project.yml
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:54:21.040265/collect_stats.json
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:45:53.451784/exchange_rate-20210407T044549.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:54:21.040265/exchange_rate-20210407T044432.csv
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:45:53.451784/fetch_exchange_rates_stdout.log
+delete: s3://xxxxxxxx/dev-exchange-rates-to-csv/artifacts/archives/2021-04-07T04:44:34.289110/exchange_rate-20210407T044432.csv
 ```
 
 Here is how to delete s3://xxxxxxxx bucket. The bucket must be empty. This cannot be reversed:
@@ -155,22 +158,22 @@ Here is how to delete s3://xxxxxxxx bucket. The bucket must be empty. This canno
 remove_bucket: xxxxxxxx
 ```
 
-Now delete xxxxxxxxv repository from ECR. This cannot be reversed.
+Now delete xxxxxxxxcsv repository from ECR. This cannot be reversed.
 --force option will ignore that we still have images in the repository.
 
 ```shell
-> aws ecr delete-repository --repository-name xxxxxxxxv --force
+> aws ecr delete-repository --repository-name xxxxxxxxcsv --force
 ```
 ```shell
 
 {
     "repository": {
-        "repositoryUri": "xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxv", 
+        "repositoryUri": "xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxcsv", 
         "registryId": "xxxxxxxxxxxx", 
         "imageTagMutability": "IMMUTABLE", 
-        "repositoryArn": "arn:aws:ecr:us-east-1:xxxxxxxxxxxx:repository/xxxxxxxxv", 
-        "repositoryName": "xxxxxxxxv", 
-        "createdAt": 1609193229.0
+        "repositoryArn": "arn:aws:ecr:us-east-1:xxxxxxxxxxxx:repository/xxxxxxxxcsv", 
+        "repositoryName": "xxxxxxxxcsv", 
+        "createdAt": 1617770758.0
     }
 }
 ```
@@ -179,14 +182,14 @@ The following code removes all the locally stored Docker images containing the
 project name:
 
 ```shell
-> docker images --format '{{.Repository}}:{{.Tag}}' |grep xxxxxxxxv | xargs -I % sh -c 'docker rmi --force %'
+> docker images --format '{{.Repository}}:{{.Tag}}' |grep xxxxxxxxcsv | xargs -I % sh -c 'docker rmi --force %'
 ```
 ```shell
 
-Untagged: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxv:0.1
-Untagged: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxv@sha256:xxxxxxxxxxxxxxxx300a78fc
-Untagged: xxxxxxxxv:0.1
-Deleted: sha256:xxxxxxxxxxxxxxxxd27649e5
+Untagged: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxcsv:0.1
+Untagged: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/xxxxxxxxcsv@sha256:xxxxxxxxxxxxxxxxd86f3d81
+Untagged: xxxxxxxxcsv:0.1
+Deleted: sha256:xxxxxxxxxxxxxxxx558280db
 ```
 
 That's all.

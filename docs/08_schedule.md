@@ -20,7 +20,7 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratesapi
+  command: pip install tap-exchangeratehost
 - venv: target
   command: pip install target-csv
 
@@ -32,7 +32,7 @@ tasks:
 - name: fetch_exchange_rates
   description: Fetch exchange rates
   pipeline:
-  - command: tap-exchangeratesapi
+  - command: tap-exchangeratehost
     args: --config files/tap-config.json
     venv: tap
   - command: python
@@ -46,7 +46,7 @@ deploy:
   cloud_provider: aws
   cloud_platform: fargate
   resource_group: handoff-etl
-  container_image: xxxxxxxxv
+  container_image: xxxxxxxxcsv
   task: exchange-rates-to-csv
 
 schedules:
@@ -71,14 +71,14 @@ Alternatively, we can pass those values to handoff with `--vars` (`-v` for short
 
 
 ```shell
-> handoff cloud schedule create -p 04_install -v target_id=1 cron='24 22 * * ? *' --envs __VARS='start_date=2020-12-21'
+> handoff cloud schedule create -p 04_install -v target_id=1 cron='38 05 * * ? *' --envs __VARS='start_date=$(date -I -d "-7 day")'
 ```
 ```shell
 
-[2020-12-28 22:19:19,499] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:20,476] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:20,862] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
-[2020-12-28 22:19:21,243] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1182)
+[2021-04-07 05:33:49,692] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:33:50,714] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:33:51,126] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
+[2021-04-07 05:33:51,888] [    INFO] - Found credentials in shared credentials file: ~/.aws/credentials - (credentials.py:1223)
 Check the status at https://console.aws.amazon.com/ecs/home?region=us-east-1#/clusters/dev-handoff-etl-resources/scheduledTasks
 - FailedEntries: []
   FailedEntryCount: 0

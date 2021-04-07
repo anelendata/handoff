@@ -1,4 +1,4 @@
-VERSION = "0.3.3"
+VERSION = "0.3.4"
 VERSION_MINOR = ".".join(VERSION.split(".")[0:2])
 
 import os, re

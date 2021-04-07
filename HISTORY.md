@@ -1,5 +1,13 @@
 ## History
 
+### 0.3.4 (2021-04-06)
+
+- feature: log pattern filter and json output
+- feature: Include STOPPED task in the status list. Full description of schedule (#80)
+- fix: travis script
+- fix: update get-pip.py URL (#83)
+- fix: Switch tap-exchangeratesapi to tap-exchangeratehost in 04_install test project
+
 ### 0.3.3 (2021-01-09)
 
 - fix: safe char should include period(.) define _line_safe var in foreach (#79)

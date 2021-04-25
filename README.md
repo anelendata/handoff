@@ -3,6 +3,8 @@
 
 # handoff.cloud
 
+👉 For a fully managed service, checkout [handoff.cloud website](https://handoff.cloud)
+
 <img src="https://github.com/anelendata/handoff/raw/master/assets/this_is_handoff.png"/>
 
 ## What is it?

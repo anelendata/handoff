@@ -3,7 +3,7 @@
   "properties": {
     "version": {
       "type": [
-        "null",
+        "number",
         "string"
       ]
     },
@@ -268,7 +268,7 @@
           },
           "target_id": {
             "type": [
-              "null",
+              "number",
               "string"
             ]
           },

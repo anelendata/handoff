@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import io, json, logging, subprocess, sys, os, re
-import attr
 from typing import Dict
+import jinja2
 from jinja2 import Template as _Template
 
 LOGGER = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ https://docs.python.org/3/library/subprocess.html#security-considerations
 
 def _get_python_info(module=__file__):
     python_exec = sys.executable
-    lib_dir = os.path.dirname(os.path.realpath(attr.__file__))
+    lib_dir = os.path.dirname(os.path.realpath(jinja2.__file__))
     work_dir = os.getcwd()
     code_dir = os.path.dirname(os.path.realpath(module))
     python_info = {"python": python_exec,

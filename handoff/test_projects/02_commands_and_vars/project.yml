@@ -1,4 +1,4 @@
-version: 0.3
+version: 0.3.0
 descriptoin: Commands and variables example
 
 # These are set as in-memory variables in the task execution

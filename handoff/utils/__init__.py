@@ -1,6 +1,5 @@
 import datetime, json, logging, os, re, sys
 from dateutil.parser import parse as dateparse
-import attr
 
 
 LOGGER = None
@@ -89,17 +88,3 @@ def get_time_window(data,
         return start_at, end_at
 
     raise ValueError("Something went wrong determining start_at and end_at")
-
-
-def get_python_info(module=__file__):
-    python_exec = sys.executable
-    lib_dir = os.path.dirname(os.path.realpath(attr.__file__))
-    work_dir = os.getcwd()
-    code_dir = os.path.dirname(os.path.realpath(module))
-    python_info = {"python": python_exec,
-                   "python_lib_dir": lib_dir,
-                   "work_dir": work_dir,
-                   "code_dir": code_dir
-                   }
-
-    return python_info

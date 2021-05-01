@@ -1,8 +1,9 @@
-import datetime, json, logging, os, shutil, sys, subprocess
+import datetime, json, logging, os, re, shutil, sys, subprocess
 from typing import Dict, Tuple
 import yaml
-
 from jinja2 import Template as _Template
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 
 from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
@@ -131,6 +132,25 @@ def _update_state(
                         "Remote file read/write will fail.") %
                        BUCKET)
 
+def _validate_project(project) -> None:
+    schema_file_dir, _ = os.path.split(__file__)
+    schema_file = os.path.join(schema_file_dir, "project_schema.json")
+    with open(schema_file, "r") as f:
+        schema = json.load(f)
+    try:
+        validate(project, schema)
+    except ValidationError as e:
+        error_message = str(e)
+        # It's a bit hacky and fragile here...
+        instance = re.sub(r".*instance\[\'(.*)\'\].*", r"\1",
+                          error_message.split("\n")[5])
+        type_ = re.sub(r".*\{\'type\'\: \[\'.*\', \'(.*)\'\]\}.*",
+                       r"\1", error_message.split("\n")[3])
+        LOGGER.error("project.yml has an invalid format")
+        LOGGER.error(instance)
+        LOGGER.error(type_)
+        raise
+
 
 def _read_project_remote(workspace_dir) -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
@@ -150,8 +170,11 @@ def _read_project_remote(workspace_dir) -> Dict:
     project_file_path = os.path.join(workspace_dir, PROJECT_FILE)
     platform.download_file(project_file_path, PROJECT_FILE)
     with open(project_file_path, "r") as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
-    return config
+        project = yaml.load(f, Loader=yaml.FullLoader)
+
+    _validate_project(project)
+
+    return project
 
 
 def _read_project_local(project_file: str) -> Dict:
@@ -161,6 +184,8 @@ def _read_project_local(project_file: str) -> Dict:
     LOGGER.debug("Reading configurations from " + project_file)
     with open(project_file, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)
+
+    _validate_project(project)
 
     deploy_env = project.get("deploy", dict())
     for key in deploy_env:

@@ -55,6 +55,28 @@ Resources:
           MetricNamespace: !Sub ${ResourceGroup}
           MetricName: !Sub ${AWS::StackName}-error
 
+  StartedLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?Job started at"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-started
+
+  EndedLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?Job ended at"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-ended
+
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:

@@ -646,7 +646,10 @@ def list_schedules(full=False, **kwargs):
     state = get_state()
     task_stack = state.get(TASK)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
-    response = events.list_schedules(task_stack, resource_group_stack)
+    try:
+        response = events.list_schedules(task_stack, resource_group_stack)
+    except Exception:
+        response = []
     schedules = list()
     for r in response:
         record = {

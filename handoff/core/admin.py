@@ -724,6 +724,20 @@ def config_print(
     return _config_get(project_dir, workspace_dir)
 
 
+def config_validate_local(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff config validate local -p <project_directory>`
+    Validate local configuration.
+    """
+    try:
+        _config_get_local(project_dir, workspace_dir)
+    except ValidationError as e:
+        return {"status": "error", "message": str(e)}
+    return {"status": "ok", "message": "valid project.yml"}
+
+
 def project_push(
     project_dir: str,
     workspace_dir: str,

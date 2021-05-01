@@ -97,6 +97,11 @@ var chart = new Highcharts.Chart({
   ]
 });
 
+function getStage() {
+    if (document.getElementById('stage').value == '0') return 'dev';
+    return 'prod';
+}
+
 function setRepositoryID(repositoryID) {
   if (repositoryID != getRepositoryID()){
     setProjectID(null);
@@ -182,7 +187,7 @@ function updateLogArea(text) {
             i = end_chunk;
             last = end_chunk;
         }
-    }  
+    }
   } else {
     for (i = 0; i < logs.length; i++) {
         filtered_text += logs[i].replace(/[0-9]{8}/, '************') + '\n'
@@ -199,9 +204,10 @@ async function pollLog(startTimestamp, endTimestamp) {
     return;
   }
   project = getProjectID();
+  stage = getStage();
   if (project === null) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/log?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
+  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage + '/log?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
   xhr.onload = function(e) {
     updateLogArea(xhr.responseText);
   }
@@ -214,9 +220,10 @@ async function pollStats(startTimestamp, endTimestamp) {
     return;
   }
   project = getProjectID();
+  stage = getStage();
   if (project === null) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/stats?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
+  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage + '/stats?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
   xhr.onload = function(e) {
     data = new Array();
     records = JSON.parse(xhr.responseText);
@@ -233,18 +240,21 @@ async function pollStats(startTimestamp, endTimestamp) {
 }
 
 async function runNow(target_id) {
-  var confirm = window.confirm('Run ' + project + ' project target ' + target_id + '?');
-  if (!confirm) {
-    return;
-  }    
   repository = getRepositoryID();
   if (repository === null) {
     return;
   }
   project = getProjectID();
+  stage = getStage();
+    
+  var confirm = window.confirm('Run ' + project + ' project stage:' + stage + ', target:' + target_id + '?');
+  if (!confirm) {
+    return;
+  }
+
   if (project === null) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/' + repository + '/' + project + '/run?target_id=' + target_id);
+  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/run?target_id=' + target_id);
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     console.info(res);
@@ -260,8 +270,9 @@ async function getSchedule() {
   }
   project = getProjectID();
   if (project === null) return;
+  stage = getStage();
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project +'/schedules');
+  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage +'/schedules');
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';
@@ -291,8 +302,9 @@ async function getStatus() {
   }
   project = getProjectID()
   if (project === null) return;
+  stage = getStage();
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project +'/status');
+  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage +'/status');
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';

@@ -235,6 +235,11 @@ def do(
 
     plugin_modules = _list_plugins()
 
+    if command == "server":
+        from handoff import ui
+        vars_ = kwargs["vars"]
+        ui.server(**vars_)
+
     # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):
         try:

@@ -97,9 +97,33 @@ var chart = new Highcharts.Chart({
   ]
 });
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/* get set
+*/
 function getStage() {
     if (document.getElementById('stage').value == '0') return 'dev';
     return 'prod';
+}
+
+var startTimestamp = null;
+function setStartTimestamp(ts) {
+    startTimestamp = ts;
+}
+function setEndTimestamp(ts) {
+    endTimestamp = ts;
+}
+
+var endTimestamp = null;
+function getStartTimestamp() {
+  if (startTimestamp === null) startTimestamp = moment().add(-3, 'day').unix();
+  return startTimestamp;
+}
+function getEndTimestamp() {
+  if (endTimestamp === null) endTimestamp = moment().unix();
+  return endTimestamp;
 }
 
 function setRepositoryID(repositoryID) {
@@ -109,7 +133,6 @@ function setRepositoryID(repositoryID) {
   document.getElementById('repository-id').textContent = repositoryID;
   fetchProjectList();
 }
-
 function getRepositoryID() {
   var repository = document.getElementById('repository-id').textContent;
   if (repository === '') repository = null;
@@ -120,17 +143,22 @@ function setProjectID(projectID) {
   document.getElementById('project-id').textContent = projectID;
   fetchData();
 }
-
 function getProjectID() {
   var projectID = document.getElementById('project-id').textContent;
   if (projectID === '') projectID = null;
   return projectID
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+var projectFiles = null;
+function getProjectFiles() {
+    return projectFiles;
+}
+function setProjectFiles(files) {
+    projectFiles = files;
 }
 
+/* Fetch
+*/
 async function fetchRepositoryList() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', '/api/repositories');
@@ -164,6 +192,21 @@ async function fetchProjectList() {
     output.innerHTML = htmlOut;
   }
   xhr.send();
+}
+
+async function fetchProjectFiles() {
+  repository = getRepositoryID();
+  if (repository === null) {
+    return;
+  }
+  project = getProjectID();
+  if (project === null) return [];
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/' + repository + '/' + project + '/files');
+  xhr.onload = function(e) {
+    setProjectFiles(JSON.parse(xhr.responseText));
+  }
+  xhr.send();    
 }
 
 var log_text = '';
@@ -328,12 +371,34 @@ async function getStatus() {
   xhr.send();
 }
 
-function fetchData(startTimestamp, endTimestamp) {
-  if (startTimestamp === undefined) startTimestamp = moment().add(-3, 'day').unix();
-  if (endTimestamp === undefined) endTimestamp = moment().unix();
+async function loadFile(path){
+  repository = getRepositoryID();
+  if (repository === null) {
+    return;
+  }
+  project = getProjectID();
+    
+  if (project === null) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/' + repository + '/' + project + '/files/' + path);
+  xhr.onload = function(e) {
+    text = xhr.responseText.replace(/^"|"$/g, '').replaceAll('\\n', '\n').replaceAll('\\"', '\"');
+    editor.setValue(text);
+  }
+  xhr.send();
+}
+
+function fetchData() {
+  startTimestamp = getStartTimestamp();
+  endTimestamp = getEndTimestamp();
   fetchRepositoryList();
   fetchProjectList();
-  getStatus();    
+  fetchProjectFiles();
+  project = getProjectID();
+  if (project != null && editor.getValue() === '') {
+      loadFile(project + '/' + 'project.yml');
+  }
+  getStatus();
   getSchedule();
   pollLog(startTimestamp, endTimestamp);
   pollStats(startTimestamp, endTimestamp);

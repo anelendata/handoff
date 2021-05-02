@@ -75,6 +75,70 @@ def read_projects(repository):
     return projects
 
 
+def _get_cur_dir(tree, path):
+    if not path:
+        return tree
+    cur_dir = tree
+    for dir_ in path.split("/"):
+        next_dir = None
+        for i in cur_dir["items"]:
+            if i["name"] == dir_:
+                next_dir = i
+                break
+        if not next_dir:
+            raise Exception(f"{dir_} not found")
+        cur_dir = next_dir
+
+    return cur_dir
+
+
+def _get_directory_structure(rootdir):
+    """
+    Creates a nested dictionary that represents the folder structure of rootdir
+    """
+    rootdir = rootdir.rstrip(os.sep)
+    project_files = [{
+        "name": os.path.split(rootdir)[-1],
+        "isDirectory": True,
+        "items": [],
+        }]
+    cur_path = rootdir
+    for path, dirs, files in os.walk(rootdir):
+        cur_dir = _get_cur_dir(project_files[0], path[len(rootdir):].strip("/"))
+        for d in dirs:
+            new_dir = {
+                    "name": d,
+                    "isDirectory": True,
+                    "items": [],
+                    }
+            cur_dir["items"].append(new_dir)
+        for f in files:
+            size = os.path.getsize(os.path.join(path, f))
+            new_file = {
+                    "name": f,
+                    "isDirectory": False,
+                    "size": size,
+                    }
+            cur_dir["items"].append(new_file)
+    print(project_files)
+    return project_files
+
+
+@router.get("/api/{repository}/{project}/files")
+def read_projects(repository, project):
+    path = f"./{repository}/projects/{project}"
+    return _get_directory_structure(path)
+
+
+@router.get("/api/{repository}/{project}/files/{path:path}")
+def read_projects(repository, project, path):
+
+    path = f"./{repository}/projects/{path}"
+    with open(path, "r") as f:
+        text = f.read()
+    return text
+
+
 @router.get("/api/{repository}/{project}/{stage}/schedules")
 def read_schedules(repository, project, stage):
     response = handoff_do(

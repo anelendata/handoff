@@ -29,7 +29,7 @@
                 <hr class="sidebar-divider my-0">
                 <ul class="navbar-nav text-light" id="accordionSidebar" style="font-size: 13.6px;font-weight: bold;position: fixed;top: 50px;left: 5px;">
                     <li class="nav-item" style="padding: 16px;">
-                        <div><span>Staging</span><input class="custom-range" type="range" id="stage" min="0" max="1" step="1" value="0" style="width: 30px;margin: 10px;padding-top: 15px;"><span>Production</span></div>
+                        <div><span>Staging</span><input class="custom-range" type="range" id="stage" min="0" max="1" step="1" value="0" style="width: 30px;margin: 10px;padding-top: 15px;" onchange="fetchData()"><span>Production</span></div>
                     </li>
                     <li class="nav-item"><a class="nav-link active" href="#monitor"><i class="fa fa-bar-chart"></i><span>Monitor</span></a></li>
                     <li class="nav-item"><a class="nav-link active" href="#deploy"><i class="fa fa-cloud"></i><span>Deploy</span></a></li>
@@ -128,7 +128,7 @@
                             </div>
                             <div class="col-lg-5 col-xl-7 offset-xl-0" style="margin-right: 24px;">
                                 <div class="input-group border rounded"><input class="bg-light form-control border-0 small" type="text" placeholder="datetime rage..." name="datetimes" style="border-style: solid;filter: blur(0px);">
-                                    <div class="input-group-append"><button class="btn btn-primary text-light py-0" type="button" style="background: #00599C;"><i class="fa fa-calendar"></i></button></div>
+                                    <div class="input-group-append"><button class="btn btn-primary text-light py-0" type="button" style="background: #00599C;" onclick="fetchData()"><i class="fa fa-refresh"></i></button></div>
                                 </div>
                             </div>
                         </div>

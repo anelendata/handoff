@@ -1,5 +1,6 @@
 var monacoVersion = '0.17.0';
 var monacoUrl = 'https://unpkg.com/monaco-editor@' + monacoVersion + '/min/'
+let editor;
 // https://www.npmjs.com/package/monaco-vim
 require.config({ 
     paths: { 
@@ -20,9 +21,9 @@ require(["vs/editor/editor.main",
         ],
         // function () {
         function (a, MonacoVim) {
-	let editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+	editor = monaco.editor.create(document.getElementById('monaco-editor'), {
 		value: [
-			'# yaml'
+			''
 		].join('\n'),
 		language: 'yaml',
 		theme: 'vs'

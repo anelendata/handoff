@@ -120,7 +120,6 @@ def _get_directory_structure(rootdir):
                     "size": size,
                     }
             cur_dir["items"].append(new_file)
-    print(project_files)
     return project_files
 
 

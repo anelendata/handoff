@@ -326,7 +326,8 @@ async function getSchedule() {
           h = h + 'onclick="updateSchedule(' + s['target_id'] + ')" ';
       }
       button_color = s['status'] != 'scheduled' ? 'green' : 'gray';
-      h = h + 'style="background: var(--' + button_color + ');">Publish</a>' + '</td>';
+      button_label = s['status'] != 'scheduled' ? 'Schedule' : 'Scheduled';
+      h = h + 'style="background: var(--' + button_color + ');">' + button_label + '</a>' + '</td>';
       h = h + '<td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
           s['target_id'] +
           ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td>';

@@ -151,18 +151,34 @@ def read_schedules(repository, project, stage):
     return response
 
 
-@router.get("/api/{repository}/{project}/{stage}/status")
-def status(repository, project, stage):
+@router.post("/api/{repository}/{project}/{stage}/schedules/{target_id}")
+def publish_schedule(repository, project, stage, target_id):
     response = handoff_do(
         os.path.join(repository, "projects", project),
-        "cloud task status",
+        "cloud schedule create",
         stage=stage,
-        )
+        vars={
+            "target_id": target_id,
+            },
+    )
     return response
 
 
-@router.post("/api/{repository}/{project}/{stage}/run")
-def run(repository, project, stage, target_id=None):
+@router.delete("/api/{repository}/{project}/{stage}/schedules/{target_id}")
+def delete_schedule(repository, project, stage, target_id):
+    response = handoff_do(
+        os.path.join(repository, "projects", project),
+        "cloud schedule delete",
+        stage=stage,
+        vars={
+            "target_id": target_id,
+            },
+    )
+    return response
+
+
+@router.post("/api/{repository}/{project}/{stage}/schedules/{target_id}/run")
+def run(repository, project, stage, target_id):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud run",
@@ -173,6 +189,15 @@ def run(repository, project, stage, target_id=None):
         )
     return response
 
+
+@router.get("/api/{repository}/{project}/{stage}/status")
+def status(repository, project, stage):
+    response = handoff_do(
+        os.path.join(repository, "projects", project),
+        "cloud task status",
+        stage=stage,
+        )
+    return response
 
 @router.get("/api/{repository}/{project}/{stage}/log", response_class=PlainTextResponse)
 def log(repository, project, stage, start_time=None, end_time=None):

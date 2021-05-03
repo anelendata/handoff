@@ -297,11 +297,59 @@ async function runNow(target_id) {
 
   if (project === null) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/run?target_id=' + target_id);
+  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + target_id + '/run');
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     console.info(res);
     setTimeout(getStatus, 5000);      
+  }
+  xhr.send();
+}
+
+async function updateSchedule(targetId, cron){
+  repository = getRepositoryID();
+  if (repository === null) {
+    return;
+  }
+  project = getProjectID();
+  stage = getStage();
+    
+  var confirm = window.confirm('Schedule ' + project + ' project stage:' + stage + ', target:' + targetId + ' at ' + cron + '?');
+  if (!confirm) {
+    return;
+  }
+    
+  if (project === null) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId);
+  xhr.onload = function(e) {
+    res = JSON.parse(xhr.responseText);
+    console.info(res);
+    setTimeout(getSchedule, 5000); 
+  }
+  xhr.send();
+}
+
+async function deleteSchedule(targetId, cron){
+  repository = getRepositoryID();
+  if (repository === null) {
+    return;
+  }
+  project = getProjectID();
+  stage = getStage();
+
+  var confirm = window.confirm('Delete schedule ' + project + ' project stage:' + stage + ', target:' + targetId + ' at ' + cron + '?');
+  if (!confirm) {
+    return;
+  }
+
+  if (project === null) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('DELETE', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId);
+  xhr.onload = function(e) {
+    res = JSON.parse(xhr.responseText);
+    console.info(res);
+    setTimeout(getSchedule, 5000);
   }
   xhr.send();
 }
@@ -322,14 +370,24 @@ async function getSchedule() {
     res['schedules'].forEach(function(s) {
       var h = '<tr>';
       h = h + '<td>' + '<a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="publish" href="#schedules"';
-      if (s['status'] != 'scheduled') {
-          h = h + 'onclick="updateSchedule(' + s['target_id'] + ')" ';
+      if (s['status'] == 'scheduled') {
+        button_label = 'Scheduled';
+        button_color = 'gray';
+      } else if (s['cron'] === undefined || s['cron'] == '') {
+        button_label = 'Adhoc';
+        button_color = 'gray';
+      } else {
+        h = h + 'onclick="updateSchedule(\'' + s['target_id'] + '\', \'' + s['cron'] +'\')" ';
+        button_label = 'Schedule';
+        button_color = 'green';
       }
-      button_color = s['status'] != 'scheduled' ? 'green' : 'gray';
-      button_label = s['status'] != 'scheduled' ? 'Schedule' : 'Scheduled';
-      h = h + 'style="background: var(--' + button_color + ');">' + button_label + '</a>' + '</td>';
+      h = h + 'style="background: var(--' + button_color + ');">' + button_label + '</a>';
+      if (s['status'] == 'scheduled') {
+        h = h + ' <a onclick="deleteSchedule(\'' + s['target_id'] + '\', \'' + s['cron'] +'\')" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now-1" href="#schedules" style="background: var(--red);"><i class="fas fa-trash-alt fa-sm text-white"></i></a>';
+      }
+      h = h + '</td>';
       h = h + '<td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
-          s['target_id'] +
+          s[' '] +
           ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td>';
       h = h + '<td>' + s['target_id'] + '</td><td>' + s['cron'] + '</td><td>';
       s['envs'].forEach(function(e) {

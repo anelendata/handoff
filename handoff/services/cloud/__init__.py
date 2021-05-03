@@ -466,7 +466,8 @@ def schedule_list(
 
             remote = {}
             remote.update(schedules["schedules"][index])
-            remote.pop("status")
+            if remote.get("status"):
+                remote.pop("status")
             if remote.get("name"):
                 remote.pop("name")
             if s != remote:

@@ -320,10 +320,17 @@ async function getSchedule() {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';
     res['schedules'].forEach(function(s) {
-      var h = '<tr><td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
+      var h = '<tr>';
+      h = h + '<td>' + '<a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="publish" href="#schedules"';
+      if (s['status'] != 'scheduled') {
+          h = h + 'onclick="updateSchedule(' + s['target_id'] + ')" ';
+      }
+      button_color = s['status'] != 'scheduled' ? 'green' : 'gray';
+      h = h + 'style="background: var(--' + button_color + ');">Publish</a>' + '</td>';
+      h = h + '<td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
           s['target_id'] +
-          ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td><td>' +
-          s['target_id'] + '</td><td>' + s['cron'] + '</td><td>';
+          ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td>';
+      h = h + '<td>' + s['target_id'] + '</td><td>' + s['cron'] + '</td><td>';
       s['envs'].forEach(function(e) {
         h = h + e['key'] + ": '" + e['value'] + "', ";
       });

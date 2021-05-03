@@ -444,7 +444,36 @@ def schedule_list(
     state = _get_state()
     platform = _get_platform()
     state.validate_env()
-    return platform.list_schedules(**vars)
+    schedules = platform.list_schedules(**vars)
+    target_ids = []
+    for s in schedules["schedules"]:
+        target_ids.append(s["target_id"])
+        s["status"] = "scheduled"
+
+    if vars.get("include_unpublished"):
+        config = admin._config_get_local(project_dir, workspace_dir)
+        local_schedules = config.get("schedules", [])
+        for s in local_schedules:
+            status = ""
+            try:
+
+                index = target_ids.index(s["target_id"])
+            except ValueError:
+                index = len(target_ids)
+                target_ids.append(s["target_id"])
+                schedules["schedules"].append({})
+                status = "draft"
+
+            remote = {}
+            remote.update(schedules["schedules"][index])
+            if remote.get("name"):
+                remote.pop("name")
+            if s != remote:
+                schedules["schedules"][index] = s
+                status = status or "edited"
+                schedules["schedules"][index]["status"] = status
+
+    return schedules
 
 
 def logs(

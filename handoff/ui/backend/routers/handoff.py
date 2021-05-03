@@ -144,6 +144,9 @@ def read_schedules(repository, project, stage):
         os.path.join(repository, "projects", project),
         "cloud schedule list",
         stage=stage,
+        vars={
+            "include_unpublished": True,
+            },
     )
     return response
 
@@ -199,7 +202,7 @@ def log(repository, project, stage, start_time=None, end_time=None):
 
 
 @router.get("/api/{repository}/{project}/{stage}/stats")
-def stats(repository, project, stage, start_time=None, end_time=None):
+def stats(repository, project, stage, start_time=None, end_time=None, filter_="count"):
     file_name = f"./{repository}/{project}_stats.json"
     if os.path.isfile(file_name):
         os.remove(file_name)
@@ -216,7 +219,7 @@ def stats(repository, project, stage, start_time=None, end_time=None):
             "start_time": start_time,
             "end_time": end_time,
             "file": file_name,
-            "filter_pattern": "count",
+            "filter_pattern": filter_,
             "format_": "json",
             "follow": False,
             },

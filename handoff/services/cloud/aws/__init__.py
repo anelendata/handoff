@@ -538,12 +538,15 @@ def list_tasks(full=False, running=True, stopped=True,
                 output[item] = task.get(item)
         else:
             output = task
-        if output["lastStatus"] in "RUNNING":
+        if output["lastStatus"] == "RUNNING":
             output["timeSinceStart"] = str(
                 datetime.datetime.utcnow().replace(
                     tzinfo=datetime.timezone.utc) - task["startedAt"])
-        elif output["lastStatus"] in "STOPPED":
-            output["duration"] = str(task["executionStoppedAt"] - task["startedAt"])
+        elif output["lastStatus"] == "STOPPED":
+            if task.get("executionStoppedAt") and task.get("startedAt"):
+                output["duration"] = str(task["executionStoppedAt"] - task["startedAt"])
+            else:
+                output["duration"] = None
 
         outputs.append(output)
     return outputs

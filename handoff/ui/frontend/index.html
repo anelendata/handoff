@@ -32,10 +32,10 @@
                         <div><span>Staging</span><input class="custom-range" type="range" id="stage" min="0" max="1" step="1" value="0" style="width: 30px;margin: 10px;padding-top: 15px;" onchange="fetchData()"><span>Production</span></div>
                     </li>
                     <li class="nav-item"><a class="nav-link active" href="#monitor"><i class="fa fa-bar-chart"></i><span>Monitor</span></a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#deploy"><i class="fa fa-cloud"></i><span>Deploy</span></a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#container"><i class="fab fa-docker"></i><span>Container</span></a></li>
-                    <li class="nav-item"><a class="nav-link active" href="#develop"><i class="fa fa-wrench"></i><span>Develop</span></a></li>
                     <li class="nav-item"><a class="nav-link active" href="#files"><i class="fa fa-files-o"></i><span>Files</span></a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#develop"><i class="fa fa-wrench"></i><span>Develop</span></a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#container"><i class="fab fa-docker"></i><span>Container</span></a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#deploy"><i class="fa fa-cloud"></i><span>Deploy</span></a></li>
                 </ul>
             </div>
         </nav>
@@ -306,54 +306,6 @@
                             </div>
                         </div>
                     </div>
-                    <div id="develop" style="padding-top: 70px;">
-                        <div class="row" style="padding: 10px;">
-                            <div class="col">
-                                <h3>Develop</h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12 offset-lg-0 mb-4" style="min-height: 200px;">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3" style="color: rgb(133, 135, 150);">
-                                        <div class="row">
-                                            <div class="col-lg-6 col-xl-3">
-                                                <h6 class="text-primary font-weight-bold m-0">Editor</h6>
-                                            </div>
-                                            <div class="col-lg-6 col-xl-8"><span id="filename">file name</span></div>
-                                            <div class="col-lg-6 col-xl-1"><button class="btn btn-primary" id="save" type="button" style="height: 32px;padding: 3px 6px;" onclick="saveFile()">Save</button></div>
-                                        </div>
-                                    </div><div id="monaco-editor"></div>
-                                    <div></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-lg-12 offset-lg-0 mb-4" style="min-height: 200px;">
-                                <div class="card shadow mb-4">
-                                    <div class="card-header py-3" style="color: rgb(133, 135, 150);">
-                                        <div class="row">
-                                            <div class="col-lg-6">
-                                                <h6 class="text-primary font-weight-bold m-0">Logs</h6>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="text-md-right dataTables_filter" id="dataTable_filter-3"><label><input type="search" id="filter-term-dev" class="form-control form-control-sm" aria-controls="dataTable" placeholder="Filter" onchange="updateLogArea(log_text)"></label></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <ul class="list-group list-group-flush">
-                                        <li class="list-group-item">
-                                            <div class="row align-items-center no-gutters">
-                                                <div class="col-lg-12 mr-2">
-                                                    <div id="log-area-dev" style="background: rgb(248,249,252);min-height: 200px;max-height: 400px;overflow:scroll;"><code><pre id="log-area"></pre></code></div>
-                                                </div>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div id="files" style="padding-top: 70px;">
                         <div class="row" style="padding: 10px;">
                             <div class="col">
@@ -378,6 +330,29 @@
                                             <div id="file-manager" class="dx-viewport" style="background: rgb(248,249,252);min-height: 200px;max-height: 400px;overflow:scroll;"></div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="develop" style="padding-top: 70px;">
+                        <div class="row" style="padding: 10px;">
+                            <div class="col">
+                                <h3>Develop</h3>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12 offset-lg-0 mb-4" style="min-height: 200px;">
+                                <div class="card shadow mb-4">
+                                    <div class="card-header py-3" style="color: rgb(133, 135, 150);">
+                                        <div class="row">
+                                            <div class="col-lg-6 col-xl-3">
+                                                <h6 class="text-primary font-weight-bold m-0">Editor</h6>
+                                            </div>
+                                            <div class="col-lg-6 col-xl-8"><span id="filename">file name</span></div>
+                                            <div class="col-lg-6 col-xl-1"><button class="btn btn-primary" id="save" type="button" style="height: 32px;padding: 3px 6px;" onclick="saveFile()">Save</button></div>
+                                        </div>
+                                    </div><div id="monaco-editor"></div>
+                                    <div></div>
                                 </div>
                             </div>
                         </div>

@@ -402,9 +402,9 @@ async function getSchedule() {
         h = h + ' <a onclick="deleteSchedule(\'' + s['target_id'] + '\', \'' + s['cron'] +'\')" class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now-1" href="#schedules" style="background: var(--red);"><i class="fas fa-trash-alt fa-sm text-white"></i></a>';
       }
       h = h + '</td>';
-      h = h + '<td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(' +
-          s[' '] +
-          ');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td>';
+      h = h + '<td><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" id="run-now" href="#schedules" onclick="runNow(\'' +
+          s['target_id'] +
+          '\');" style="background: #00599C;"><i class="fas fa-play fa-sm text-white-50"></i>&nbsp;Run Now</a> </td>';
       h = h + '<td>' + s['target_id'] + '</td><td>' + s['cron'] + '</td><td>';
       s['envs'].forEach(function(e) {
         h = h + e['key'] + ": '" + e['value'] + "', ";

@@ -1,10 +1,10 @@
 $(function() {
   $('input[name="datetimes"]').daterangepicker({
     timePicker: true,
-    startDate: moment().startOf('hour').add(-1, 'day'),
-    endDate: moment().startOf('hour'),
+    startDate: moment.utc().startOf('hour').add(-1, 'day'),
+    endDate: moment.utc().startOf('hour'),
     locale: {
-      format: 'M/DD hh:mm A'
+      format: 'YYYY/MM/DD hh:mm A UTC'
     }
   });
   $('input[name="datetimes"]').on('apply.daterangepicker', function(ev, picker) {

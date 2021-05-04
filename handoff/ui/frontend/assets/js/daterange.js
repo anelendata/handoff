@@ -1,7 +1,7 @@
 $(function() {
   $('input[name="datetimes"]').daterangepicker({
     timePicker: true,
-    startDate: moment().startOf('hour').add(-3, 'day'),
+    startDate: moment().startOf('hour').add(-1, 'day'),
     endDate: moment().startOf('hour'),
     locale: {
       format: 'M/DD hh:mm A'

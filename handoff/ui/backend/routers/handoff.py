@@ -4,6 +4,8 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from pydantic import BaseModel
+
 import handoff
 from handoff.config import (
     init_state,
@@ -129,8 +131,20 @@ def read_projects(repository, project):
     return _get_directory_structure(path)
 
 
+class Data(BaseModel):
+    body: str
+
+
+@router.post("/api/{repository}/{project}/files/{path:path}")
+def write_file(repository, project, path, data: Data):
+    path = f"./{repository}/projects/{path}"
+    with open(path, "w") as f:
+        f.write(data.body)
+    print(f"Saved {path}")
+
+
 @router.get("/api/{repository}/{project}/files/{path:path}")
-def read_projects(repository, project, path):
+def read_file(repository, project, path):
 
     path = f"./{repository}/projects/{path}"
     with open(path, "r") as f:
@@ -269,3 +283,8 @@ def project():
     with open(FRONTEND_DIR + "/index.html", "r") as f:
         body = f.read()
     return HTMLResponse(body)
+
+
+@router.get("/p/{organization}/{repository}/{project_name}", response_class=HTMLResponse)
+def project_path(organization, repository, project_name):
+    return project()

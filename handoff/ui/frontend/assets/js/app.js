@@ -126,6 +126,19 @@ function getEndTimestamp() {
   return endTimestamp;
 }
 
+function setOrganizationID(organizationID) {
+  if (organizationID != getOrganizationID()){
+    setRepositoryID(null);
+  }
+  document.getElementById('organization-id').textContent = organizationID;
+  fetchRepositoryList();  
+}
+function getOrganizationID() {
+  var organization = document.getElementById('organization-id').textContent;
+  if (organization === '') organization = null;
+  return organization;
+}
+
 function setRepositoryID(repositoryID) {
   if (repositoryID != getRepositoryID()){
     setProjectID(null);
@@ -141,12 +154,15 @@ function getRepositoryID() {
 
 function setProjectID(projectID) {
   document.getElementById('project-id').textContent = projectID;
-  fetchData();
 }
 function getProjectID() {
   var projectID = document.getElementById('project-id').textContent;
   if (projectID === '') projectID = null;
   return projectID
+}
+function goToProject(projectID) {
+  setProjectID(projectID);
+  window.location.href = '/p/' + getOrganizationID() + '/' + getRepositoryID() + '/' + getProjectID();
 }
 
 var projectFiles = null;
@@ -187,7 +203,7 @@ async function fetchProjectList() {
     records = JSON.parse(xhr.responseText);
     htmlOut = '';
     records.forEach(function(obj, index) {
-       htmlOut += '<a class="dropdown-item" href="#" onclick="setProjectID(\'' + obj + '\')">' + obj + '</a>'
+       htmlOut += '<a class="dropdown-item" href="#" onclick="goToProject(\'' + obj + '\')">' + obj + '</a>'
     });
     output.innerHTML = htmlOut;
   }
@@ -325,7 +341,7 @@ async function updateSchedule(targetId, cron){
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     console.info(res);
-    setTimeout(getSchedule, 5000); 
+    setTimeout(getSchedule, 1000); 
   }
   xhr.send();
 }
@@ -349,7 +365,7 @@ async function deleteSchedule(targetId, cron){
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     console.info(res);
-    setTimeout(getSchedule, 5000);
+    setTimeout(getSchedule, 1000);
   }
   xhr.send();
 }
@@ -437,6 +453,30 @@ async function getStatus() {
   xhr.send();
 }
 
+async function saveFile() {
+  path = document.getElementById('filename').innerText;
+  if (path === undefined || path == '') {
+      return;
+  }
+  repository = getRepositoryID();
+  if (repository === null) {
+    return;
+  }
+  project = getProjectID();
+    
+  if (project === null) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/' + repository + '/' + project + '/files/' + path);
+  xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+  document.getElementById('filename').innerText = path;
+  xhr.onload = function(e) {
+    console.log('saved file:' + path);
+    setTimeout(fetchData, 1000);      
+  }
+  var data = JSON.stringify({'body': editor.getValue()});
+  xhr.send(data);    
+}
+
 async function loadFile(path){
   repository = getRepositoryID();
   if (repository === null) {
@@ -447,6 +487,7 @@ async function loadFile(path){
   if (project === null) return;
   var xhr = new XMLHttpRequest();
   xhr.open('GET', '/api/' + repository + '/' + project + '/files/' + path);
+  document.getElementById('filename').innerText = path;
   xhr.onload = function(e) {
     text = xhr.responseText.replace(/^"|"$/g, '').replaceAll('\\n', '\n').replaceAll('\\"', '\"');
     editor.setValue(text);
@@ -455,6 +496,13 @@ async function loadFile(path){
 }
 
 function fetchData() {
+  path = window.location.pathname.split('/');
+  organization = path[2];
+  if (organization != undefined) setOrganizationID(organization);
+  repository = path[3];
+  if (repository != undefined) setRepositoryID(repository);
+  project = path[4];
+  if (project != undefined) setProjectID(project);
   startTimestamp = getStartTimestamp();
   endTimestamp = getEndTimestamp();
   fetchRepositoryList();

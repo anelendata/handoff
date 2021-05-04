@@ -470,6 +470,8 @@ def schedule_list(
                 remote.pop("status")
             if remote.get("name"):
                 remote.pop("name")
+            if s.get("description"):
+                s.pop("description")
             if s != remote:
                 schedules["schedules"][index] = s
                 status = status or "edited"

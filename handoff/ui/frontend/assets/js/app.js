@@ -508,8 +508,9 @@ function fetchData() {
   fetchRepositoryList();
   fetchProjectList();
   fetchProjectFiles();
+  if (fileManager != undefined) fileManager.refresh();    
   project = getProjectID();
-  if (project != null && editor.getValue() === '') {
+  if (project != null && editor != undefined && editor.getValue() === '') {
       loadFile(project + '/' + 'project.yml');
   }
   getStatus();

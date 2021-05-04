@@ -1,3 +1,4 @@
+var fileManager;
 $(function () {
     // https://js.devexpress.com/Documentation/Guide/UI_Components/FileManager/Bind_to_File_Systems/
     /*
@@ -15,7 +16,7 @@ $(function () {
         // ...
     });
 
-    $("#file-manager").dxFileManager({
+    fileManager = $("#file-manager").dxFileManager({
         name: "fileManager",
         fileSystemProvider: customProvider,
         currentPath: "Widescreen",
@@ -39,7 +40,7 @@ $(function () {
             popup.show();
             */
 		}
-    });
+    }).dxFileManager("instance");;
 
     /*
     $("#photo-popup").dxPopup({

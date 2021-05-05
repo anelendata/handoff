@@ -433,7 +433,7 @@ async function getStatus() {
   xhr.onload = function(e) {
     res = JSON.parse(xhr.responseText);
     var htmlOut = '';
-    if (res === null) return;
+    if (res === null || res['status'] == 'error') return;
     res.forEach(function(s) {
     var h = '<tr><td>' + s['taskArn'].slice(-8) + '</td><td>' +
     // var h = '<tr><td>' + s['taskArn'].replace(/\d{12}/, '******') + '</td><td>' +        
@@ -508,10 +508,12 @@ function fetchData() {
   fetchRepositoryList();
   fetchProjectList();
   fetchProjectFiles();
-  if (fileManager != undefined) fileManager.refresh();    
   project = getProjectID();
   if (project != null && editor != undefined && editor.getValue() === '') {
       loadFile(project + '/' + 'project.yml');
+  }
+  if (fileManager != undefined){
+      fileManager.refresh();
   }
   getStatus();
   getSchedule();

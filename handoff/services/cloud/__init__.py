@@ -189,10 +189,14 @@ def bucket_delete(
 def resources_create(
     project_dir: str,
     workspace_dir: str,
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud resources create -p <project_directory>`
     Create resources necessary for task execution.
     The resources are shared among the tasks under the same resource group.
+
+    Optionally:
+    -v static_ip=True: [AWS] Create Elastic IP and NAT Gateway to obtain a static IP. This [costs more](https://aws.amazon.com/vpc/pricing/).
 
     AWS:
     - Please refer to the
@@ -201,12 +205,13 @@ def resources_create(
     state = _get_state()
     platform = _get_platform()
     state.validate_env()
-    return platform.create_resources()
+    return platform.create_resources(**vars)
 
 
 def resources_update(
     project_dir: str,
     workspace_dir: str,
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud resources update -p <project_directory>`
     Update the resources
@@ -216,7 +221,7 @@ def resources_update(
     state = _get_state()
     platform = _get_platform()
     state.validate_env()
-    return platform.update_resources()
+    return platform.update_resources(**vars)
 
 
 def resources_delete(

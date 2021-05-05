@@ -49,7 +49,9 @@ def schedule_task(task_stack, resource_group_stack, container_image,
                 **{"region": region,
                    "account_id": account_id,
                    "phys_rsrc_id": r["PhysicalResourceId"]})
-        if r["ResourceType"] == "AWS::EC2::Subnet":
+        # PublicSubnetTwo is <= v0.3.4
+        if (r["ResourceType"] == "AWS::EC2::Subnet" and
+                r["LogicalResourceId"] in ["PublicSubnetTwo", "Subnet2"]):
             subnets.append(r["PhysicalResourceId"])
         if r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])

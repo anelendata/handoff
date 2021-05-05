@@ -522,8 +522,13 @@ def list_tasks(full=False, running=True, stopped=True,
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
-    response = ecs.describe_tasks(resource_group + "-resources", region,
-                                  running=running, stopped=stopped)
+    try:
+        response = ecs.describe_tasks(resource_group + "-resources", region,
+                                      running=running, stopped=stopped)
+    except Exception as e:
+        response = {"status": "error", "message": str(e)}
+        return response
+
     outputs = []
     digest = ["taskArn", "taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
     if not response:
@@ -725,11 +730,15 @@ def write_logs(
         format_ = "{datetime} - {message}"
 
     while True:
-        response = logs.filter_log_events(log_group_name,
-                                          start_time=start_time,
-                                          end_time=end_time,
-                                          filter_pattern=filter_pattern,
-                                          extras=extras)
+        try:
+            response = logs.filter_log_events(log_group_name,
+                                              start_time=start_time,
+                                              end_time=end_time,
+                                              filter_pattern=filter_pattern,
+                                              extras=extras)
+        except Exception as e:
+            response = {"status": "error", "message": str(e)}
+            return response
 
         show = False
         for e in response.get("events", list()):

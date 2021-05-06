@@ -426,13 +426,16 @@ def delete_bucket():
     return response
 
 
-def create_resources(template_file=None, update=False):
+def create_resources(template_file=None, update=False, static_ip=False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
-        template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
+        if static_ip:
+            template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources_static_ip.yml")
+        else:
+            template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
 
     if not update:
         response = cloudformation.create_stack(stack_name, template_file)

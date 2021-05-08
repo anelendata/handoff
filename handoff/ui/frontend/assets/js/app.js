@@ -247,7 +247,7 @@ function logout() {
     sessionStorage.removeItem("token");
     document.getElementById('user-menu').innerHTML = '<a class="dropdown-item" id="login" href="#" onclick="showLoginModal()"><i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i> Login</a>';
     $('#profile-image')[0].src = 'https://gravatar.com/avatar/0';
-    showLoginModal();
+    window.location = '/';
 }
 
 /* Fetch

@@ -1,6 +1,6 @@
 import datetime, json, logging, multiprocessing, os, re, tempfile
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -14,6 +14,8 @@ from handoff.config import (
     CLOUD_PLATFORM,
     CONTAINER_PROVIDER,
 )
+from handoff.ui.backend import crud, schemas
+
 
 CODE_DIR, _ = os.path.split(__file__)
 FRONTEND_DIR = os.path.join(CODE_DIR, "../../frontend")
@@ -26,6 +28,14 @@ log_proc = None
 stats_proc = None
 
 PROJECT_ROOT = os.getcwd()
+
+
+def validate():
+    schemas.User = Depends(crud.get_current_active_user)
+    print(schemas.User)
+    if not schemas.User:
+        raise HTTPException(status_code=400, detail="Unauthorized access")
+    return True
 
 
 def json_serial(obj):
@@ -62,14 +72,17 @@ def handoff_do(project, command, stage, vars={}, do_async=False):
 
 
 @router.get("/api/repositories")
-def read_repositories():
+def read_repositories(
+        valid: bool = Depends(validate)
+    ):
     repositories = next(os.walk("."))[1]
     repositories.sort()
     return repositories
 
 
 @router.get("/api/{repository}/projects")
-def read_projects(repository):
+def read_projects(repository,
+        valid: bool = Depends(validate)):
     path = f"./{repository}/projects"
     dirs = next(os.walk(path))[1]
     projects = [d for d in dirs if os.path.isfile(os.path.join(path, d, "project.yml"))]
@@ -126,7 +139,8 @@ def _get_directory_structure(rootdir):
 
 
 @router.get("/api/{repository}/{project}/files")
-def read_projects(repository, project):
+def read_projects(repository, project,
+        valid: bool = Depends(validate)):
     path = f"./{repository}/projects/{project}"
     return _get_directory_structure(path)
 
@@ -136,7 +150,8 @@ class Data(BaseModel):
 
 
 @router.post("/api/{repository}/{project}/files/{path:path}")
-def write_file(repository, project, path, data: Data):
+def write_file(repository, project, path, data: Data,
+        valid: bool = Depends(validate)):
     path = f"./{repository}/projects/{path}"
     with open(path, "w") as f:
         f.write(data.body)
@@ -144,8 +159,8 @@ def write_file(repository, project, path, data: Data):
 
 
 @router.get("/api/{repository}/{project}/files/{path:path}")
-def read_file(repository, project, path):
-
+def read_file(repository, project, path,
+        valid: bool = Depends(validate)):
     path = f"./{repository}/projects/{path}"
     with open(path, "r") as f:
         text = f.read()
@@ -153,7 +168,8 @@ def read_file(repository, project, path):
 
 
 @router.get("/api/{repository}/{project}/{stage}/schedules")
-def read_schedules(repository, project, stage):
+def read_schedules(repository, project, stage,
+        valid: bool = Depends(validate)):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud schedule list",
@@ -166,7 +182,8 @@ def read_schedules(repository, project, stage):
 
 
 @router.post("/api/{repository}/{project}/{stage}/schedules/{target_id}")
-def publish_schedule(repository, project, stage, target_id):
+def publish_schedule(repository, project, stage, target_id,
+        valid: bool = Depends(validate)):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud schedule create",
@@ -179,7 +196,8 @@ def publish_schedule(repository, project, stage, target_id):
 
 
 @router.delete("/api/{repository}/{project}/{stage}/schedules/{target_id}")
-def delete_schedule(repository, project, stage, target_id):
+def delete_schedule(repository, project, stage, target_id,
+        valid: bool = Depends(validate)):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud schedule delete",
@@ -192,7 +210,8 @@ def delete_schedule(repository, project, stage, target_id):
 
 
 @router.post("/api/{repository}/{project}/{stage}/schedules/{target_id}/run")
-def run(repository, project, stage, target_id):
+def run(repository, project, stage, target_id,
+        valid: bool = Depends(validate)):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud run",
@@ -205,7 +224,8 @@ def run(repository, project, stage, target_id):
 
 
 @router.get("/api/{repository}/{project}/{stage}/status")
-def status(repository, project, stage):
+def status(repository, project, stage,
+        valid: bool = Depends(validate)):
     response = handoff_do(
         os.path.join(repository, "projects", project),
         "cloud task status",
@@ -214,7 +234,8 @@ def status(repository, project, stage):
     return response
 
 @router.get("/api/{repository}/{project}/{stage}/log", response_class=PlainTextResponse)
-def log(repository, project, stage, start_time=None, end_time=None):
+def log(repository, project, stage, start_time=None, end_time=None,
+        valid: bool = Depends(validate)):
     file_name = f"./{project}.log"
     if os.path.isfile(file_name):
         os.remove(file_name)
@@ -241,7 +262,8 @@ def log(repository, project, stage, start_time=None, end_time=None):
 
 
 @router.get("/api/{repository}/{project}/{stage}/stats")
-def stats(repository, project, stage, start_time=None, end_time=None, filter_="count"):
+def stats(repository, project, stage, start_time=None, end_time=None,
+        filter_="count", valid: bool = Depends(validate)):
     file_name = f"./{repository}/{project}_stats.json"
     if os.path.isfile(file_name):
         os.remove(file_name)

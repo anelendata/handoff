@@ -1,55 +1,3 @@
-function login() {    
-  username = $('#inputEmail').val();
-  password = $('#inputPassword').val();
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/token', true);
-  xhr.onload = function(e) {
-    response = JSON.parse(xhr.responseText);
-    if (response['access_token'] != undefined) {
-      token = response['access_token'];
-      postLogin(token);
-      sessionStorage.SessionName = 'handoff';
-      sessionStorage.setItem("token", token);              
-    }
-  }
-  data = new FormData();
-  data.append('username', username);
-  data.append('password', password)
-  xhr.send(data);
-}
-
-function showLoginModal() {
-  $("#login-modal").modal({
-    backdrop: 'static',
-    keyboard: false
-  });
-  $('#login-modal').modal('show');    
-}
-
-function postLogin(token) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/users/me/');
-  xhr.setRequestHeader('accept', 'application/json', false);
-  xhr.setRequestHeader('Authorization', 'Bearer ' + token, false);
-  xhr.onload = function(e) {
-    response = JSON.parse(xhr.responseText);
-    $('#profile-image')[0].src = response['profile_url']
-    $('#login-modal').modal('hide');    
-    document.getElementById('user-menu').innerHTML = 
-      '<a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i> Profile</a><a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i> Settings</a><a class="dropdown-item" href="#"><i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i> Activity log</a><div class="dropdown-divider"></div><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Logout</a>';      
-  }
-  xhr.send();
-}
-
-function logout() {
-    sessionStorage.removeItem("token");
-    document.getElementById('user-menu').innerHTML = '<a class="dropdown-item" id="login" href="#" onclick="showLoginModal()"><i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i> Login</a>';
-    $('#profile-image')[0].src = 'https://gravatar.com/avatar/0';
-    showLoginModal();
-}
-
-var path = window.location.pathname.split('/')
-
 var chart = new Highcharts.Chart({
   chart: {
      renderTo: 'chart-area',
@@ -101,8 +49,87 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function goToSection(h){
+  var url = location.href;
+  location.href = "#"+h;
+  history.replaceState(null,null,url);
+}
+
+function request(url, method, params=[], data=[], headers=[], json=false) {
+  // adopted from https://web.dev/promises/#promisifying-xmlhttprequest
+  // Return a new promise.
+  return new Promise(function(resolve, reject) {
+    // Do the usual XHR stuff
+    var req = new XMLHttpRequest();
+    var urlParams = url;
+    params.forEach(function(p, index) {
+      if (index == 0) {
+          urlParams += '?' + p[0] + '=' + p[1];
+      } else {
+          urlParams += '&' + p[0] + '=' + p[1];        
+      }
+    });
+    req.open(method, urlParams);
+    headers.forEach(function(h, index) {
+      req.setRequestHeader(h[0], h[1]);
+    });
+    if (json) {
+      req.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    }
+
+    req.onload = function() {
+      // This is called even on 404 etc
+      // so check the status
+      if (req.status == 200) {
+        // Resolve the promise with the response text
+        resolve(req.response);
+      }
+      else {
+        // Otherwise reject with the status text
+        // which will hopefully be a meaningful error
+        reject(Error(req.statusText));
+      }
+    };
+
+    // Handle network errors
+    req.onerror = function() {
+      reject(Error("Network Error"));
+    };
+
+    var formData = null;
+    if (json) {
+      formData = data;  
+    } else if (data.length > 0) {
+      formData = new FormData();
+      data.forEach(function(obj, index){
+        formData.append(obj[0], obj[1]);
+      });
+    }
+    // Make the request
+    req.send(formData);
+  });
+}
+
+function post(url, data=[], headers=[], json=false) {
+  return request(url, 'POST', [], data, headers, json);
+}
+
+function get(url, params=[], headers=[]) {
+  return request(url, 'GET', params, [], headers);
+}
+
+function put(url, data=[], headers=[]) {
+  return request(url, 'PUT', [], data, headers);
+}
+
+function delete_(url, headers=[]) {
+  return request(url, 'DELETE', [], [], headers);
+}
+
 /* get set
 */
+var path = window.location.pathname.split('/')
+
 function getStage() {
     if (document.getElementById('stage').value == '0') return 'dev';
     return 'prod';
@@ -173,21 +200,70 @@ function setProjectFiles(files) {
     projectFiles = files;
 }
 
+/* login
+*/
+function login() {    
+  var data = [
+    ['username', $('#inputEmail').val()],
+    ['password', $('#inputPassword').val()]
+  ];
+  post('/token', data).then(function(response) {
+    response = JSON.parse(response);
+    if (response['access_token'] != undefined) {
+      token = response['access_token'];
+      postLogin(token);
+      sessionStorage.SessionName = 'handoff';
+      sessionStorage.setItem("token", token);              
+    }      
+  });
+}
+
+function showLoginModal() {
+  $("#login-modal").modal({
+    backdrop: 'static',
+    keyboard: false
+  });
+  $('#login-modal').modal('show');    
+}
+
+function postLogin(token) {
+  var headers = [
+      ['accept', 'application/json', false],
+      ['Authorization', 'Bearer ' + token, false]
+  ]
+  get('/users/me/', [], headers).then(function(response) {
+    response = JSON.parse(response);
+    $('#profile-image')[0].src = response['profile_url']
+    $('#login-modal').modal('hide');    
+    document.getElementById('user-menu').innerHTML = 
+      '<a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i> Profile</a><a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i> Settings</a><a class="dropdown-item" href="#"><i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i> Activity log</a><div class="dropdown-divider"></div><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Logout</a>';
+      fetchData();
+  }, function(error) {
+        showLoginModal();    
+  });
+}
+
+function logout() {
+    sessionStorage.removeItem("token");
+    document.getElementById('user-menu').innerHTML = '<a class="dropdown-item" id="login" href="#" onclick="showLoginModal()"><i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i> Login</a>';
+    $('#profile-image')[0].src = 'https://gravatar.com/avatar/0';
+    showLoginModal();
+}
+
 /* Fetch
 */
 async function fetchRepositoryList() {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/repositories');
-  xhr.onload = function(e) {
+  get('/api/repositories').then(function(response) {
     var output = document.getElementById('repositories');
-    records = JSON.parse(xhr.responseText);
+    records = JSON.parse(response);
     htmlOut = '';
     records.forEach(function(obj, index) {
        htmlOut += '<a class="dropdown-item" href="#" onclick="setRepositoryID(\'' + obj + '\')">' + obj + '</a>'
     });
     output.innerHTML = htmlOut;
-  }
-  xhr.send();
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 async function fetchProjectList() {
@@ -195,34 +271,32 @@ async function fetchProjectList() {
   if (repository === null) {
     return;
   }
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/projects');
-  xhr.onload = function(e) {
+  get('/api/' + repository + '/projects').then(function(response) {
     var output = document.getElementById('projects');
-    xhr.responseText;
-    records = JSON.parse(xhr.responseText);
+    records = JSON.parse(response);
     htmlOut = '';
     records.forEach(function(obj, index) {
        htmlOut += '<a class="dropdown-item" href="#" onclick="goToProject(\'' + obj + '\')">' + obj + '</a>'
     });
     output.innerHTML = htmlOut;
-  }
-  xhr.send();
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 async function fetchProjectFiles() {
-  repository = getRepositoryID();
+  var repository = getRepositoryID();
   if (repository === null) {
     return;
   }
-  project = getProjectID();
+  var project = getProjectID();
   if (project === null) return [];
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/files');
-  xhr.onload = function(e) {
-    setProjectFiles(JSON.parse(xhr.responseText));
-  }
-  xhr.send();    
+    
+  get('/api/' + repository + '/' + project + '/files').then(function(response) {
+    setProjectFiles(JSON.parse(response));
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 var log_text = '';
@@ -265,12 +339,15 @@ async function pollLog(startTimestamp, endTimestamp) {
   project = getProjectID();
   stage = getStage();
   if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage + '/log?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
-  xhr.onload = function(e) {
-    updateLogArea(xhr.responseText);
-  }
-  xhr.send();
+  params = [
+    ['start_time', startTimestamp],
+    ['end_time', endTimestamp]
+  ]
+  get('/api/' + repository + '/' + project + '/' + stage + '/log', params).then(function(response) {
+    updateLogArea(response);
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 async function pollStats(startTimestamp, endTimestamp) {
@@ -281,11 +358,13 @@ async function pollStats(startTimestamp, endTimestamp) {
   project = getProjectID();
   stage = getStage();
   if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage + '/stats?start_time=' + startTimestamp + '&end_time=' + endTimestamp);
-  xhr.onload = function(e) {
+  params = [
+    ['start_time', startTimestamp],
+    ['end_time', endTimestamp]
+  ]    
+  get('/api/' + repository + '/' + project + '/' + stage + '/stats', params).then(function(response) {
     data = new Array();
-    records = JSON.parse(xhr.responseText);
+    records = JSON.parse(response);
     records.forEach(function(obj, index) {
       if (obj['message'] && obj['message']['metric'] == 'record_count') {
         data.push([new Date(obj['datetime']).getTime() /* - 8 * 60 * 60 * 1000 */,
@@ -294,8 +373,9 @@ async function pollStats(startTimestamp, endTimestamp) {
     });
     console.info(data);
     chart.series[0].update({name: project, data: data}, true);
-  }
-  xhr.send();
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 async function runNow(target_id) {
@@ -305,21 +385,16 @@ async function runNow(target_id) {
   }
   project = getProjectID();
   stage = getStage();
-    
+  if (project === null) return;   
   var confirm = window.confirm('Run ' + project + ' project stage:' + stage + ', target:' + target_id + '?');
   if (!confirm) {
     return;
-  }
-
-  if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + target_id + '/run');
-  xhr.onload = function(e) {
-    res = JSON.parse(xhr.responseText);
+  }    
+  post('/api/' + repository + '/' + project + '/' + stage + '/schedules/' + target_id + '/run').then(function(response){
+    res = JSON.parse(response);
     console.info(res);
     setTimeout(getStatus, 5000);      
-  }
-  xhr.send();
+  });
 }
 
 async function updateSchedule(targetId, cron){
@@ -329,21 +404,16 @@ async function updateSchedule(targetId, cron){
   }
   project = getProjectID();
   stage = getStage();
-    
+  if (project === null) return; 
   var confirm = window.confirm('Schedule ' + project + ' project stage:' + stage + ', target:' + targetId + ' at ' + cron + '?');
   if (!confirm) {
     return;
   }
-    
-  if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId);
-  xhr.onload = function(e) {
-    res = JSON.parse(xhr.responseText);
+  post('/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId).then(function(response) {
+    res = JSON.parse(response);
     console.info(res);
-    setTimeout(getSchedule, 1000); 
-  }
-  xhr.send();
+    setTimeout(getSchedule, 1000);       
+  });
 }
 
 async function deleteSchedule(targetId, cron){
@@ -353,21 +423,17 @@ async function deleteSchedule(targetId, cron){
   }
   project = getProjectID();
   stage = getStage();
-
+  if (project === null) return;
   var confirm = window.confirm('Delete schedule ' + project + ' project stage:' + stage + ', target:' + targetId + ' at ' + cron + '?');
   if (!confirm) {
     return;
   }
 
-  if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('DELETE', '/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId);
-  xhr.onload = function(e) {
-    res = JSON.parse(xhr.responseText);
+  delete_('/api/' + repository + '/' + project + '/' + stage + '/schedules/' + targetId).then(function(response){
+    res = JSON.parse(response);
     console.info(res);
-    setTimeout(getSchedule, 1000);
-  }
-  xhr.send();
+    setTimeout(getSchedule, 1000);      
+  });
 }
 
 async function getSchedule() {
@@ -378,10 +444,9 @@ async function getSchedule() {
   project = getProjectID();
   if (project === null) return;
   stage = getStage();
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage +'/schedules');
-  xhr.onload = function(e) {
-    res = JSON.parse(xhr.responseText);
+    
+  get('/api/' + repository + '/' + project + '/' + stage + '/schedules').then(function(response) {
+    res = JSON.parse(response);
     var htmlOut = '';
     res['schedules'].forEach(function(s) {
       var h = '<tr>';
@@ -413,9 +478,10 @@ async function getSchedule() {
       htmlOut += h;
     });
     var output = document.getElementById('schedule');
-    output.innerHTML = htmlOut;
-  }
-  xhr.send();
+    output.innerHTML = htmlOut;        
+  }, function(error) {
+    console.error("Failed!", error);
+  });    
 }
 
 async function getStatus() {
@@ -428,10 +494,9 @@ async function getStatus() {
   project = getProjectID()
   if (project === null) return;
   stage = getStage();
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/' + stage +'/status');
-  xhr.onload = function(e) {
-    res = JSON.parse(xhr.responseText);
+    
+  get('/api/' + repository + '/' + project + '/' + stage + '/status').then(function(response) {
+    res = JSON.parse(response);
     var htmlOut = '';
     if (res === null || res['status'] == 'error') return;
     res.forEach(function(s) {
@@ -448,33 +513,30 @@ async function getStatus() {
     });
     var output = document.getElementById('status');
     // output.textContent = JSON.stringify(res, undefined, 4);
-    output.innerHTML= htmlOut;
-  }
-  xhr.send();
+    output.innerHTML= htmlOut;  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 async function saveFile() {
-  path = document.getElementById('filename').innerText;
+  var path = document.getElementById('filename').innerText;
   if (path === undefined || path == '') {
       return;
   }
-  repository = getRepositoryID();
+  var repository = getRepositoryID();
   if (repository === null) {
     return;
   }
-  project = getProjectID();
+  var project = getProjectID();
+  if (project === null) return; 
     
-  if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/' + repository + '/' + project + '/files/' + path);
-  xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-  document.getElementById('filename').innerText = path;
-  xhr.onload = function(e) {
-    console.log('saved file:' + path);
-    setTimeout(fetchData, 1000);      
-  }
+  // document.getElementById('filename').innerText = path;
   var data = JSON.stringify({'body': editor.getValue()});
-  xhr.send(data);    
+    
+  post('/api/' + repository + '/' + project + '/files/' + path, data, [], true).then(function(response){
+    console.log('saved file:' + path);
+    setTimeout(fetchData, 1000);            
+  });
 }
 
 async function loadFile(path){
@@ -483,16 +545,16 @@ async function loadFile(path){
     return;
   }
   project = getProjectID();
-    
   if (project === null) return;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/' + repository + '/' + project + '/files/' + path);
-  document.getElementById('filename').innerText = path;
-  xhr.onload = function(e) {
-    text = xhr.responseText.replace(/^"|"$/g, '').replaceAll('\\n', '\n').replaceAll('\\"', '\"');
+
+  get('/api/' + repository + '/' + project + '/files/' + path).then(function(response) {
+    text = response.replace(/^"|"$/g, '').replaceAll('\\n', '\n').replaceAll('\\"', '\"');
     editor.setValue(text);
-  }
-  xhr.send();
+    document.getElementById('filename').innerText = path;  
+    goToSection('develop');
+  }, function(error) {
+    console.error("Failed!", error);
+  });
 }
 
 function fetchData() {
@@ -526,7 +588,6 @@ function init() {
   token = sessionStorage.getItem("token");
   if (token != undefined) {
     postLogin(token);
-    fetchData();  
   } else {
     showLoginModal();      
   }

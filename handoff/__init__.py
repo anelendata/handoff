@@ -74,17 +74,17 @@ def _load_param_list(arg_list: List) -> Dict:
     return data
 
 
-def _list_plugins() -> Dict:
-    modules = dict()
-    objects = dir(plugins)
+def _list_submodules(module) -> Dict:
+    submodules = dict()
+    objects = dir(module)
     for name in objects:
         if name[0] == "_":
             continue
-        obj = getattr(plugins, name)
+        obj = getattr(module, name)
 
         if not callable(obj):
-            modules[name] = obj
-    return modules
+            submodules[name] = obj
+    return submodules
 
 
 def _list_commands(module: Dict) -> Dict:
@@ -232,7 +232,8 @@ def do(
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]
 
-    plugin_modules = _list_plugins()
+    plugin_modules = _list_submodules(plugins)
+    service_modules = _list_submodules(services)
 
     # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):
@@ -267,20 +268,20 @@ def do(
         print_announcements()
         return response
 
-    if module_name in services.registration:
+    if module_name in service_modules:
         if show_help:
-            return _run_subcommand(services.registration[module_name],
+            return _run_subcommand(service_modules[module_name],
                     sub_command, project_dir, workspace_dir, show_help, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
         if module_name == "cloud":
             if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
-                image_version = services.registration["container"]._get_latest_image_version(
+                image_version = service_modules["container"]._get_latest_image_version(
                     project_dir, workspace_dir, **kwargs)
                 if image_version:
                     state.set_env(IMAGE_VERSION, image_version)
 
-        return _run_subcommand(services.registration[module_name], sub_command,
+        return _run_subcommand(service_modules[module_name], sub_command,
                 project_dir, workspace_dir, show_help, **kwargs)
 
     if module_name in plugin_modules.keys():
@@ -311,7 +312,7 @@ def check_update() -> None:
 def print_commands() -> None:
     admin_command_list = "\n- ".join(_list_commands(admin))
     task_command_list = "\n- ".join(_list_commands(task))
-    plugin_list = "\n- ".join(_list_plugins().keys())
+    plugin_list = "\n- ".join(_list_submodules(plugins).keys())
 
     print("""Try running:
     handoff quick_start make

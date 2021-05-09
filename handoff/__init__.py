@@ -14,8 +14,7 @@ from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             get_state, init_state)
 from handoff.core import admin, task
 from handoff.utils import bcolors, get_logger
-from handoff.services import cloud, container
-from handoff import plugins
+from handoff import plugins, services
 
 LOGGER = get_logger("handoff")
 
@@ -75,17 +74,17 @@ def _load_param_list(arg_list: List) -> Dict:
     return data
 
 
-def _list_plugins() -> Dict:
-    modules = dict()
-    objects = dir(plugins)
+def _list_submodules(module) -> Dict:
+    submodules = dict()
+    objects = dir(module)
     for name in objects:
         if name[0] == "_":
             continue
-        obj = getattr(plugins, name)
+        obj = getattr(module, name)
 
         if not callable(obj):
-            modules[name] = obj
-    return modules
+            submodules[name] = obj
+    return submodules
 
 
 def _list_commands(module: Dict) -> Dict:
@@ -233,7 +232,8 @@ def do(
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]
 
-    plugin_modules = _list_plugins()
+    plugin_modules = _list_submodules(plugins)
+    service_modules = _list_submodules(services)
 
     if command == "server":
         from handoff import ui
@@ -273,27 +273,21 @@ def do(
         print_announcements()
         return response
 
-    if module_name == "container":
+    if module_name in service_modules:
         if show_help:
-            return _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                                   show_help, **kwargs)
+            return _run_subcommand(service_modules[module_name],
+                    sub_command, project_dir, workspace_dir, show_help, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        return _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                               show_help, **kwargs)
 
-    if module_name == "cloud":
-        if show_help:
-            return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                                   show_help, **kwargs)
-        admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
-            image_version = container._get_latest_image_version(
-                project_dir, workspace_dir, **kwargs)
-            if image_version:
-                state.set_env(IMAGE_VERSION, image_version)
+        if module_name == "cloud":
+            if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
+                image_version = service_modules["container"]._get_latest_image_version(
+                    project_dir, workspace_dir, **kwargs)
+                if image_version:
+                    state.set_env(IMAGE_VERSION, image_version)
 
-        return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                               show_help, **kwargs)
+        return _run_subcommand(service_modules[module_name], sub_command,
+                project_dir, workspace_dir, show_help, **kwargs)
 
     if module_name in plugin_modules.keys():
         if show_help:
@@ -323,7 +317,7 @@ def check_update() -> None:
 def print_commands() -> None:
     admin_command_list = "\n- ".join(_list_commands(admin))
     task_command_list = "\n- ".join(_list_commands(task))
-    plugin_list = "\n- ".join(_list_plugins().keys())
+    plugin_list = "\n- ".join(_list_submodules(plugins).keys())
 
     print("""Try running:
     handoff quick_start make
@@ -338,7 +332,7 @@ Availabe run commands:
 
 Available subcommands:
 - cloud
-- docker
+- container
 - %s
 
 handoff <command> -h for more help.\033[0m

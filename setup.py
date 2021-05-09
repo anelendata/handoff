@@ -37,7 +37,7 @@ setup(
         "jsonschema>=3.2.0",
         "packaging>=19.2",
         "python-dateutil>=2.8.0",
-        "pyyaml>=5.1",
+        "pyyaml>=5.4",
         "requests>=2.19.0",
         "s3transfer>=0.2.0",
     ],

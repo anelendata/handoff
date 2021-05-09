@@ -14,8 +14,7 @@ from handoff.config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             get_state, init_state)
 from handoff.core import admin, task
 from handoff.utils import bcolors, get_logger
-from handoff.services import cloud, container
-from handoff import plugins
+from handoff import plugins, services
 
 LOGGER = get_logger("handoff")
 
@@ -268,27 +267,21 @@ def do(
         print_announcements()
         return response
 
-    if module_name == "container":
+    if module_name in services.registration:
         if show_help:
-            return _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                                   show_help, **kwargs)
+            return _run_subcommand(services.registration[module_name],
+                    sub_command, project_dir, workspace_dir, show_help, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        return _run_subcommand(container, sub_command, project_dir, workspace_dir,
-                               show_help, **kwargs)
 
-    if module_name == "cloud":
-        if show_help:
-            return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                                   show_help, **kwargs)
-        admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
-            image_version = container._get_latest_image_version(
-                project_dir, workspace_dir, **kwargs)
-            if image_version:
-                state.set_env(IMAGE_VERSION, image_version)
+        if module_name == "cloud":
+            if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
+                image_version = services.registration["container"]._get_latest_image_version(
+                    project_dir, workspace_dir, **kwargs)
+                if image_version:
+                    state.set_env(IMAGE_VERSION, image_version)
 
-        return _run_subcommand(cloud, sub_command, project_dir, workspace_dir,
-                               show_help, **kwargs)
+        return _run_subcommand(services.registration[module_name], sub_command,
+                project_dir, workspace_dir, show_help, **kwargs)
 
     if module_name in plugin_modules.keys():
         if show_help:
@@ -333,7 +326,7 @@ Availabe run commands:
 
 Available subcommands:
 - cloud
-- docker
+- container
 - %s
 
 handoff <command> -h for more help.\033[0m

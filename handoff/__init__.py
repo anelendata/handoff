@@ -272,7 +272,9 @@ def do(
         if show_help:
             return _run_subcommand(service_modules[module_name],
                     sub_command, project_dir, workspace_dir, show_help, **kwargs)
-        admin._config_get_local(project_dir, workspace_dir, **kwargs)
+
+        if module_name != "github":
+            admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
         if module_name == "cloud":
             if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):

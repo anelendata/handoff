@@ -32,7 +32,6 @@ PROJECT_ROOT = os.getcwd()
 
 def validate():
     schemas.User = Depends(crud.get_current_active_user)
-    print(schemas.User)
     if not schemas.User:
         raise HTTPException(status_code=400, detail="Unauthorized access")
     return True

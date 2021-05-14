@@ -1,7 +1,7 @@
 VERSION = "0.3.4"
 VERSION_MINOR = ".".join(VERSION.split(".")[0:2])
 
-import os, re
+import datetime, os, re
 from handoff import utils
 
 LOGGER = utils.get_logger(__name__)
@@ -187,6 +187,11 @@ def init_state(stage=DEFAULT_STAGE):
         STATE["_stage-"] = stage + "-"
         STATE["__stage"] = "_" + stage
         STATE["__stage_"] = "_" + stage + "_"
+    STATE["_today"] = datetime.date.today().isoformat()
+    STATE["_yesterday"] = (
+        datetime.date.today() + datetime.timedelta(days=-1)).isoformat()
+    STATE["_tomorrow"] = (
+        datetime.date.today() + datetime.timedelta(days=1)).isoformat()
     STATE.set_env(STAGE, stage)
 
 

@@ -123,6 +123,7 @@ Resources:
               - ecs:RunTask
               - ecs:StartTask
               - ecs:StopTask
+              - ecs:ListTasks
               Resource: "*"
             - Effect: Allow
               Action:

@@ -88,7 +88,7 @@ def role_create(
                          "-v external_id=yyyy")
 
     return platform.create_role(
-        grantee_account_id=vars.get("grantee_account_id", account_id),
+        grantee_account_id=str(vars.get("grantee_account_id", account_id)),
         external_id=vars.get("external_id")
     )
 
@@ -115,7 +115,7 @@ def role_update(
                          "-v external_id=yyyy")
 
     return platform.update_role(
-        grantee_account_id=vars.get("grantee_account_id", account_id),
+        grantee_account_id=str(vars.get("grantee_account_id", account_id)),
         external_id=vars.get("external_id")
     )
 
@@ -142,7 +142,7 @@ def role_delete(
                          "-v external_id=yyyy")
 
     return platform.delete_role(
-        grantee_account_id=vars.get("grantee_account_id", account_id),
+        grantee_account_id=str(vars.get("grantee_account_id", account_id)),
         external_id=vars.get("external_id")
     )
 

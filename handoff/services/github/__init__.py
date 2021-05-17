@@ -31,17 +31,18 @@ def clone(
     state = _get_state()
     access_token = vars.get("access_token", state.get(GITHUB_ACCESS_TOKEN))
     github = _get_github(access_token)
-    org_name = vars["organization"]
     repo_name = vars["repository"]
+    org_name = vars.get("organization")
     local_dir = vars.get("local_dir", "./" + repo_name)
     if os.path.exists(local_dir):
         if not vars.get("force", False):
             raise Exception("The directory already exists.")
         shutil.rmtree(local_dir)
-    git_url = "https://github.com/" + org_name + "/" + repo_name + ".git"
+    git_url = vars.get("url", "https://github.com/" + str(org_name) + "/" + repo_name + ".git")
     callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(access_token, "x-oauth-basic"))
     repo_clone = pygit2.clone_repository(
             git_url, local_dir, callbacks=callbacks)
+    return {"status": "success", "repository": repo_name}
 
 
 def commit (
@@ -56,7 +57,7 @@ def commit (
     access_token = vars.get("access_token")
     github = _get_github(access_token)
     commit_msg = vars["commit_msg"]
-    local_dir = vars.get("local_dir")
+    local_dir = vars["local_dir"]  # typically the "./{repository_name}"
     branch = vars.get("branch", "master")
 
     repo = pygit2.Repository(local_dir + "/.git")
@@ -65,6 +66,7 @@ def commit (
     # repo.remotes.set_url("origin", repo.clone_url)
     index = repo.index
     index.add_all()
+    index.remove_all("*.secrets*")
     index.write()
     author = pygit2.Signature(user.name, user.email)
     commiter = pygit2.Signature(user.name, user.email)

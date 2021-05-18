@@ -32,12 +32,15 @@ def _get_platform(
     if not PLATFORM_MODULE:
         if not provider_name or not platform_name:
             raise Exception("You need to set provider_name and platform_name")
-        # TODO: use platform_name
-        PLATFORM_MODULE = _import_module("handoff.services.cloud."
-                                         + provider_name)
-        response = PLATFORM_MODULE.login(cloud_profile)
-        if stdout:
-            sys.stdout.write(response)
+
+    # TODO: use platform_name
+    PLATFORM_MODULE = _import_module("handoff.services.cloud."
+                                     + provider_name)
+    response = PLATFORM_MODULE.login(cloud_profile)
+    if not response:
+        raise Exception(
+            f"Login to {provider_name} failed. Credentials may not be set correctly.")
+
     return PLATFORM_MODULE
 
 

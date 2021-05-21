@@ -201,9 +201,13 @@ def _read_project_local(project_file: str) -> Dict:
     cloud_provider_name = project.get("deploy", dict()).get("cloud_provider")
     cloud_platform_name = project.get("deploy", dict()).get("cloud_platform")
     if cloud_provider_name and cloud_platform_name:
-        platform = cloud._get_platform(provider_name=cloud_provider_name,
-                                       platform_name=cloud_platform_name)
-        LOGGER.debug("Platform: " + platform.NAME)
+        try:
+            platform = cloud._get_platform(provider_name=cloud_provider_name,
+                                           platform_name=cloud_platform_name)
+        except Exception as e:
+            LOGGER.warning(str(e))
+        else:
+            LOGGER.debug("Platform: " + platform.NAME)
 
     return project
 

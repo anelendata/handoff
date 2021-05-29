@@ -8,19 +8,19 @@ from . import credentials as cred
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("ssm")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("ssm", cred_keys)
 
 
-def get_parameter(key):
-    client = get_client()
+def get_parameter(key, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     param = client.get_parameter(Name=key, WithDecryption=True)
     value = param["Parameter"]["Value"]
     return value
 
 
-def get_parameters_by_path(path):
-    client = get_client()
+def get_parameters_by_path(path, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     response = client.get_parameters_by_path(
         Path=path,
         Recursive=False,
@@ -39,13 +39,14 @@ def put_parameter(key, value,
                   allowed_pattern=None,
                   tags=None,
                   tier="Standard",
-                  policies=None
+                  policies=None,
+                  cred_keys: dict = {},
                   ):
     """
     For parameters, see
     https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ssm.html#SSM.Client.put_parameter
     """
-    client = get_client()
+    client = get_client(cred_keys)
 
     kwargs = {"Name": key,
               "Value": value,
@@ -67,8 +68,8 @@ def put_parameter(key, value,
     return response
 
 
-def delete_parameter(key):
-    client = get_client()
+def delete_parameter(key, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     kwargs = {"Name": key}
     response = client.delete_parameter(**kwargs)
     return response

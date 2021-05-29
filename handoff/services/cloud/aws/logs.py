@@ -8,8 +8,8 @@ from . import credentials as cred
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("logs")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("logs", cred_keys)
 
 
 def filter_log_events(
@@ -19,11 +19,12 @@ def filter_log_events(
     next_token=None,
     filter_pattern=None,
     extras=None,
+    cred_keys: dict = {},
 ):
     if not filter_pattern:
         filter_pattern = " "
 
-    client = get_client()
+    client = get_client(cred_keys)
     kwargs = {
         "logGroupName": log_group_name,
         "filterPattern": filter_pattern,

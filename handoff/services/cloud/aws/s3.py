@@ -8,14 +8,14 @@ from . import credentials as cred
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("s3")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("s3", cred_keys)
 
 
-def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix):
+def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix, cred_keys: dict = {}):
     logger.info("Copying recursively from s3://%s/* to s3://%s/*" %
                 (os.path.join(src_bucket, src_prefix), os.path.join(dest_bucket, dest_prefix)))
-    client = get_client()
+    client = get_client(cred_keys)
     keys = []
     next_token = ""
     base_kwargs = {
@@ -53,7 +53,7 @@ def copy_dir_to_another_bucket(src_bucket, src_prefix, dest_bucket, dest_prefix)
                         (os.path.join(src_bucket, k), os.path.join(dest_bucket, dest_path)))
 
 
-def download_dir(bucket_name, local_dir_path, remote_dir_path):
+def download_dir(bucket_name, local_dir_path, remote_dir_path, cred_keys: dict = {}):
     """
     params:
     - bucket_name: s3 bucket name (without s3://) with target contents
@@ -62,7 +62,7 @@ def download_dir(bucket_name, local_dir_path, remote_dir_path):
 
     Modified from: https://stackoverflow.com/a/56267603
     """
-    client = get_client()
+    client = get_client(cred_keys)
     logger.info("GET s3://" + bucket_name + "/" + remote_dir_path)
     keys = []
     dirs = []
@@ -107,12 +107,12 @@ def download_dir(bucket_name, local_dir_path, remote_dir_path):
         client.download_file(bucket_name, k, dest_pathname)
 
 
-def upload_dir(bucket_name, local_dir_path, remote_dir_path):
+def upload_dir(bucket_name, local_dir_path, remote_dir_path, cred_keys: dict = {}):
     """
     References:
     - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
     """
-    client = get_client()
+    client = get_client(cred_keys)
 
     # check if the bucket exists
     s3 = boto3.resource("s3")
@@ -143,7 +143,7 @@ def upload_dir(bucket_name, local_dir_path, remote_dir_path):
         client.upload_file(source_path, bucket_name, dest_path)
 
 
-def delete_recurse(bucket_name, prefix):
+def delete_recurse(bucket_name, prefix, cred_keys: dict = {}):
     """Recursively delete objects in the bucket under prefix
     params:
     - bucket_name: s3 bucket name (without s3://) with target contents
@@ -151,7 +151,7 @@ def delete_recurse(bucket_name, prefix):
 
     Modified from: https://stackoverflow.com/a/56267603
     """
-    client = get_client()
+    client = get_client(cred_keys)
     logger.info("GET s3://" + bucket_name + "/" + prefix)
     objects = []
     next_token = ""
@@ -182,22 +182,22 @@ def delete_recurse(bucket_name, prefix):
     logger.info("Deleted %s" % objects)
 
 
-def download_file(bucket_name, local_path, remote_path):
-    client = get_client()
+def download_file(bucket_name, local_path, remote_path, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     client.download_file(bucket_name, remote_path, local_path)
 
 
-def upload_file(bucket_name, local_path, remote_path):
-    client = get_client()
+def upload_file(bucket_name, local_path, remote_path, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     client.upload_file(local_path, bucket_name, remote_path)
 
 
-def delete_file(bucket_name, key):
+def delete_file(bucket_name, key, cred_keys: dict = {}):
     """
     References:
     - https://boto3.amazonaws.com/v1/documentation/api/latest/guide/migrations3.html
     """
-    client = get_client()
+    client = get_client(cred_keys)
 
     # check if the bucket exists
     s3 = boto3.resource("s3")

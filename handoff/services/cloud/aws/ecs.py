@@ -9,14 +9,14 @@ from . import cloudformation as cfn, sts
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("ecs")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("ecs", cred_keys)
 
 
 def describe_tasks(resource_group, region, running=True, stopped=True,
-                   extras=None):
-    client = get_client()
-    account_id = sts.get_account_id()
+        extras=None, cred_keys: dict = {}):
+    client = get_client(cred_keys=cred_keys)
+    account_id = sts.get_account_id(cred_keys=cred_keys)
     cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"
     task_arns = []
     if stopped:
@@ -32,23 +32,24 @@ def describe_tasks(resource_group, region, running=True, stopped=True,
     return response
 
 
-def stop_task(resource_group, region, task_id, reason, extras=None):
-    client = get_client()
-    account_id = sts.get_account_id()
+def stop_task(resource_group, region, task_id, reason, extras=None,
+        cred_keys: dict = {}):
+    client = get_client(cred_keys=cred_keys)
+    account_id = sts.get_account_id(cred_keys=cred_keys)
     cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"
     response = client.stop_task(cluster=cluster, task=task_id, reason=reason)
     return response
 
 
 def run_fargate_task(task_stack, resource_group_stack, container_image, region,
-                     env=[], extras=None):
+        env=[], extras=None, cred_keys: dict = {}):
     """Run a fargate task
     extras overwrite the kwargs given to run_task boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
     """
     env.append({"name": "TASK_TRIGGERED_AT",
                 "value": datetime.datetime.utcnow().isoformat()})
-    client = get_client()
+    client = get_client(cred_keys=cred_keys)
 
     rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
 
@@ -61,7 +62,7 @@ def run_fargate_task(task_stack, resource_group_stack, container_image, region,
 
     rg_resources = cfn.describe_stack_resources(
         resource_group_stack)["StackResources"]
-    account_id = sts.get_account_id()
+    account_id = sts.get_account_id(cred_keys)
     cluster_arn = None
     subnets = list()
     security_groups =list()

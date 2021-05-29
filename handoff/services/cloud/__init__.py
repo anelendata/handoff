@@ -109,8 +109,9 @@ def role_update(
     Update the role privilege information.
     """
     state = _get_state()
-    platform = _get_platform()
-    account_id = platform.login()
+    platform = _get_platform(vars=vars)
+    cred_keys = platform.find_cred_keys(vars)
+    account_id = platform.login(cred_keys=cred_keys)
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
@@ -136,8 +137,9 @@ def role_delete(
     Delete the role.
     """
     state = _get_state()
-    platform = _get_platform()
-    account_id = platform.login()
+    platform = _get_platform(vars=vars)
+    cred_keys = platform.find_cred_keys(vars)
+    account_id = platform.login(cred_keys=cred_keys)
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +

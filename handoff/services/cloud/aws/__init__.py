@@ -121,10 +121,11 @@ def get_session():
                       trust=True)
 
 
-def assume_role(role_arn=None, target_account_id=None,  external_id=None):
+def assume_role(role_arn=None, target_account_id=None,  external_id=None,
+        cred_keys: dict = {}):
     state = get_state()
     if not role_arn:
-        account_id = sts.get_account_id()
+        account_id = sts.get_account_id(cred_keys=cred_keys)
         resource_group = state.get(RESOURCE_GROUP)
         role_name = ("FargateDeployRole-%s-%s" %
                      (resource_group, account_id))
@@ -306,8 +307,8 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
                                   bucket, dest_prefix)
 
 
-def get_account_id():
-    return sts.get_account_id()
+def get_account_id(cred_keys: dict = {}):
+    return sts.get_account_id(cred_keys)
 
 
 def get_docker_registry_credentials(registry_id=None):

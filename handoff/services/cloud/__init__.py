@@ -22,6 +22,7 @@ def _get_platform(
     platform_name: str = None,
     stdout: bool = False,
     cloud_profile: str = None,
+    vars: dict = {},
     **kwargs) -> ModuleType:
     state = _get_state()
     if not provider_name:
@@ -36,7 +37,8 @@ def _get_platform(
     # TODO: use platform_name
     PLATFORM_MODULE = _import_module("handoff.services.cloud."
                                      + provider_name)
-    response = PLATFORM_MODULE.login(cloud_profile)
+    cred_keys = PLATFORM_MODULE.find_cred_keys(vars)
+    response = PLATFORM_MODULE.login(cloud_profile, cred_keys=cred_keys)
     if not response:
         raise Exception(
             f"Login to {provider_name} failed. Credentials may not be set correctly.")
@@ -78,8 +80,9 @@ def role_create(
     Create the role with deployment privilege.
     """
     state = _get_state()
-    platform = _get_platform()
-    account_id = platform.login()
+    platform = _get_platform(vars=vars)
+    cred_keys = platform.find_cred_keys(vars)
+    account_id = platform.login(cred_keys=cred_keys)
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
@@ -92,8 +95,9 @@ def role_create(
 
     return platform.create_role(
         grantee_account_id=str(vars.get("grantee_account_id", account_id)),
-        external_id=vars.get("external_id")
-    )
+        external_id=vars.get("external_id"),
+        cred_keys=cred_keys,
+        )
 
 
 def role_update(

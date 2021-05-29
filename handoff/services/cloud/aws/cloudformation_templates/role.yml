@@ -19,7 +19,7 @@ Resources:
   FargateDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
+      RoleName: !Sub handoff-FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -32,7 +32,7 @@ Resources:
               sts:ExternalId: !Sub ${ExternalId}
       Path: /
       Policies:
-        - PolicyName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
+        - PolicyName: !Sub handoff-FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -44,9 +44,6 @@ Resources:
               - cloudformation:DescribeStackResources
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - ec2:AssociateRouteTable
               - ec2:AttachInternetGateway
               - ec2:AuthorizeSecurityGroupEgress
@@ -77,9 +74,6 @@ Resources:
               - ec2:ModifyVpcAttribute
               - ec2:RevokeSecurityGroupEgress
               - ec2:RevokeSecurityGroupEgress
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - ecr:BatchCheckLayerAvailability
               - ecr:BatchDeleteImage
               - ecr:BatchGetImage
@@ -108,9 +102,6 @@ Resources:
               - ecr:TagResource
               - ecr:UntagResource
               - ecr:UploadLayerPart
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - ecs:CreateCluster
               - ecs:DeleteCluster
               - ecs:DeregisterContainerInstance
@@ -124,16 +115,10 @@ Resources:
               - ecs:StartTask
               - ecs:StopTask
               - ecs:ListTasks
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - events:DeleteRule
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - iam:CreateRole
               - iam:CreateServiceLinkedRole
               - iam:DeleteRole
@@ -143,9 +128,6 @@ Resources:
               - iam:ListRoles
               - iam:PassRole
               - iam:PutRolePolicy
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - logs:CreateLogGroup
               - logs:DeleteLogGroup
               - logs:DescribeLogGroups
@@ -160,9 +142,6 @@ Resources:
               - logs:StartQuery
               - logs:StopQuery
               - logs:TestMetricFilter
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - s3:CreateBucket
               - s3:DeleteBucket
               - s3:DeleteObject
@@ -171,9 +150,6 @@ Resources:
               - s3:PutBucketPublicAccessBlock
               - s3:PutEncryptionConfiguration
               - s3:PutObject
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - ssm:DeleteParameter
               - ssm:DeleteParameters
               - ssm:DescribeParameters
@@ -182,8 +158,5 @@ Resources:
               - ssm:GetParameters
               - ssm:GetParametersByPath
               - ssm:PutParameter
-              Resource: "*"
-            - Effect: Allow
-              Action:
               - sts:AssumeRole
-              Resource: "*"
+              Resource: !Sub "*handoff-${ResourceGroup}*"

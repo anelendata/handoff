@@ -46,6 +46,7 @@ RUN set -ex \
         locales \
         wget \
         git \
+        python3-pygit2 \
         openssh-server \
         openssh-client \
         gdebi-core \

@@ -29,6 +29,7 @@ RUN set -ex \
         libblas-dev \
         liblapack-dev \
         libpq-dev \
+        cmake \
     ' \
     && apt-get update -yqq \
     && apt-get install -yqq --no-install-recommends \
@@ -46,12 +47,23 @@ RUN set -ex \
         locales \
         wget \
         git \
+        python3-pygit2 \
         openssh-server \
         openssh-client \
         gdebi-core \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+##############
+# libgit2 make
+RUN wget https://github.com/libgit2/libgit2/archive/v1.1.0.tar.gz && \
+    tar xzf v1.1.0.tar.gz && \
+    cd libgit2-1.1.0/ && \
+    cmake . && \
+    make && \
+    make install && \
+    sudo ldconfig
 
 #######
 #  Add tini

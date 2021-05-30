@@ -1,10 +1,14 @@
-sudo: false
-dist: trusty
+sudo: required
+dist: bionic
 
 language: python
 
 python:
   - "3.6"
+
+#befoer_script:
+#  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
+#  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y python3-pygit2; fi
 
 before_install:
   - export
@@ -26,3 +30,8 @@ script:
   - pytest -s tests/local_run_no_install
   - pytest -s tests/local_run_install
     #  - tests/install_test.sh
+
+addons:
+  apt:
+    packages:
+      - python3-pygit2

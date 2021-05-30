@@ -83,7 +83,8 @@ def login(profile=None, cred_keys: dict = {}):
             state.set_env("AWS_REGION", region)
 
         return account_id
-    except Exception:
+    except Exception as e:
+        LOGGER.warning(str(e))
         return None
 
 
@@ -109,16 +110,10 @@ def get_session():
     state = get_state()
     session = cred.get_session()
     keys = session.get_credentials()
-    state.set_env("AWS_ACCESS_KEY_ID",
-                  keys.access_key,
-                  trust=True)
-    state.set_env("AWS_SECRET_ACCESS_KEY",
-                  keys.secret_key,
-                  trust=True)
+    state["AWS_ACCESS_KEY_ID"] = keys.access_key
+    state["AWS_SECRET_ACCESS_KEY"] = keys.secret_key
     if keys.token:
-        state.set_env("AWS_SESSION_TOKEN",
-                      keys.token,
-                      trust=True)
+        state["AWS_SESSION_TOKEN"] = keys.token
 
 
 def assume_role(role_arn=None, target_account_id=None,  external_id=None,
@@ -139,12 +134,9 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None,
                     "role/{role_name}").format(**params)
     response = sts.assume_role(role_arn, external_id=external_id)
 
-    state.set_env("AWS_ACCESS_KEY_ID", response["Credentials"]["AccessKeyId"],
-                  trust=True)
-    state.set_env("AWS_SECRET_ACCESS_KEY",
-                  response["Credentials"]["SecretAccessKey"], trust=True)
-    state.set_env("AWS_SESSION_TOKEN", response["Credentials"]["SessionToken"],
-                  trust=True)
+    state["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
+    state["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
+    state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
 
     return response
 

@@ -355,13 +355,13 @@ def create_role(
                   ]
 
     if not update:
-        response = cloudformation.create_stack(
+        aws_response = cloudformation.create_stack(
                 stack_name, template_file, parameters, cred_keys=cred_keys)
     else:
-        response = cloudformation.update_stack(
+        aws_response = cloudformation.update_stack(
                 stack_name, template_file, parameters, cred_keys=cred_keys)
 
-    _log_stack_info(response)
+    _log_stack_info(aws_response)
 
     account_id = sts.get_account_id(cred_keys)
     role_name = f"handoff-FargateDeployRole-{resource_group}-{grantee_account_id}"
@@ -369,7 +369,7 @@ def create_role(
 
     region = state.get("AWS_REGION")
 
-    print(f"""Add this info to ~/.aws/credentials (Linux & Mac)\n
+    instruction = f"""Add this info to ~/.aws/credentials (Linux & Mac)\n
 %USERPROFILE%\\.aws\\credentials (Windows)
 
     [<new-profile-name>]
@@ -384,7 +384,17 @@ And update the environment varialbe:
 
 Learn more about AWS name profiles at
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
-""")
+"""
+    print(instruction)
+
+    response = {
+        "aws_response": aws_response,
+        "account_id": account_id,
+        "role_arn": role_arn,
+        "external_id": external_id,
+        "region": region,
+        "instruction": instruction,
+        }
     return response
 
 

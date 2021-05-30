@@ -44,6 +44,9 @@ Resources:
               - cloudformation:DescribeStackResources
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
+              Resource: !Sub "arn:aws:cloudformation:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - ec2:AssociateRouteTable
               - ec2:AttachInternetGateway
               - ec2:AuthorizeSecurityGroupEgress
@@ -74,6 +77,9 @@ Resources:
               - ec2:ModifyVpcAttribute
               - ec2:RevokeSecurityGroupEgress
               - ec2:RevokeSecurityGroupEgress
+              Resource: !Sub "arn:aws:ec2:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - ecr:BatchCheckLayerAvailability
               - ecr:BatchDeleteImage
               - ecr:BatchGetImage
@@ -102,6 +108,9 @@ Resources:
               - ecr:TagResource
               - ecr:UntagResource
               - ecr:UploadLayerPart
+              Resource: !Sub "arn:aws:ecr:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - ecs:CreateCluster
               - ecs:DeleteCluster
               - ecs:DeregisterContainerInstance
@@ -115,10 +124,16 @@ Resources:
               - ecs:StartTask
               - ecs:StopTask
               - ecs:ListTasks
+              Resource: !Sub "arn:aws:ecs:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - events:DeleteRule
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              Resource: !Sub "arn:aws:events:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - iam:CreateRole
               - iam:CreateServiceLinkedRole
               - iam:DeleteRole
@@ -128,6 +143,9 @@ Resources:
               - iam:ListRoles
               - iam:PassRole
               - iam:PutRolePolicy
+              Resource: !Sub "arn:aws:iam:::role/*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - logs:CreateLogGroup
               - logs:DeleteLogGroup
               - logs:DescribeLogGroups
@@ -142,6 +160,9 @@ Resources:
               - logs:StartQuery
               - logs:StopQuery
               - logs:TestMetricFilter
+              Resource: !Sub "arn:aws:logs:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - s3:CreateBucket
               - s3:DeleteBucket
               - s3:DeleteObject
@@ -150,6 +171,9 @@ Resources:
               - s3:PutBucketPublicAccessBlock
               - s3:PutEncryptionConfiguration
               - s3:PutObject
+              Resource: !Sub "arn:aws:s3:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - ssm:DeleteParameter
               - ssm:DeleteParameters
               - ssm:DescribeParameters
@@ -158,5 +182,8 @@ Resources:
               - ssm:GetParameters
               - ssm:GetParametersByPath
               - ssm:PutParameter
+              Resource: !Sub "arn:aws:ssm:::*handoff-${ResourceGroup}*"
+            - Effect: Allow
+              Action:
               - sts:AssumeRole
-              Resource: !Sub "*handoff-${ResourceGroup}*"
+              Resource: !Sub "arn:aws:sts:::*handoff-${ResourceGroup}*"

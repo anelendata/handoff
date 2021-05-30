@@ -55,21 +55,36 @@ def _log_task_run_filter(task_name, response):
            "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
-def login(profile=None):
+def find_cred_keys(vars_: dict):
+    cred = {}
+    keys = [
+            "aws_access_key_id",
+            "aws_secret_access_key",
+            "aws_region",
+            "aws_session_token",
+            ]
+    if vars_.get("aws_access_key_id"):
+        for key in keys:
+            cred[key] = vars_.get(key)
+    return cred
+
+
+def login(profile=None, cred_keys: dict = {}):
     state = get_state()
     if profile:
         state.set_env("AWS_PROFILE", profile)
         LOGGER.debug("AWS_PROFILE set to " + state.get("AWS_PROFILE"))
 
-    region = cred.get_region()
-    if region:
-        state.set_env("AWS_REGION", region)
-
     try:
-        account_id = sts.get_account_id()
+        account_id = sts.get_account_id(cred_keys)
+        region = cred.get_region(cred_keys)
         LOGGER.debug("You have the access to AWS resources.")
+        if region:
+            state.set_env("AWS_REGION", region)
+
         return account_id
-    except Exception:
+    except Exception as e:
+        LOGGER.warning(str(e))
         return None
 
 
@@ -95,22 +110,17 @@ def get_session():
     state = get_state()
     session = cred.get_session()
     keys = session.get_credentials()
-    state.set_env("AWS_ACCESS_KEY_ID",
-                  keys.access_key,
-                  trust=True)
-    state.set_env("AWS_SECRET_ACCESS_KEY",
-                  keys.secret_key,
-                  trust=True)
+    state["AWS_ACCESS_KEY_ID"] = keys.access_key
+    state["AWS_SECRET_ACCESS_KEY"] = keys.secret_key
     if keys.token:
-        state.set_env("AWS_SESSION_TOKEN",
-                      keys.token,
-                      trust=True)
+        state["AWS_SESSION_TOKEN"] = keys.token
 
 
-def assume_role(role_arn=None, target_account_id=None,  external_id=None):
+def assume_role(role_arn=None, target_account_id=None,  external_id=None,
+        cred_keys: dict = {}):
     state = get_state()
     if not role_arn:
-        account_id = sts.get_account_id()
+        account_id = sts.get_account_id(cred_keys=cred_keys)
         resource_group = state.get(RESOURCE_GROUP)
         role_name = ("FargateDeployRole-%s-%s" %
                      (resource_group, account_id))
@@ -124,12 +134,9 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None):
                     "role/{role_name}").format(**params)
     response = sts.assume_role(role_arn, external_id=external_id)
 
-    state.set_env("AWS_ACCESS_KEY_ID", response["Credentials"]["AccessKeyId"],
-                  trust=True)
-    state.set_env("AWS_SECRET_ACCESS_KEY",
-                  response["Credentials"]["SecretAccessKey"], trust=True)
-    state.set_env("AWS_SESSION_TOKEN", response["Credentials"]["SessionToken"],
-                  trust=True)
+    state["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
+    state["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
+    state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
 
     return response
 
@@ -292,8 +299,8 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
                                   bucket, dest_prefix)
 
 
-def get_account_id():
-    return sts.get_account_id()
+def get_account_id(cred_keys: dict = {}):
+    return sts.get_account_id(cred_keys)
 
 
 def get_docker_registry_credentials(registry_id=None):
@@ -319,8 +326,12 @@ def create_repository(is_mutable=False):
     ecr.create_repository(name, is_mutable)
 
 
-def create_role(grantee_account_id, external_id, template_file=None,
-                update=False):
+def create_role(
+        grantee_account_id,
+        external_id: str,
+        template_file: str = None,
+        update: bool = False,
+        cred_keys: dict = {}):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role-" + str(grantee_account_id)
@@ -336,24 +347,21 @@ def create_role(grantee_account_id, external_id, template_file=None,
                   ]
 
     if not update:
-        response = cloudformation.create_stack(stack_name, template_file,
-                                               parameters)
+        aws_response = cloudformation.create_stack(
+                stack_name, template_file, parameters, cred_keys=cred_keys)
     else:
-        response = cloudformation.update_stack(stack_name, template_file,
-                                               parameters)
+        aws_response = cloudformation.update_stack(
+                stack_name, template_file, parameters, cred_keys=cred_keys)
 
-    _log_stack_info(response)
+    _log_stack_info(aws_response)
 
-    account_id = sts.get_account_id()
-    role_name = ("FargateDeployRole-%s-%s" %
-                 (resource_group, grantee_account_id))
-    params = {
-        "role_name": role_name,
-        "account_id": account_id
-    }
-    role_arn = ("arn:aws:iam::{account_id}:" +
-                "role/{role_name}").format(**params)
-    print("""Add this info to ~/.aws/credentials (Linux & Mac)\n
+    account_id = sts.get_account_id(cred_keys)
+    role_name = f"handoff-FargateDeployRole-{resource_group}-{grantee_account_id}"
+    role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
+
+    region = state.get("AWS_REGION")
+
+    instruction = f"""Add this info to ~/.aws/credentials (Linux & Mac)\n
 %USERPROFILE%\\.aws\\credentials (Windows)
 
     [<new-profile-name>]
@@ -368,26 +376,35 @@ And update the environment varialbe:
 
 Learn more about AWS name profiles at
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
-""".format(**{"role_arn": role_arn, "external_id": external_id,
-              "region": state.get("AWS_REGION")}))
+"""
+    print(instruction)
+
+    response = {
+        "aws_response": aws_response,
+        "account_id": account_id,
+        "role_arn": role_arn,
+        "external_id": external_id,
+        "region": region,
+        "instruction": instruction,
+        }
     return response
 
 
-def update_role(grantee_account_id, external_id, template_file=None):
-    create_role(grantee_account_id, external_id, template_file, update=True)
+def update_role(grantee_account_id, external_id, template_file=None, cred_keys: dict = {}):
+    create_role(grantee_account_id, external_id, template_file, update=True, cred_keys=cred_keys)
 
 
-def delete_role(grantee_account_id, template_file=None):
+def delete_role(grantee_account_id, template_file=None, cred_keys: dict = {}):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role-" + str(grantee_account_id)
-    response = cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
     _log_stack_filter(stack_name)
     print("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
     return response
 
 
-def create_bucket(template_file=None, update=False):
+def create_bucket(template_file=None, update=False, cred_keys: dict = {}):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     bucket = state.get(BUCKET)
@@ -399,9 +416,9 @@ def create_bucket(template_file=None, update=False):
 
     try:
         if not update:
-            response = cloudformation.create_stack(stack_name, template_file, parameters)
+            response = cloudformation.create_stack(stack_name, template_file, parameters, cred_keys=cred_keys)
         else:
-            response = cloudformation.update_stack(stack_name, template_file, parameters)
+            response = cloudformation.update_stack(stack_name, template_file, parameters, cred_keys=cred_keys)
     except botocore.exceptions.ClientError as e:
         # Bucket already exists
         LOGGER.error("Error creating/updating %s bucket: %s" %
@@ -411,22 +428,23 @@ def create_bucket(template_file=None, update=False):
         return response
 
 
-def update_bucket(template_file=None):
-    create_bucket(template_file, update=True)
+def update_bucket(template_file=None, cred_keys: dict = {}):
+    create_bucket(template_file, update=True, cred_keys=cred_keys)
 
 
-def delete_bucket():
+def delete_bucket(cred_keys: dict = {}):
     state = get_state()
     LOGGER.warning("This will only delete the CloudFormation stack. " +
                    "The bucket %s will be retained." % state.get(BUCKET))
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
-    response = cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
     _log_stack_filter(state[BUCKET])
     return response
 
 
-def create_resources(template_file=None, update=False, static_ip=False):
+def create_resources(template_file=None, update=False, static_ip=False,
+        cred_keys: dict = {}):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
@@ -438,29 +456,29 @@ def create_resources(template_file=None, update=False, static_ip=False):
             template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
 
     if not update:
-        response = cloudformation.create_stack(stack_name, template_file)
+        response = cloudformation.create_stack(stack_name, template_file, cred_keys=cred_keys)
     else:
-        response = cloudformation.update_stack(stack_name, template_file)
+        response = cloudformation.update_stack(stack_name, template_file, cred_keys=cred_keys)
 
     _log_stack_info(response)
     return response
 
 
-def update_resources(template_file=None):
-    create_resources(template_file, update=True)
+def update_resources(template_file=None, cred_keys: dict = {}):
+    create_resources(template_file, update=True, cred_keys=cred_keys)
 
 
-def delete_resources():
+def delete_resources(cred_keys: dict = {}):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
-    response = cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
     _log_stack_filter(resource_group)
     return response
 
 
 def create_task(template_file=None, update=False, memory=512,
-                cpu=256, **kwargs):
+                cpu=256, cred_keys: dict = {}, **kwargs):
     state = get_state()
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
@@ -490,19 +508,19 @@ def create_task(template_file=None, update=False, memory=512,
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "task.yml")
 
     if not update:
-        response = cloudformation.create_stack(stack_name, template_file,
-                                               parameters)
+        response = cloudformation.create_stack(
+                stack_name, template_file, parameters, cred_keys=cred_keys)
     else:
-        response = cloudformation.update_stack(stack_name, template_file,
-                                               parameters)
+        response = cloudformation.update_stack(
+                stack_name, template_file, parameters, cred_keys=cred_keys)
 
     _log_stack_info(response)
     return response
 
 
-def update_task(**kwargs):
+def update_task(cred_keys: dict = {}, **kwargs):
     try:
-        response = create_task(update=True, **kwargs)
+        response = create_task(update=True, cred_keys=cred_keys, **kwargs)
     except botocore.exceptions.ClientError as e:
         LOGGER.error(e)
         exit(1)
@@ -511,10 +529,10 @@ def update_task(**kwargs):
     return response
 
 
-def delete_task():
+def delete_task(cred_keys: dict = {}):
     state = get_state()
     stack_name = state.get(TASK)
-    response = cloudformation.delete_stack(stack_name)
+    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
     _log_stack_filter(stack_name)
     return response
 

@@ -119,8 +119,9 @@ def _update_state(
 
     if not state.get(BUCKET):
         try:
-            platform = cloud._get_platform()
-            aws_account_id = platform.get_account_id()
+            platform = cloud._get_platform(vars=vars)
+            cred_keys = platform.find_cred_keys(vars)
+            aws_account_id = platform.get_account_id(cred_keys)
         except Exception:
             pass
         else:
@@ -152,16 +153,19 @@ def _validate_project(project) -> None:
         raise
 
 
-def _read_project_remote(workspace_dir) -> Dict:
+def _read_project_remote(workspace_dir, vars) -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
     LOGGER.debug("Reading precompiled config from remote.")
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
-    account_id = platform.login()
+    platform = cloud._get_platform(
+            provider_name=state.get(CLOUD_PROVIDER),
+            platform_name=state.get(CLOUD_PLATFORM),
+            vars=vars)
+    cred_keys = platform.find_cred_keys(vars)
+    account_id = platform.login(cred_keys)
     if not account_id:
         raise Exception("Failed to login to cloud account. " +
                         "Did you forget set credentials such as AWS_PROFILE?")
@@ -622,7 +626,7 @@ def _config_get(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     LOGGER.debug("Reading configurations from remote parameter store.")
-    precompiled_config = _read_project_remote(workspace_dir)
+    precompiled_config = _read_project_remote(workspace_dir, vars)
 
     _secrets_get(project_dir, workspace_dir, **kwargs)
     _update_state(precompiled_config, vars=vars)

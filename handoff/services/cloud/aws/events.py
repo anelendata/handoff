@@ -9,18 +9,18 @@ from . import cloudformation as cfn, iam, sts
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("events")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("events", cred_keys)
 
 
 def schedule_task(task_stack, resource_group_stack, container_image,
                   region, target_id, cronexp, role_arn,
-                  env=[], extras=None):
+                  env=[], extras=None, cred_keys: dict = {}):
     """Schedule a task
     extras overwrite the kwargs given to put_targets boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets
     """
-    client = get_client()
+    client = get_client(cred_keys)
 
     rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
 
@@ -92,8 +92,8 @@ def schedule_task(task_stack, resource_group_stack, container_image,
     return client.put_targets(**kwargs)
 
 
-def unschedule_task(task_stack, resource_group_stack, target_id):
-    client = get_client()
+def unschedule_task(task_stack, resource_group_stack, target_id, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
     kwargs = {
         "Rule": rule_name,
@@ -103,8 +103,8 @@ def unschedule_task(task_stack, resource_group_stack, target_id):
     client.delete_rule(Name=rule_name)
 
 
-def list_schedules(task_stack, resource_group_stack):
-    client = get_client()
+def list_schedules(task_stack, resource_group_stack, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     rule_prefix = resource_group_stack + "-" + task_stack
     kwargs = {
         "NamePrefix": rule_prefix,

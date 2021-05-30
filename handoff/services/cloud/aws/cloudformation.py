@@ -7,12 +7,13 @@ from . import credentials as cred
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("cloudformation")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("cloudformation", cred_keys)
 
 
 def create_stack(stack_name, template_file, parameters=None,
-                 capabilities=["CAPABILITY_NAMED_IAM"]):
+                 capabilities=["CAPABILITY_NAMED_IAM"],
+                 cred_keys: dict = {}):
     """
     Parameters are a list of dict objects that has these four keys,
     latter two keys are optional:
@@ -26,7 +27,7 @@ def create_stack(stack_name, template_file, parameters=None,
     """
     with open(template_file, "r") as f:
         template = f.read()
-    client = get_client()
+    client = get_client(cred_keys)
     kwargs = {
         "StackName": stack_name,
         "TemplateBody": template,
@@ -40,7 +41,8 @@ def create_stack(stack_name, template_file, parameters=None,
 
 
 def update_stack(stack_name, template_file, parameters=None,
-                 capabilities=["CAPABILITY_NAMED_IAM"]):
+                 capabilities=["CAPABILITY_NAMED_IAM"],
+                 cred_keys: dict = {}):
     """
     Parameters are a list of dict objects that has these four keys,
     latter two keys are optional:
@@ -54,7 +56,7 @@ def update_stack(stack_name, template_file, parameters=None,
     """
     with open(template_file, "r") as f:
         template = f.read()
-    client = get_client()
+    client = get_client(cred_keys)
 
     kwargs = {
         "StackName": stack_name,
@@ -68,16 +70,16 @@ def update_stack(stack_name, template_file, parameters=None,
     return response
 
 
-def delete_stack(stack_name):
+def delete_stack(stack_name, cred_keys: dict = {}):
     """
     See:
     - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#CloudFormation.Client.delete_stack
     """
-    client = get_client()
+    client = get_client(cred_keys)
     response = client.delete_stack(StackName=stack_name)
     return response
 
 
-def describe_stack_resources(stack_name, query=None):
-    client = get_client()
+def describe_stack_resources(stack_name, query=None, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     return client.describe_stack_resources(StackName=stack_name)

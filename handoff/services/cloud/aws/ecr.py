@@ -7,12 +7,12 @@ from . import credentials as cred
 logger = logging.getLogger(__name__)
 
 
-def get_client():
-    return cred.get_client("ecr")
+def get_client(cred_keys: dict = {}):
+    return cred.get_client("ecr", cred_keys)
 
 
-def get_token(registry_id):
-    client = get_client()
+def get_token(registry_id, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     token = client.get_authorization_token(registryIds=[registry_id])
     return token
 
@@ -30,8 +30,8 @@ def get_docker_registry_credentials(registry_id):
     return username, password, registry
 
 
-def list_images(image_name):
-    client = get_client()
+def list_images(image_name, cred_keys: dict = {}):
+    client = get_client(cred_keys)
     response = client.list_images(repositoryName=image_name)
     ecr_images = response["imageIds"]
     while response.get("next_token"):
@@ -42,13 +42,13 @@ def list_images(image_name):
     return ecr_images
 
 
-def create_repository(repository_name, is_mutable):
+def create_repository(repository_name, is_mutable, cred_keys: dict = {}):
     if is_mutable:
         mutability = "MUTABLE"
     else:
         mutability = "IMMUTABLE"
 
-    client = get_client()
+    client = get_client(cred_keys)
     response = client.create_repository(repositoryName=repository_name,
                                         imageTagMutability=mutability)
     return response

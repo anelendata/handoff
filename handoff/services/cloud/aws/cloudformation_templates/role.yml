@@ -24,7 +24,9 @@ Resources:
         Statement:
         - Effect: Allow
           Principal:
-            AWS: !Sub arn:aws:iam::${GranteeAccountId}:root
+            AWS:
+              - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:root"
+              - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/handoffbot"
           Action:
             - sts:AssumeRole
           Condition:

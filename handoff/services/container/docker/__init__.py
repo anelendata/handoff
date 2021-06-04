@@ -15,9 +15,7 @@ def _envs(
     project_dir: str,
     workspace_dir: str,
     **kwargs) -> None:
-    platform = cloud._get_platform()
-    if not platform.login():
-        raise Exception("Please set platform credentials")
+    platform = cloud.get_platform()
     # Do this to set CONTAINER_IMAGE
     _ = admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
@@ -58,8 +56,8 @@ def run(
     state = config.get_state()
     state.validate_env([CONTAINER_IMAGE])
 
-    env = cloud._get_platform_auth_env(project_dir, workspace_dir,
-                                       envs=envs, **kwargs)
+    platform = cloud.get_platform()
+    env = platform.get_platform_auth_env(vars)
     env.update(envs)
     kwargs.update(vars)
     try:
@@ -79,7 +77,7 @@ def push(
     state = config.get_state()
     state.validate_env([CONTAINER_IMAGE])
 
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     username, password, registry = platform.get_docker_registry_credentials()
     image_name = state.get(CONTAINER_IMAGE)
     try:

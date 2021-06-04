@@ -87,60 +87,6 @@ Resources:
 #           ToPort: 22
       VpcId: !Ref VPC
           
-  TaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${AWS::StackName}-TaskExecutionRole
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: [ecs-tasks.amazonaws.com]
-          Action: ["sts:AssumeRole"]
-      Path: /
-      Policies:
-        - PolicyName: !Sub ${AWS::StackName}-TaskExecutionRolePolicy
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                - ecr:GetAuthorizationToken
-                - ecr:BatchCheckLayerAvailability
-                - ecr:GetDownloadUrlForLayer
-                - ecr:BatchGetImage
-                - logs:CreateLogStream
-                - logs:PutLogEvents
-              Resource: "*"
-
-  CloudWatchEventECSRole:
-   Type: AWS::IAM::Role
-   Properties:
-     RoleName: !Sub ${AWS::StackName}-CloudWatchEventECSRole
-     AssumeRolePolicyDocument:
-       Version: 2012-10-17
-       Statement:
-         - Effect: Allow
-           Principal:
-             Service:
-               - events.amazonaws.com
-           Action:
-             - sts:AssumeRole
-     Path: /
-     Policies:
-       - PolicyName: !Sub ${AWS::StackName}-CloudwatchEventsInvokeECSRunTask
-         PolicyDocument:
-           Version: 2012-10-17
-           Statement:
-             - Effect: Allow
-               Action: ecs:RunTask
-               Resource: "*"
-             - Effect: Allow
-               Action: iam:PassRole
-               Resource: "*"
-               Condition:
-                 StringLike:
-                   iam:PassedToService:
-                     ecs-tasks.amazonaws.com
   FargateCluster:
     Type: AWS::ECS::Cluster
     Properties:

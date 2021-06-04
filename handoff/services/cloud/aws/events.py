@@ -13,9 +13,18 @@ def get_client(cred_keys: dict = {}):
     return cred.get_client("events", cred_keys)
 
 
-def schedule_task(task_stack, resource_group_stack, container_image,
-                  region, target_id, cronexp, role_arn,
-                  env=[], extras=None, cred_keys: dict = {}):
+def schedule_task(
+        account_id,
+        task_stack,
+        resource_group_stack,
+        container_image,
+        region,
+        target_id,
+        cronexp,
+        role_arn,
+        env=[],
+        extras=None,
+        cred_keys: dict = {}):
     """Schedule a task
     extras overwrite the kwargs given to put_targets boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets
@@ -30,7 +39,10 @@ def schedule_task(task_stack, resource_group_stack, container_image,
     }
     client.put_rule(**kwargs)
 
-    task_resources = cfn.describe_stack_resources(task_stack)["StackResources"]
+    task_resources = cfn.describe_stack_resources(
+            task_stack,
+            cred_keys=cred_keys,
+        )["StackResources"]
     task_def_arn = None
     for r in task_resources:
         if r["ResourceType"] == "AWS::ECS::TaskDefinition":
@@ -38,8 +50,9 @@ def schedule_task(task_stack, resource_group_stack, container_image,
             break
 
     rg_resources = cfn.describe_stack_resources(
-        resource_group_stack)["StackResources"]
-    account_id = sts.get_account_id()
+            resource_group_stack,
+            cred_keys=cred_keys,
+        )["StackResources"]
     cluster_arn = None
     subnets = list()
     security_groups = list()
@@ -92,7 +105,11 @@ def schedule_task(task_stack, resource_group_stack, container_image,
     return client.put_targets(**kwargs)
 
 
-def unschedule_task(task_stack, resource_group_stack, target_id, cred_keys: dict = {}):
+def unschedule_task(
+        task_stack,
+        resource_group_stack,
+        target_id,
+        cred_keys: dict = {}):
     client = get_client(cred_keys)
     rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
     kwargs = {
@@ -103,7 +120,11 @@ def unschedule_task(task_stack, resource_group_stack, target_id, cred_keys: dict
     client.delete_rule(Name=rule_name)
 
 
-def list_schedules(task_stack, resource_group_stack, cred_keys: dict = {}):
+def list_schedules(
+        task_stack,
+        resource_group_stack,
+        cred_keys: dict = {},
+        ):
     client = get_client(cred_keys)
     rule_prefix = resource_group_stack + "-" + task_stack
     kwargs = {

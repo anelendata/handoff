@@ -11,6 +11,13 @@ Parameters:
     Description: A name to group the task belongs to
     MaxLength: 27
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  ResourceGroupNaked:
+    Type: String
+    Description: A name to group the task belongs to without staging prefix
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
   Bucket:
     Type: String
     Description: The name of the bucket to store configs and artifacts
@@ -86,8 +93,10 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref TaskExecutionRole
-      TaskRoleArn: !Ref TaskRole
+      ExecutionRoleArn: !ImportValue
+        "Fn::Sub": "${ResourceGroupNaked}-TaskExecutionRoleArn"
+      TaskRoleArn: !ImportValue
+        "Fn::Sub": "${ResourceGroupNaked}-TaskRoleArn"
       ContainerDefinitions:
         - Name: !Sub ${ImageName}
           Cpu: !Sub ${AllocatedCpu}
@@ -117,65 +126,3 @@ Resources:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Sub ${ResourceGroup}-${AWS::StackName}
-
-  TaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskExecutionRole
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - ecs-tasks.amazonaws.com
-          Action:
-            - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskExecutionRolePolicy
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                - ecr:GetAuthorizationToken
-                - ecr:BatchCheckLayerAvailability
-                - ecr:GetDownloadUrlForLayer
-                - ecr:BatchGetImage
-                - logs:CreateLogStream
-                - logs:PutLogEvents
-              Resource: "*"
-
-  TaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskRole
-      AssumeRolePolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - ecs-tasks.amazonaws.com
-          Action:
-            - sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: !Sub ${ResourceGroup}-${AWS::StackName}-TaskRolePolicy
-          PolicyDocument:
-            Statement:
-            - Effect: Allow
-              Action:
-                - s3:GetObject
-                - s3:ListBucket
-                - s3:PutObject
-                - s3:DeleteObject
-              Resource:
-                - !Sub arn:aws:s3:::${Bucket}
-                - !Sub arn:aws:s3:::${Bucket}/${AWS::StackName}/*
-
-            - Effect: Allow
-              Action:
-                - ssm:Describe*
-                - ssm:Get*
-                - ssm:List*
-              Resource:
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}*

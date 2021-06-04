@@ -119,9 +119,8 @@ def _update_state(
 
     if not state.get(BUCKET):
         try:
-            platform = cloud._get_platform(vars=vars)
-            cred_keys = platform.find_cred_keys(vars)
-            aws_account_id = platform.get_account_id(cred_keys)
+            platform = cloud.get_platform()
+            aws_account_id = state.get("AWS_ACCOUNT_ID")
         except Exception:
             pass
         else:
@@ -132,6 +131,7 @@ def _update_state(
         LOGGER.warning(("Environment variable %s is not set. " +
                         "Remote file read/write will fail.") %
                        BUCKET)
+
 
 def _validate_project(project) -> None:
     schema_file_dir, _ = os.path.split(__file__)
@@ -153,19 +153,15 @@ def _validate_project(project) -> None:
         raise
 
 
-def _read_project_remote(workspace_dir, vars) -> Dict:
+def _read_project_remote(workspace_dir: str) -> Dict:
     """Read the config from remote parameters store (e.g. AWS SSM)
     """
     state = get_state()
     LOGGER.debug("Reading precompiled config from remote.")
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform(
-            provider_name=state.get(CLOUD_PROVIDER),
-            platform_name=state.get(CLOUD_PLATFORM),
-            vars=vars)
-    cred_keys = platform.find_cred_keys(vars)
-    account_id = platform.login(cred_keys)
+    platform = cloud.get_platform()
+    account_id = state.get("AWS_ACCOUNT_ID")
     if not account_id:
         raise Exception("Failed to login to cloud account. " +
                         "Did you forget set credentials such as AWS_PROFILE?")
@@ -196,22 +192,12 @@ def _read_project_local(project_file: str) -> Dict:
         full_key = ENV_PREFIX + key.upper()
         value = deploy_env[key]
         if key in ["resource_group", "task"]:
+            state[full_key + "_NAKED"] = value
             value = state["_stage-"] + value
         if state.is_allowed_env(full_key):
             state.set_env(full_key, value)
         else:
             state[full_key] = value
-
-    cloud_provider_name = project.get("deploy", dict()).get("cloud_provider")
-    cloud_platform_name = project.get("deploy", dict()).get("cloud_platform")
-    if cloud_provider_name and cloud_platform_name:
-        try:
-            platform = cloud._get_platform(provider_name=cloud_provider_name,
-                                           platform_name=cloud_platform_name)
-        except Exception as e:
-            LOGGER.warning(str(e))
-        else:
-            LOGGER.debug("Platform: " + platform.NAME)
 
     return project
 
@@ -225,8 +211,7 @@ def _secrets_get(
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
+    platform = cloud.get_platform()
     LOGGER.debug("Fetching the secrets from the remote parameter store.")
     global SECRETS
     SECRETS = {}
@@ -285,7 +270,7 @@ def _secrets_get_local(
 def secrets_push(
     project_dir: str,
     workspace_dir: str,
-    yes: bool =False,
+    yes: bool = False,
     **kwargs) -> None:
     """`handoff secrets push -p <project_directory> -v secrets_dir=<secrets_dir>`
 
@@ -306,7 +291,7 @@ def secrets_push(
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     secrets = _secrets_get_local(project_dir, workspace_dir, **kwargs)
 
     if not secrets:
@@ -352,7 +337,7 @@ def secrets_delete(
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     secrets = _secrets_get_local(project_dir, workspace_dir, **kwargs)
 
     if not secrets:
@@ -398,8 +383,7 @@ def secrets_print(
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK,
                         CLOUD_PROVIDER, CLOUD_PLATFORM])
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
+    platform = cloud.get_platform()
     LOGGER.debug("Fetching the secrets from the remote parameter store.")
     params = platform.get_all_parameters()
     secret_list = list()
@@ -432,8 +416,7 @@ def artifacts_archive(
     LOGGER.debug("Copying the remote artifacts from last to runs " +
                  state.get(BUCKET))
 
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
+    platform = cloud.get_platform()
 
     dest_dir = os.path.join(ARTIFACTS_DIR,
                             BUCKET_ARCHIVE_PREFIX,
@@ -461,9 +444,7 @@ def artifacts_get(
     LOGGER.debug("Downloading artifacts from the remote storage " +
                  state.get(BUCKET))
 
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
-
+    platform = cloud.get_platform()
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     remote_dir = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
 
@@ -489,8 +470,7 @@ def artifacts_push(
     LOGGER.debug("Pushing local artifacts to the remote storage " +
                  state.get(BUCKET))
 
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
+    platform = cloud.get_platform()
 
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     prefix = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
@@ -513,9 +493,7 @@ def artifacts_delete(
     LOGGER.debug("Deleting artifacts from the remote storage " +
                  state.get(BUCKET))
 
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
-
+    platform = cloud.get_platform()
     dir_name = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.delete_dir(dir_name)
     return "success"
@@ -540,8 +518,7 @@ def files_get(
     LOGGER.debug("Downloading config files from the remote storage " +
                  state.get(BUCKET))
 
-    platform = cloud._get_platform(provider_name=state.get(CLOUD_PROVIDER),
-                                   platform_name=state.get(CLOUD_PLATFORM))
+    platform = cloud.get_platform()
 
     # First download to the local templates directory, then parse to save
     # in the workspace files directory.
@@ -591,8 +568,7 @@ def files_push(
     """`handoff files push -p <project_directory>`
     Push the contents of <project_dir>/files and <project_dir>/templates
     to remote storage"""
-    platform = cloud._get_platform()
-
+    platform = cloud.get_platform()
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = FILES_DIR
     platform.upload_dir(files_dir, prefix)
@@ -609,8 +585,7 @@ def files_delete(
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM,
                         BUCKET])
-
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     dir_name = FILES_DIR
     platform.delete_dir(dir_name)
     return "success"
@@ -626,7 +601,7 @@ def _config_get(
     if not workspace_dir:
         raise Exception("Workspace directory is not set")
     LOGGER.debug("Reading configurations from remote parameter store.")
-    precompiled_config = _read_project_remote(workspace_dir, vars)
+    precompiled_config = _read_project_remote(workspace_dir)
 
     _secrets_get(project_dir, workspace_dir, **kwargs)
     _update_state(precompiled_config, vars=vars)
@@ -687,13 +662,12 @@ def _config_get_local(
 def config_push(
     project_dir: str,
     workspace_dir: str,
-    vars: Dict = {},
     **kwargs) -> None:
     """`handoff config push -p <project_directory>`
     Push project.yml and the contents of project_dir/config as a secure
     parameter key.
     """
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     platform.upload_file(os.path.join(project_dir, PROJECT_FILE), PROJECT_FILE)
     return "success"
 
@@ -705,7 +679,7 @@ def config_delete(
     """`handoff config delete -p <project_directory>`
     Delete the project configuration from the remote parameter store.
     """
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     platform.delete_file(PROJECT_FILE)
     return "success"
 
@@ -717,7 +691,7 @@ def config_deleteold(
     """`handoff config delete -p <project_directory>`
     Delete the project configuration from the remote parameter store.
     """
-    platform = cloud._get_platform()
+    platform = cloud.get_platform()
     platform.delete_parameter("config")
     return "success"
 
@@ -729,7 +703,7 @@ def config_print(
     """`handoff config print -p <project_directory>`
     Print the project configuration in the remote parameter store.
     """
-    return _config_get(project_dir, workspace_dir)
+    return _config_get(project_dir, workspace_dir, **kwargs)
 
 
 def config_validate_local(
@@ -800,6 +774,7 @@ def workspace_install(
             _make_python_venv(install["venv"])
         _install(install["command"], install.get("venv"))
     return "sucess"
+
 
 def version(
     project_dir: str,

@@ -26,22 +26,32 @@ def _get_credentials(cred: dict = {}):
         cred["aws_session_token"] = task_cred["Token"]
         # cred["aws_role_arn"] = task_cred["RoleArn"]
 
+    if not cred.get("region_name") and cred.get("aws_region"):
+        cred["region_name"] = cred["aws_region"]
+
     return cred
 
 
-def get_session(aws_access_key_id=None, aws_secret_access_key=None,
-                aws_session_token=None, aws_region=None):
-    session = boto3.session.Session(
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_session_token=aws_session_token,
-        region_name=aws_region)
-    return session
+def _get_boto3_session_kwargs(params):
+    kwargs = {}
+    valid_boto3_session_keys = [
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_session_token",
+        "region_name",
+        "botocore_session",
+        "profile_name",
+    ]
+    for key in params.keys():
+        if key in valid_boto3_session_keys:
+            kwargs[key] = params[key]
+    return kwargs
 
 
 def get_region(cred_keys: dict = {}):
     cred_keys = _get_credentials(cred_keys)
-    session = boto3.session.Session(**cred_keys)
+    kwargs = _get_boto3_session_kwargs(cred_keys)
+    session = boto3.session.Session(**kwargs)
     return session.region_name
 
 
@@ -51,7 +61,7 @@ def get_client(service, cred_keys: dict = {}):
     # if CLIENTS.get(service):
     #   return CLIENTS[service]
     cred_keys = _get_credentials(cred_keys)
-    session = boto3.session.Session(**cred_keys)
+    kwargs = _get_boto3_session_kwargs(cred_keys)
+    session = boto3.session.Session(**kwargs)
     CLIENTS[service] = session.client(service)
-
     return CLIENTS[service]

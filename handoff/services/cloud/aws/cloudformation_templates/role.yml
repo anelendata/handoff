@@ -19,7 +19,7 @@ Resources:
   FargateDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
+      RoleName: !Sub ${ResourceGroup}-FargateDeployRole-for-${GranteeAccountId}
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -27,6 +27,7 @@ Resources:
             AWS:
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:root"
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/handoffbot"
+>>>>>>> master
           Action:
             - sts:AssumeRole
           Condition:
@@ -34,7 +35,7 @@ Resources:
               sts:ExternalId: !Sub ${ExternalId}
       Path: /
       Policies:
-        - PolicyName: !Sub FargateDeployRole-${ResourceGroup}-${GranteeAccountId}
+        - PolicyName: !Sub ${ResourceGroup}-FargateDeployRole-for-${GranteeAccountId}
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -47,6 +48,7 @@ Resources:
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
               Resource: "*"
+              # Resource: !Sub "arn:aws:cloudformation:*:*:stack/*${ResourceGroup}*/*"
             - Effect: Allow
               Action:
               - ec2:AssociateRouteTable
@@ -79,7 +81,7 @@ Resources:
               - ec2:ModifyVpcAttribute
               - ec2:RevokeSecurityGroupEgress
               - ec2:RevokeSecurityGroupEgress
-              Resource: "*"
+              Resource: !Sub "arn:aws:ec2:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - ecr:BatchCheckLayerAvailability
@@ -110,7 +112,7 @@ Resources:
               - ecr:TagResource
               - ecr:UntagResource
               - ecr:UploadLayerPart
-              Resource: "*"
+              Resource: !Sub "arn:aws:ecr:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - ecs:CreateCluster
@@ -127,25 +129,23 @@ Resources:
               - ecs:StopTask
               - ecs:ListTasks
               Resource: "*"
+              # Resource: !Sub "arn:aws:ecs:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - events:DeleteRule
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              - events:ListRules
+              - events:ListTargetsByRule
               Resource: "*"
+              # Resource: !Sub "arn:aws:events:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
-              - iam:CreateRole
-              - iam:CreateServiceLinkedRole
-              - iam:DeleteRole
-              - iam:DeleteRolePolicy
-              - iam:GetRole
-              - iam:GetRolePolicy
-              - iam:ListRoles
               - iam:PassRole
-              - iam:PutRolePolicy
+              - iam:ListRoles
               Resource: "*"
+              # Resource: !Sub "arn:aws:iam::*:role/*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - logs:CreateLogGroup
@@ -162,7 +162,10 @@ Resources:
               - logs:StartQuery
               - logs:StopQuery
               - logs:TestMetricFilter
+              - logs:PutMetricFilter
+              - logs:DeleteMetricFilter
               Resource: "*"
+              # Resource: !Sub "arn:aws:logs:*:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - s3:CreateBucket
@@ -173,7 +176,7 @@ Resources:
               - s3:PutBucketPublicAccessBlock
               - s3:PutEncryptionConfiguration
               - s3:PutObject
-              Resource: "*"
+              Resource: !Sub "arn:aws:s3::*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - ssm:DeleteParameter
@@ -184,8 +187,115 @@ Resources:
               - ssm:GetParameters
               - ssm:GetParametersByPath
               - ssm:PutParameter
-              Resource: "*"
+              Resource: !Sub "arn:aws:ssm:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - sts:AssumeRole
+              Resource: !Sub "arn:aws:sts::*:*${ResourceGroup}*"
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourceGroup}-TaskExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ResourceGroup}-TaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
+                - ecr:BatchCheckLayerAvailability
+                - ecr:GetDownloadUrlForLayer
+                - ecr:BatchGetImage
+                - logs:CreateLogStream
+                - logs:PutLogEvents
               Resource: "*"
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourceGroup}-TaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+          Action:
+            - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ResourceGroup}-TaskRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+                - s3:ListBucket
+                - s3:PutObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub arn:aws:s3:::${ResourceGroup}*/*
+
+            - Effect: Allow
+              Action:
+                - ssm:Describe*
+                - ssm:Get*
+                - ssm:List*
+              Resource:
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}*
+
+  CloudWatchEventECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ResourceGroup}-CloudWatchEventECSRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: !Sub ${ResourceGroup}--CloudwatchEventsInvokeECSRunTask
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ecs:RunTask
+                Resource: "*"
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: "*"
+                Condition:
+                  StringLike:
+                    iam:PassedToService:
+                      ecs-tasks.amazonaws.com
+
+Outputs:
+  TaskExecutionRoleArn:
+    Description: TaskExecutionRole ARN
+    Value:
+      Ref: TaskExecutionRole
+    Export:
+      Name:
+        "Fn::Sub": "${ResourceGroup}-TaskExecutionRoleArn"
+  TaskRoleArn:
+    Description: TaskRole ARN
+    Value:
+      Ref: TaskRole
+    Export:
+      Name:
+        "Fn::Sub": "${ResourceGroup}-TaskRoleArn"

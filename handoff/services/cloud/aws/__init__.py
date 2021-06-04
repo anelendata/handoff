@@ -5,8 +5,8 @@ import dateutil
 
 from handoff import utils
 from handoff.config import (BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
-                            IMAGE_VERSION, RESOURCE_GROUP, STAGE, TASK,
-                            get_state)
+                            IMAGE_VERSION, RESOURCE_GROUP, RESOURCE_GROUP_NAKED,
+                            STAGE, TASK, get_state)
 from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
                                         sts, cloudformation)
 from handoff.services.cloud.aws import credentials as cred
@@ -23,6 +23,17 @@ boto3_logger = logging.getLogger("boto3")
 boto3_logger.setLevel(LOGGER.level)
 botocore_logger = logging.getLogger("botocore")
 botocore_logger.setLevel(LOGGER.level)
+
+
+def _get_cred_keys():
+    state = get_state()
+    cred_keys = {
+        "aws_access_key_id": state["AWS_ACCESS_KEY_ID"],
+        "aws_secret_access_key": state["AWS_SECRET_ACCESS_KEY"],
+        "aws_session_token": state.get("AWS_SESSION_TOKEN"),
+        "aws_region": state.get("AWS_REGION"),
+    }
+    return cred_keys
 
 
 def _log_stack_info(response):
@@ -55,69 +66,12 @@ def _log_task_run_filter(task_name, response):
            "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
-def find_cred_keys(vars_: dict):
-    cred = {}
-    keys = [
-            "aws_access_key_id",
-            "aws_secret_access_key",
-            "aws_region",
-            "aws_session_token",
-            ]
-    if vars_.get("aws_access_key_id"):
-        for key in keys:
-            cred[key] = vars_.get(key)
-    return cred
-
-
-def login(profile=None, cred_keys: dict = {}):
-    state = get_state()
-    if profile:
-        state.set_env("AWS_PROFILE", profile)
-        LOGGER.debug("AWS_PROFILE set to " + state.get("AWS_PROFILE"))
-
-    try:
-        account_id = sts.get_account_id(cred_keys)
-        region = cred.get_region(cred_keys)
-        LOGGER.debug("You have the access to AWS resources.")
-        if region:
-            state.set_env("AWS_REGION", region)
-
-        return account_id
-    except Exception as e:
-        LOGGER.warning(str(e))
-        return None
-
-
-def get_platform_auth_env(data):
-    state = get_state()
-    if not state.get("AWS_ACCESS_KEY_ID"):
-        try:
-            role_arn = data.get("role_arn")
-            target_account_id = data.get("target_account_id")
-            external_id = data.get("external_id")
-            assume_role(role_arn, target_account_id, external_id)
-        except botocore.exceptions.ClientError:
-            get_session()
-    env = {"AWS_ACCESS_KEY_ID": state.get("AWS_ACCESS_KEY_ID"),
-           "AWS_SECRET_ACCESS_KEY": state.get("AWS_SECRET_ACCESS_KEY"),
-           "AWS_SESSION_TOKEN": state.get("AWS_SESSION_TOKEN"),
-           "AWS_REGION": state.get("AWS_REGION")
-           }
-    return env
-
-
-def get_session():
-    state = get_state()
-    session = cred.get_session()
-    keys = session.get_credentials()
-    state["AWS_ACCESS_KEY_ID"] = keys.access_key
-    state["AWS_SECRET_ACCESS_KEY"] = keys.secret_key
-    if keys.token:
-        state["AWS_SESSION_TOKEN"] = keys.token
-
-
-def assume_role(role_arn=None, target_account_id=None,  external_id=None,
-        cred_keys: dict = {}):
+def _assume_role(
+        role_arn=None,
+        target_account_id=None,
+        external_id=None,
+        cred_keys: dict = {},
+        ):
     state = get_state()
     if not role_arn:
         account_id = sts.get_account_id(cred_keys=cred_keys)
@@ -126,19 +80,82 @@ def assume_role(role_arn=None, target_account_id=None,  external_id=None,
                      (resource_group, account_id))
         if not target_account_id:
             target_account_id = account_id
-        params = {
-            "role_name": role_name,
-            "target_account_id": target_account_id
-        }
-        role_arn = ("arn:aws:iam::{target_account_id}:" +
-                    "role/{role_name}").format(**params)
-    response = sts.assume_role(role_arn, external_id=external_id)
+        role_arn = (f"arn:aws:iam::{target_account_id}:role/{role_name}")
+    response = sts.assume_role(role_arn, external_id=external_id, cred_keys=cred_keys)
 
     state["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
     state["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
     state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
 
     return response
+
+
+def find_cred_keys(vars_: dict):
+    cred = {}
+    valid_keys = [
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_region",
+        "aws_session_token",
+        "role_arn",
+        "external_id",
+    ]
+    for key in vars_:
+        if key in valid_keys:
+            cred[key] = vars_[key]
+    return cred
+
+
+def login(
+        profile=None,
+        cred_keys: dict = {},
+        ):
+    state = get_state()
+    if cred_keys.get("role_arn"):
+        try:
+            _assume_role(
+                    cred_keys["role_arn"],
+                    external_id=cred_keys["external_id"],
+                    cred_keys=cred_keys)
+        except Exception as e:
+            LOGGER.error(str(e))
+            raise
+        cred_keys["aws_access_key_id"] = state["AWS_ACCESS_KEY_ID"]
+        cred_keys["aws_secret_access_key"] = state["AWS_SECRET_ACCESS_KEY"]
+        cred_keys["aws_session_token"] = state["AWS_SESSION_TOKEN"]
+    elif profile:
+        state.set_env("AWS_PROFILE", profile)
+        LOGGER.debug("AWS_PROFILE set to " + state.get("AWS_PROFILE"))
+
+    try:
+        account_id = sts.get_account_id(cred_keys)
+        state["AWS_ACCOUNT_ID"] = account_id
+        region = cred.get_region(cred_keys)
+        if region:
+            state["AWS_REGION"]= region
+
+        state["AWS_ACCESS_KEY_ID"] = cred_keys["aws_access_key_id"]
+        state["AWS_SECRET_ACCESS_KEY"] = cred_keys["aws_secret_access_key"]
+        state["AWS_SESSION_TOKEN"] = cred_keys["aws_session_token"]
+        return account_id
+    except Exception as e:
+        LOGGER.warning(str(e))
+        return None
+
+
+def get_account_id():
+    state = get_state()
+    return state["AWS_ACCOUNT_ID"]
+
+
+def get_platform_auth_env():
+    state = get_state()
+    env = {"AWS_ACCESS_KEY_ID": state.get("AWS_ACCESS_KEY_ID"),
+           "AWS_SECRET_ACCESS_KEY": state.get("AWS_SECRET_ACCESS_KEY"),
+           "AWS_SESSION_TOKEN": state.get("AWS_SESSION_TOKEN"),
+           "AWS_REGION": state.get("AWS_REGION")
+           }
+    return env
 
 
 def get_parameter(key, resource_group_level=False):
@@ -151,7 +168,7 @@ def get_parameter(key, resource_group_level=False):
 
     value = None
     try:
-        value = ssm.get_parameter(prefix_key)
+        value = ssm.get_parameter(prefix_key, cred_keys=_get_cred_keys())
     except Exception as e:
         LOGGER.error("Cannot get %s - %s" % (prefix_key, str(e)))
         LOGGER.error("See the parameters at https://console.aws.amazon.com/" +
@@ -168,9 +185,9 @@ def get_parameter(key, resource_group_level=False):
 def get_all_parameters():
     state = get_state()
     params = {}
-
     path = "/" + state.get(RESOURCE_GROUP)
-    raw_params = ssm.get_parameters_by_path(path)
+    cred_keys = _get_cred_keys()
+    raw_params = ssm.get_parameters_by_path(path, cred_keys=cred_keys)
     for p in raw_params:
         value = raw_params[p]
         # Parameter Store does not allow {{}}. Unescaping.
@@ -179,7 +196,7 @@ def get_all_parameters():
         params[key] = {"value": value, "path": p}
 
     path = path + "/" + state.get(TASK)
-    raw_params = ssm.get_parameters_by_path(path)
+    raw_params = ssm.get_parameters_by_path(path, cred_keys=cred_keys)
     for p in raw_params:
         value = raw_params[p]
         # Parameter Store does not allow {{}}. Unescaping.
@@ -189,8 +206,12 @@ def get_all_parameters():
     return params
 
 
-def push_parameter(key, value, allow_advanced_tier=False,
-                   resource_group_level=False, **kwargs):
+def push_parameter(
+        key,
+        value,
+        allow_advanced_tier=False,
+        resource_group_level=False,
+        **kwargs):
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, "AWS_REGION"])
 
@@ -216,7 +237,7 @@ def push_parameter(key, value, allow_advanced_tier=False,
                              "You must use -d allow_advanced_tier=true option.") % len(value))
     LOGGER.debug("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
                  (prefix_key, tier))
-    ssm.put_parameter(prefix_key, value, tier=tier)
+    ssm.put_parameter(prefix_key, value, cred_keys=_get_cred_keys(), tier=tier)
     print("See the parameters at https://console.aws.amazon.com/" +
           "systems-manager/parameters/?region=" +
           state.get("AWS_REGION") +
@@ -224,7 +245,10 @@ def push_parameter(key, value, allow_advanced_tier=False,
           prefix_key)
 
 
-def delete_parameter(key, resource_group_level=False, **kwargs):
+def delete_parameter(
+        key,
+        resource_group_level=False,
+        **kwargs):
     state = get_state()
 
     if resource_group_level:
@@ -233,10 +257,13 @@ def delete_parameter(key, resource_group_level=False, **kwargs):
         prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
                       "/" + key)
 
-    ssm.delete_parameter(prefix_key)
+    ssm.delete_parameter(prefix_key, cred_keys=_get_cred_keys())
 
 
-def set_env_var_from_ssm(project, name):
+def set_env_var_from_ssm(
+        project,
+        name,
+        ):
     """
     Not used?
     """
@@ -249,28 +276,28 @@ def download_file(local_path, remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
     remote_path = os.path.join(state.get(TASK), remote_path)
-    s3.download_file(bucket, local_path, remote_path)
+    s3.download_file(bucket, local_path, remote_path, cred_keys=_get_cred_keys())
 
 
 def upload_file(local_path, remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
     remote_path = os.path.join(state.get(TASK), remote_path)
-    s3.upload_file(bucket, local_path, remote_path)
+    s3.upload_file(bucket, local_path, remote_path, cred_keys=_get_cred_keys())
 
 
 def delete_file(remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
     remote_path = os.path.join(state.get(TASK), remote_path)
-    s3.delete_file(bucket, remote_path)
+    s3.delete_file(bucket, remote_path, cred_keys=_get_cred_keys())
 
 
 def download_dir(local_dir_path, remote_dir_path):
     state = get_state()
     bucket = state.get(BUCKET)
     remote_dir_path = os.path.join(state.get(TASK), remote_dir_path)
-    s3.download_dir(bucket, local_dir_path, remote_dir_path)
+    s3.download_dir(bucket, local_dir_path, remote_dir_path, cred_keys=_get_cred_keys())
 
 
 def upload_dir(local_dir_path, remote_dir_path):
@@ -278,7 +305,7 @@ def upload_dir(local_dir_path, remote_dir_path):
     state.validate_env([BUCKET, "AWS_REGION"])
     bucket = state.get(BUCKET)
     dest_prefix = os.path.join(state.get(TASK), remote_dir_path)
-    s3.upload_dir(bucket, local_dir_path, dest_prefix)
+    s3.upload_dir(bucket, local_dir_path, dest_prefix, cred_keys=_get_cred_keys())
     print(("See the files at https://s3.console.aws.amazon.com/s3/" +
              "buckets/%s/%s/") % (bucket, dest_prefix))
 
@@ -287,7 +314,7 @@ def delete_dir(remote_dir_path):
     state = get_state()
     bucket = state.get(BUCKET)
     remote_dir = os.path.join(state.get(TASK), remote_dir_path)
-    s3.delete_recurse(bucket, remote_dir)
+    s3.delete_recurse(bucket, remote_dir, cred_keys=_get_cred_keys())
 
 
 def copy_dir_to_another_bucket(src_dir, dest_dir):
@@ -296,11 +323,7 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
     src_prefix = os.path.join(state.get(TASK), src_dir)
     dest_prefix = os.path.join(state.get(TASK), dest_dir)
     s3.copy_dir_to_another_bucket(bucket, src_prefix,
-                                  bucket, dest_prefix)
-
-
-def get_account_id(cred_keys: dict = {}):
-    return sts.get_account_id(cred_keys)
+                                  bucket, dest_prefix, cred_keys=_get_cred_keys())
 
 
 def get_docker_registry_credentials(registry_id=None):
@@ -313,7 +336,7 @@ def get_repository_images(image_name=None):
     state = get_state()
     if not image_name:
         image_name = state.get(CONTAINER_IMAGE)
-    ecr_images = ecr.list_images(image_name)
+    ecr_images = ecr.list_images(image_name, cred_keys=_get_cred_keys())
     if not ecr_images:
         return None
     images = [{"id": i["imageDigest"], "tag": i["imageTag"]} for i in ecr_images]
@@ -323,40 +346,37 @@ def get_repository_images(image_name=None):
 def create_repository(is_mutable=False):
     state = get_state()
     name = state.get(CONTAINER_IMAGE)
-    ecr.create_repository(name, is_mutable)
+    ecr.create_repository(name, is_mutable, cred_keys=_get_cred_keys())
 
 
 def create_role(
         grantee_account_id,
         external_id: str,
         template_file: str = None,
-        update: bool = False,
-        cred_keys: dict = {}):
+        update: bool = False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role-" + str(grantee_account_id)
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
-    parameters = [{"ParameterKey": "ResourceGroup",
-                   "ParameterValue": resource_group},
-                  {"ParameterKey": "GranteeAccountId",
-                   "ParameterValue": grantee_account_id},
-                  {"ParameterKey": "ExternalId",
-                   "ParameterValue": external_id}
-                  ]
+    parameters = [
+            {"ParameterKey": "ResourceGroup", "ParameterValue": resource_group},
+            {"ParameterKey": "GranteeAccountId", "ParameterValue": grantee_account_id},
+            {"ParameterKey": "ExternalId", "ParameterValue": external_id},
+    ]
 
     if not update:
         aws_response = cloudformation.create_stack(
-                stack_name, template_file, parameters, cred_keys=cred_keys)
+                stack_name, template_file, parameters, cred_keys=_get_cred_keys())
     else:
         aws_response = cloudformation.update_stack(
-                stack_name, template_file, parameters, cred_keys=cred_keys)
+                stack_name, template_file, parameters, cred_keys=_get_cred_keys())
 
     _log_stack_info(aws_response)
 
-    account_id = sts.get_account_id(cred_keys)
-    role_name = f"handoff-FargateDeployRole-{resource_group}-{grantee_account_id}"
+    account_id = get_account_id()
+    role_name = f"{resource_group}-FargateDeployRole-for-{grantee_account_id}"
     role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
 
     region = state.get("AWS_REGION")
@@ -390,21 +410,21 @@ https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
     return response
 
 
-def update_role(grantee_account_id, external_id, template_file=None, cred_keys: dict = {}):
-    create_role(grantee_account_id, external_id, template_file, update=True, cred_keys=cred_keys)
+def update_role(grantee_account_id, external_id, template_file=None):
+    return create_role(grantee_account_id, external_id, template_file, update=True)
 
 
-def delete_role(grantee_account_id, template_file=None, cred_keys: dict = {}):
+def delete_role(grantee_account_id, template_file=None):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-role-" + str(grantee_account_id)
-    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
+    response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     _log_stack_filter(stack_name)
     print("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
     return response
 
 
-def create_bucket(template_file=None, update=False, cred_keys: dict = {}):
+def create_bucket(template_file=None, update=False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     bucket = state.get(BUCKET)
@@ -416,9 +436,9 @@ def create_bucket(template_file=None, update=False, cred_keys: dict = {}):
 
     try:
         if not update:
-            response = cloudformation.create_stack(stack_name, template_file, parameters, cred_keys=cred_keys)
+            response = cloudformation.create_stack(stack_name, template_file, parameters, cred_keys=_get_cred_keys())
         else:
-            response = cloudformation.update_stack(stack_name, template_file, parameters, cred_keys=cred_keys)
+            response = cloudformation.update_stack(stack_name, template_file, parameters, cred_keys=_get_cred_keys())
     except botocore.exceptions.ClientError as e:
         # Bucket already exists
         LOGGER.error("Error creating/updating %s bucket: %s" %
@@ -428,23 +448,23 @@ def create_bucket(template_file=None, update=False, cred_keys: dict = {}):
         return response
 
 
-def update_bucket(template_file=None, cred_keys: dict = {}):
-    create_bucket(template_file, update=True, cred_keys=cred_keys)
+def update_bucket(template_file=None):
+    create_bucket(template_file, update=True, cred_keys=_get_cred_keys())
 
 
-def delete_bucket(cred_keys: dict = {}):
+def delete_bucket():
     state = get_state()
     LOGGER.warning("This will only delete the CloudFormation stack. " +
                    "The bucket %s will be retained." % state.get(BUCKET))
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
-    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
+    response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     _log_stack_filter(state[BUCKET])
     return response
 
 
 def create_resources(template_file=None, update=False, static_ip=False,
-        cred_keys: dict = {}):
+        **kwargs):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
@@ -456,51 +476,71 @@ def create_resources(template_file=None, update=False, static_ip=False,
             template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
 
     if not update:
-        response = cloudformation.create_stack(stack_name, template_file, cred_keys=cred_keys)
+        response = cloudformation.create_stack(stack_name, template_file, cred_keys=_get_cred_keys())
     else:
-        response = cloudformation.update_stack(stack_name, template_file, cred_keys=cred_keys)
+        response = cloudformation.update_stack(stack_name, template_file, cred_keys=_get_cred_keys())
 
     _log_stack_info(response)
     return response
 
 
-def update_resources(template_file=None, cred_keys: dict = {}):
-    create_resources(template_file, update=True, cred_keys=cred_keys)
+def update_resources(template_file=None):
+    create_resources(template_file, update=True, cred_keys=_get_cred_keys())
 
 
-def delete_resources(cred_keys: dict = {}):
+def delete_resources():
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
-    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
+    response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     _log_stack_filter(resource_group)
     return response
 
 
 def create_task(template_file=None, update=False, memory=512,
-                cpu=256, cred_keys: dict = {}, **kwargs):
+                cpu=256, **kwargs):
     state = get_state()
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
+    resource_group_naked = state.get(RESOURCE_GROUP_NAKED)
+
     bucket = state.get(BUCKET)
     _, _, image_domain = get_docker_registry_credentials()
     container_image = state.get(CONTAINER_IMAGE)
     image_version = state.get(IMAGE_VERSION)
     parameters = [
-        {"ParameterKey": "ResourceGroup",
-         "ParameterValue": resource_group},
-        {"ParameterKey": "Bucket",
-         "ParameterValue": bucket},
-        {"ParameterKey": "ImageDomain",
-         "ParameterValue": image_domain},
-        {"ParameterKey": "ImageName",
-         "ParameterValue": container_image},
-        {"ParameterKey": "ImageVersion",
-         "ParameterValue": image_version},
-        {"ParameterKey": "AllocatedCpu",
-         "ParameterValue": str(cpu)},
-        {"ParameterKey": "AllocatedMemory",
-         "ParameterValue": str(memory)}
+        {
+            "ParameterKey": "ResourceGroup",
+            "ParameterValue": resource_group,
+        },
+        {
+            "ParameterKey": "ResourceGroupNaked",
+            "ParameterValue": resource_group_naked,
+        },
+        {
+            "ParameterKey": "Bucket",
+            "ParameterValue": bucket,
+            },
+        {
+            "ParameterKey": "ImageDomain",
+            "ParameterValue": image_domain,
+        },
+        {
+            "ParameterKey": "ImageName",
+            "ParameterValue": container_image,
+        },
+        {
+            "ParameterKey": "ImageVersion",
+            "ParameterValue": image_version,
+        },
+        {
+            "ParameterKey": "AllocatedCpu",
+            "ParameterValue": str(cpu),
+        },
+        {
+            "ParameterKey": "AllocatedMemory",
+            "ParameterValue": str(memory),
+        },
     ]
 
     if not template_file:
@@ -509,18 +549,26 @@ def create_task(template_file=None, update=False, memory=512,
 
     if not update:
         response = cloudformation.create_stack(
-                stack_name, template_file, parameters, cred_keys=cred_keys)
+                resource_group + "-" + stack_name,
+                template_file,
+                parameters,
+                cred_keys=_get_cred_keys(),
+                )
     else:
         response = cloudformation.update_stack(
-                stack_name, template_file, parameters, cred_keys=cred_keys)
+                resource_group + "-" + stack_name,
+                template_file,
+                parameters,
+                cred_keys=_get_cred_keys(),
+                )
 
     _log_stack_info(response)
     return response
 
 
-def update_task(cred_keys: dict = {}, **kwargs):
+def update_task(**kwargs):
     try:
-        response = create_task(update=True, cred_keys=cred_keys, **kwargs)
+        response = create_task(update=True, cred_keys=_get_cred_keys(), **kwargs)
     except botocore.exceptions.ClientError as e:
         LOGGER.error(e)
         exit(1)
@@ -529,23 +577,32 @@ def update_task(cred_keys: dict = {}, **kwargs):
     return response
 
 
-def delete_task(cred_keys: dict = {}):
+def delete_task():
     state = get_state()
     stack_name = state.get(TASK)
-    response = cloudformation.delete_stack(stack_name, cred_keys=cred_keys)
+    resource_group = state.get(RESOURCE_GROUP)
+    response = cloudformation.delete_stack(
+            resource_group + "-" + stack_name,
+            cred_keys=_get_cred_keys(),
+            )
     _log_stack_filter(stack_name)
     return response
 
 
 def list_tasks(full=False, running=True, stopped=True,
-               resource_group_level=False):
+               resource_group_level=False, **kwargs):
     state = get_state()
     stack_name = state.get(TASK)
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
     try:
-        response = ecs.describe_tasks(resource_group + "-resources", region,
-                                      running=running, stopped=stopped)
+        response = ecs.describe_tasks(
+                resource_group + "-resources",
+                region,
+                running=running,
+                stopped=stopped,
+                cred_keys=_get_cred_keys(),
+            )
     except Exception as e:
         response = {"status": "error", "message": str(e)}
         return response
@@ -571,6 +628,8 @@ def list_tasks(full=False, running=True, stopped=True,
         elif output["lastStatus"] == "STOPPED":
             if task.get("executionStoppedAt") and task.get("startedAt"):
                 output["duration"] = str(task["executionStoppedAt"] - task["startedAt"])
+            elif task.get("startedAt"):
+                output["duration"] = output["timeSinceStart"]
             else:
                 output["duration"] = None
 
@@ -585,12 +644,13 @@ def stop_task(id=None, reason="Stopped by the user"):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
-    response = ecs.stop_task(resource_group + "-resources", region, id, reason)
+    response = ecs.stop_task(resource_group + "-resources", region, id, reason, cred_keys=_get_cred_keys())
     return response
 
 
 def run_task(env={}, extras=None):
     state = get_state()
+    account_id = state["AWS_ACCOUNT_ID"]
     task_stack = state.get(TASK)
     container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
@@ -599,25 +659,32 @@ def run_task(env={}, extras=None):
     extra_env = []
     for key in env.keys():
         extra_env.append({"name": key, "value": env[key]})
-    response = ecs.run_fargate_task(task_stack, resource_group_stack,
-                                    container_image, region, extra_env,
-                                    extras=extras)
+    response = ecs.run_fargate_task(
+            account_id,
+            task_stack,
+            resource_group_stack,
+            container_image,
+            region,
+            extra_env,
+            extras=extras,
+            cred_keys=_get_cred_keys())
     _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)
     return response
 
 
 def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     state = get_state()
+    account_id = state["AWS_ACCOUNT_ID"]
     task_stack = state.get(TASK)
     container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
 
-    role_name = (state.get(RESOURCE_GROUP) +
-                 "-resources-CloudWatchEventECSRole")
+    role_name = (state.get(RESOURCE_GROUP_NAKED) +
+                 "-CloudWatchEventECSRole")
 
     if not role_arn:
-        roles = iam.list_roles()
+        roles = iam.list_roles(cred_keys=_get_cred_keys())
         for r in roles:
             if r["RoleName"] == role_name:
                 role_arn = r["Arn"]
@@ -630,10 +697,19 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
         extra_env.append({"name": key, "value": env[key]})
 
     try:
-        response = events.schedule_task(task_stack, resource_group_stack,
-                                        container_image,
-                                        region, target_id, cronexp, role_arn,
-                                        env=extra_env, extras=extras)
+        response = events.schedule_task(
+                account_id,
+                task_stack,
+                resource_group_stack,
+                container_image,
+                region,
+                target_id,
+                cronexp,
+                role_arn,
+                env=extra_env,
+                extras=extras,
+                cred_keys=_get_cred_keys(),
+                )
     except Exception as e:
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
                      (task_stack, target_id, cronexp))
@@ -657,7 +733,7 @@ def unschedule_task(target_id):
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     try:
         response = events.unschedule_task(task_stack, resource_group_stack,
-                                          target_id)
+                                          target_id, cred_keys=_get_cred_keys())
     except Exception as e:
         raise Exception("No schedules found")
     params = {
@@ -676,8 +752,9 @@ def list_schedules(full=False, **kwargs):
     task_stack = state.get(TASK)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     try:
-        response = events.list_schedules(task_stack, resource_group_stack)
-    except Exception:
+        response = events.list_schedules(task_stack, resource_group_stack, cred_keys=_get_cred_keys())
+    except Exception as e:
+        LOGGER.error(e)
         response = []
     schedules = list()
     for r in response:
@@ -742,6 +819,7 @@ def write_logs(
     state = get_state()
     log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
 
+
     if start_time and type(start_time) is str:
         start_time = dateutil.parser.parse(start_time)
     if end_time and type(end_time) is str:
@@ -756,8 +834,10 @@ def write_logs(
                                               start_time=start_time,
                                               end_time=end_time,
                                               filter_pattern=filter_pattern,
-                                              extras=extras)
+                                              extras=extras,
+                                              cred_keys=_get_cred_keys())
         except Exception as e:
+            LOGGER.error(e)
             response = {"status": "error", "message": str(e)}
             return response
 
@@ -775,8 +855,6 @@ def write_logs(
         while next_token:
             response = logs.filter_log_events(log_group_name,
                                               next_token=next_token,
-                                              filter_pattern=filter_pattern,
-                                              extras=extras,
                                               cred_keys=_get_cred_keys())
             for e in response.get("events", list()):
                 e["datetime"] = datetime.datetime.fromtimestamp(

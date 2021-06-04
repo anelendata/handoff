@@ -215,6 +215,7 @@ def do(
     for key in envs.keys():
         value = envs[key]
         if key in ["resource_group", "task"]:
+            state.set_env(key.upper() + "_NAKED", value, trust=True)
             value = state["_stage-"] + value
         try:
             state.set_env(ENV_PREFIX + key.upper(), value)
@@ -229,11 +230,23 @@ def do(
                   kwargs.get("container_provider",
                              state.get_env(CONTAINER_PROVIDER)))
 
+    # Login will cache the cloud platform credentials to state
+    try:
+        services.cloud.logout()
+        platform = services.cloud.get_platform(vars=kwargs["vars"])
+    except Exception as e:
+        LOGGER.warning(str(e))
+
     module_name = command.split(" ")[0]
     sub_command = command[command.find(" ") + 1:]
 
     plugin_modules = _list_submodules(plugins)
     service_modules = _list_submodules(services)
+
+    if command == "server":
+        from handoff import ui
+        vars_ = kwargs["vars"]
+        ui.server(**vars_)
 
     # task module implements the commands such as run, run local, show commands
     if command in _list_commands(task):

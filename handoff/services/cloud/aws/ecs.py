@@ -41,7 +41,12 @@ def stop_task(resource_group, region, task_id, reason, extras=None,
     return response
 
 
-def run_fargate_task(task_stack, resource_group_stack, container_image, region,
+def run_fargate_task(
+        account_id,
+        task_stack,
+        resource_group_stack,
+        container_image,
+        region,
         env=[], extras=None, cred_keys: dict = {}):
     """Run a fargate task
     extras overwrite the kwargs given to run_task boto3 command.
@@ -51,9 +56,15 @@ def run_fargate_task(task_stack, resource_group_stack, container_image, region,
                 "value": datetime.datetime.utcnow().isoformat()})
     client = get_client(cred_keys=cred_keys)
 
-    rg_resources = cfn.describe_stack_resources(resource_group_stack)["StackResources"]
+    rg_resources = cfn.describe_stack_resources(
+        resource_group_stack,
+        cred_keys=cred_keys,
+    )["StackResources"]
 
-    task_resources = cfn.describe_stack_resources(task_stack)["StackResources"]
+    task_resources = cfn.describe_stack_resources(
+        task_stack,
+        cred_keys=cred_keys,
+    )["StackResources"]
     task_def_arn = None
     for r in task_resources:
         if r["ResourceType"] == "AWS::ECS::TaskDefinition":
@@ -61,8 +72,9 @@ def run_fargate_task(task_stack, resource_group_stack, container_image, region,
             break
 
     rg_resources = cfn.describe_stack_resources(
-        resource_group_stack)["StackResources"]
-    account_id = sts.get_account_id(cred_keys)
+        resource_group_stack,
+        cred_keys=cred_keys,
+    )["StackResources"]
     cluster_arn = None
     subnets = list()
     security_groups =list()

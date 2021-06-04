@@ -17,24 +17,31 @@ LOGGER = _get_logger(__name__)
 PLATFORM_MODULE = None
 
 
-def _get_platform(
+def logout():
+    global PLATFORM_MODULE
+    PLATFORM_MODULE = None
+
+
+def get_platform(
     provider_name: str = None,
     platform_name: str = None,
     stdout: bool = False,
     cloud_profile: str = None,
-    vars: dict = {},
+    vars: Dict = {},
     **kwargs) -> ModuleType:
+    global PLATFORM_MODULE
+    if PLATFORM_MODULE:
+        return PLATFORM_MODULE
+
     state = _get_state()
+
     if not provider_name:
         provider_name = state.get(CLOUD_PROVIDER)
     if not platform_name:
         platform_name = state.get(CLOUD_PLATFORM)
-    global PLATFORM_MODULE
-    if not PLATFORM_MODULE:
-        if not provider_name or not platform_name:
-            raise Exception("You need to set provider_name and platform_name")
+    if not provider_name or not platform_name:
+        raise Exception("You need to set provider_name and platform_name")
 
-    # TODO: use platform_name
     PLATFORM_MODULE = _import_module("handoff.services.cloud."
                                      + provider_name)
     cred_keys = PLATFORM_MODULE.find_cred_keys(vars)
@@ -45,7 +52,7 @@ def _get_platform(
 
     return PLATFORM_MODULE
 
-
+"""
 def _assume_role(
     project_dir: str,
     workspace_dir: str,
@@ -53,22 +60,14 @@ def _assume_role(
     **kwargs) -> None:
     state = _get_state()
     state.validate_env([RESOURCE_GROUP])
-    platform = _get_platform()
+    platform = _get_platform(vars=vars)
     role_arn = vars.get("role_arn")
     target_account_id = vars.get("target_account_id")
     external_id = vars.get("external_id")
     platform.assume_role(role_arn=role_arn,
                          target_account_id=target_account_id,
                          external_id=external_id)
-
-
-def _get_platform_auth_env(
-    project_dir: str,
-    workspace_dir: str,
-    vars: Dict = {},
-    **kwargs) -> Dict:
-    platform = _get_platform()
-    return platform.get_platform_auth_env(vars)
+"""
 
 
 def role_create(
@@ -80,9 +79,8 @@ def role_create(
     Create the role with deployment privilege.
     """
     state = _get_state()
-    platform = _get_platform(vars=vars)
-    cred_keys = platform.find_cred_keys(vars)
-    account_id = platform.login(cred_keys=cred_keys)
+    platform = get_platform()
+    account_id = platform.get_account_id()
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
@@ -96,7 +94,6 @@ def role_create(
     return platform.create_role(
         grantee_account_id=str(vars.get("grantee_account_id", account_id)),
         external_id=vars.get("external_id"),
-        cred_keys=cred_keys,
         )
 
 
@@ -109,9 +106,8 @@ def role_update(
     Update the role privilege information.
     """
     state = _get_state()
-    platform = _get_platform(vars=vars)
-    cred_keys = platform.find_cred_keys(vars)
-    account_id = platform.login(cred_keys=cred_keys)
+    platform = get_platform()
+    account_id = platform.get_account_id()
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
@@ -137,9 +133,8 @@ def role_delete(
     Delete the role.
     """
     state = _get_state()
-    platform = _get_platform(vars=vars)
-    cred_keys = platform.find_cred_keys(vars)
-    account_id = platform.login(cred_keys=cred_keys)
+    platform = get_platform()
+    account_id = platform.get_account_id()
     state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
@@ -164,7 +159,7 @@ def bucket_create(
     Create remote storage bucket. Bucket is attached to the resource group.
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.create_bucket()
 
@@ -177,7 +172,7 @@ def bucket_update(
     Update remote storage bucket info
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.update_bucket()
 
@@ -190,7 +185,7 @@ def bucket_delete(
     Delete remote storage bucket.
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.delete_bucket()
 
@@ -212,7 +207,7 @@ def resources_create(
       [CloudFormation template](https://github.com/anelenvars/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/resources.yml) for the resources created with this command.
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.create_resources(**vars)
 
@@ -228,7 +223,7 @@ def resources_update(
     The resources are shared among the tasks under the same resource group.
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.update_resources(**vars)
 
@@ -243,7 +238,7 @@ def resources_delete(
     The resources are shared among the tasks under the same resource group.
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.delete_resources()
 
@@ -259,7 +254,7 @@ def task_create(
     -v cpu=256, memory=512
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env([IMAGE_VERSION])
     return platform.create_task(**vars)
 
@@ -275,7 +270,7 @@ def task_update(
     -v cpu=256, memory=512
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env([IMAGE_VERSION])
     return platform.update_task(**vars)
 
@@ -288,7 +283,7 @@ def task_delete(
     Delete the task
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.delete_task()
 
@@ -296,7 +291,7 @@ def task_delete(
 def task_status(
     project_dir: str,
     workspace_dir: str,
-    vars: str = None,
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task status -p <project_directory> -v full=False running=True stopped=True resource_group_level=False`
     list task status
@@ -308,7 +303,7 @@ def task_status(
     - resource_group_level: When true, list all the tasks under the same resource groups (default: false)
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.list_tasks(**vars)
 
@@ -316,7 +311,7 @@ def task_status(
 def task_stop(
     project_dir: str,
     workspace_dir: str,
-    vars: str = None,
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud task stop -p <project_directory> -v id=<task_id> reason=<reason>`
     stop a running task
@@ -324,7 +319,7 @@ def task_stop(
     - reason
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     return platform.stop_task(**vars)
 
@@ -344,7 +339,7 @@ def run(
     `handoff run -v $(eval echo $vars)`
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
 
@@ -383,7 +378,7 @@ def schedule_create(
     `handoff run -v $(eval echo $vars)`
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
     state.validate_env()
     schedules = config.get("schedules")
@@ -435,7 +430,7 @@ def schedule_delete(
     Unschedule a task named <target_id>
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     if not vars.get("target_id"):
         print("Forgot to set '-v target_id=<ID>' ?")
@@ -450,13 +445,13 @@ def schedule_delete(
 def schedule_list(
     project_dir: str,
     workspace_dir: str,
-    vars=None,
+    vars: Dict = {},
     **kwargs) -> None:
     """`handoff cloud schedule list`
     List the scheduled tasks
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     schedules = platform.list_schedules(**vars)
     target_ids = []
@@ -505,10 +500,9 @@ def logs(
     - start_time: ISO 8086 formatted date time to indicate the start time
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
-    - filter: Filter log term
     """
     state = _get_state()
-    platform = _get_platform()
+    platform = get_platform()
     state.validate_env()
     close = False
     if vars.get("file"):
@@ -517,8 +511,9 @@ def logs(
     else:
         file_descriptor = sys.stdout
 
+    if vars.get("role_arn"):
+        vars.pop("role_arn")
     platform.write_logs(file_descriptor, **vars)
 
     if close:
         file_descriptor.close()
-

@@ -48,8 +48,21 @@ def filter_log_events(
     if next_token:
         kwargs["nextToken"] = next_token
 
+    valid_params = [
+            "logGroupName",
+            "logStreamNames",
+            "logStreamNamePrefix",
+            "startTime",
+            "endTime",
+            "filterPattern",
+            "nextToken",
+            "limit",
+            "interleaved",
+            ]
     if extras:
-        kwargs.update(extras)
+        for k in extras.keys():
+            if k in valid_params:
+                kwargs[k] = extras[k]
 
     response = client.filter_log_events(**kwargs)
     return response

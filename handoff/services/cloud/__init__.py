@@ -505,6 +505,7 @@ def logs(
     - start_time: ISO 8086 formatted date time to indicate the start time
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
+    - filter: Filter log term
     """
     state = _get_state()
     platform = _get_platform()

@@ -774,7 +774,10 @@ def write_logs(
         next_token = response.get("nextToken")
         while next_token:
             response = logs.filter_log_events(log_group_name,
-                                              next_token=next_token)
+                                              next_token=next_token,
+                                              filter_pattern=filter_pattern,
+                                              extras=extras,
+                                              cred_keys=_get_cred_keys())
             for e in response.get("events", list()):
                 e["datetime"] = datetime.datetime.fromtimestamp(
                     e["timestamp"] / 1000)

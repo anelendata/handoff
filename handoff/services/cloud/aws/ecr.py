@@ -17,8 +17,8 @@ def get_token(registry_id, cred_keys: dict = {}):
     return token
 
 
-def get_docker_registry_credentials(registry_id):
-    token = get_token(registry_id)
+def get_docker_registry_credentials(registry_id, cred_keys: dict = {}):
+    token = get_token(registry_id, cred_keys)
     username = "AWS"
     password = token["authorizationData"][0]["authorizationToken"]
     registry = token["authorizationData"][0]["proxyEndpoint"][len("https://"):]

@@ -48,13 +48,6 @@ def _get_boto3_session_kwargs(params):
     return kwargs
 
 
-def get_region(cred_keys: dict = {}):
-    cred_keys = _get_credentials(cred_keys)
-    kwargs = _get_boto3_session_kwargs(cred_keys)
-    session = boto3.session.Session(**kwargs)
-    return session.region_name
-
-
 def get_client(service, cred_keys: dict = {}):
     global CLIENTS
     # Disabling cache as it is doing strange bug

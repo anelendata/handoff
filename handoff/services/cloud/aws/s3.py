@@ -117,7 +117,7 @@ def upload_dir(bucket_name, local_dir_path, remote_dir_path, cred_keys: dict = {
     # check if the bucket exists
     s3 = boto3.resource("s3")
     # raise if bucket does not exist
-    s3.meta.client.head_bucket(Bucket=bucket_name)
+    # s3.meta.client.head_bucket(Bucket=bucket_name)
 
     logger.info("Uploading %s to bucket %s" % (local_dir_path, bucket_name))
 
@@ -202,7 +202,7 @@ def delete_file(bucket_name, key, cred_keys: dict = {}):
     # check if the bucket exists
     s3 = boto3.resource("s3")
     # raise if bucket does not exist
-    s3.meta.client.head_bucket(Bucket=bucket_name)
+    # s3.meta.client.head_bucket(Bucket=bucket_name)
 
     logger.info("Deleting %s from bucket %s" % (key, bucket_name))
 

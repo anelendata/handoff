@@ -201,6 +201,14 @@ def _run_task_subcommand(
         admin.artifacts_archive(project_dir, workspace_dir, **kwargs)
 
 
+def project_required(command):
+    if (not command.startswith("github") and
+            not command.startswith("cloud role") and
+            not command.startswith("cloud login test")):
+        return True
+    return False
+
+
 def do(
     command: str,
     project_dir: str = None,
@@ -286,7 +294,7 @@ def do(
             return _run_subcommand(service_modules[module_name],
                     sub_command, project_dir, workspace_dir, show_help, **kwargs)
 
-        if module_name != "github":
+        if project_required(command):
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
         if module_name == "cloud":

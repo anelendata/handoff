@@ -52,22 +52,15 @@ def get_platform(
 
     return PLATFORM_MODULE
 
-"""
-def _assume_role(
+
+def login_test(
     project_dir: str,
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> None:
-    state = _get_state()
-    state.validate_env([RESOURCE_GROUP])
-    platform = _get_platform(vars=vars)
-    role_arn = vars.get("role_arn")
-    target_account_id = vars.get("target_account_id")
-    external_id = vars.get("external_id")
-    platform.assume_role(role_arn=role_arn,
-                         target_account_id=target_account_id,
-                         external_id=external_id)
-"""
+    platform = get_platform()
+    account_id = platform.get_account_id()
+    return {"status": "success", "account_id": account_id}
 
 
 def role_create(
@@ -81,7 +74,9 @@ def role_create(
     state = _get_state()
     platform = get_platform()
     account_id = platform.get_account_id()
-    state.validate_env()
+    if not account_id:
+        raise Exception("Login failed")
+    # state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
@@ -108,7 +103,9 @@ def role_update(
     state = _get_state()
     platform = get_platform()
     account_id = platform.get_account_id()
-    state.validate_env()
+    if not account_id:
+        raise Exception("Login failed")
+    # state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
@@ -140,14 +137,9 @@ def role_delete(
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
         LOGGER.warn("-v grantee_account_id=xxxx")
-    if not vars.get("external_id"):
-        raise ValueError("external_id must be set. Do as:\n    " +
-                         "handoff cloud create_role -p <project-vir> " +
-                         "-v external_id=yyyy")
 
     return platform.delete_role(
-        grantee_account_id=str(vars.get("grantee_account_id", account_id)),
-        external_id=vars.get("external_id")
+        grantee_account_id=str(vars.get("grantee_account_id", account_id))
     )
 
 
@@ -456,7 +448,7 @@ def schedule_list(
     schedules = platform.list_schedules(**vars)
     target_ids = []
     for s in schedules["schedules"]:
-        target_ids.append(s["target_id"])
+        target_ids.append(str(s["target_id"]))
         s["status"] = "scheduled"
 
     if vars.get("include_unpublished"):
@@ -465,8 +457,7 @@ def schedule_list(
         for s in local_schedules:
             status = ""
             try:
-
-                index = target_ids.index(s["target_id"])
+                index = target_ids.index(str(s["target_id"]))
             except ValueError:
                 index = len(target_ids)
                 target_ids.append(s["target_id"])
@@ -500,6 +491,7 @@ def logs(
     - start_time: ISO 8086 formatted date time to indicate the start time
     - end_time
     - follow: If set, it waits for more logs until interrupted by ctrl-c
+    - filter: Filter log term
     """
     state = _get_state()
     platform = get_platform()

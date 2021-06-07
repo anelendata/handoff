@@ -122,9 +122,12 @@ def _update_state(
             platform = cloud.get_platform()
             aws_account_id = state.get("AWS_ACCOUNT_ID")
         except Exception:
+            LOGGER.warning("Error getting platform handle")
             pass
         else:
-            if state.get(RESOURCE_GROUP):
+            if not aws_account_id:
+                LOGGER.warning("aws_account_id is not set")
+            elif state.get(RESOURCE_GROUP):
                 _set_bucket_name(state[RESOURCE_GROUP], aws_account_id)
 
     if not state.get(BUCKET):
@@ -270,7 +273,7 @@ def _secrets_get_local(
 def secrets_push(
     project_dir: str,
     workspace_dir: str,
-    yes: bool = False,
+    yes: bool = None,
     **kwargs) -> None:
     """`handoff secrets push -p <project_directory> -v secrets_dir=<secrets_dir>`
 
@@ -308,10 +311,10 @@ def secrets_push(
         print("  - " + key + " (" + secrets[key].get("level", "task") +
               " level)" + skip_msg)
 
-    if not yes:
+    if yes is None:
         response = input("Proceed? (y/N)")
-        if response.lower() not in ["yes", "y"]:
-            return "abort"
+    if yes is False or response.lower() not in ["yes", "y"]:
+        return "abort"
 
     for key in secrets:
         if not secrets[key].get("push", True):

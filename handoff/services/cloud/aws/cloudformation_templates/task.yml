@@ -18,6 +18,18 @@ Parameters:
     MaxLength: 27
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
 
+  TaskName:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  TaskNameNaked:
+    Type: String
+    Description: A name to group the task belongs to without staging prefix
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
   Bucket:
     Type: String
     Description: The name of the bucket to store configs and artifacts
@@ -48,7 +60,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
-      LogGroupName: !Sub ${ResourceGroup}-${AWS::StackName}
+      LogGroupName: !Sub ${AWS::StackName}
       RetentionInDays: 365
 
   ErrorLogMetricFilter:
@@ -87,16 +99,16 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${ResourceGroup}-${AWS::StackName}
+      Family: !Sub ${AWS::StackName}
       Cpu: !Sub ${AllocatedCpu}
       Memory: !Sub ${AllocatedMemory}
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: !ImportValue
-        "Fn::Sub": "${ResourceGroupNaked}-TaskExecutionRoleArn"
+        "Fn::Sub": "handoff-TaskExecutionRoleArn"
       TaskRoleArn: !ImportValue
-        "Fn::Sub": "${ResourceGroupNaked}-TaskRoleArn"
+        "Fn::Sub": "handoff-TaskRoleArn"
       ContainerDefinitions:
         - Name: !Sub ${ImageName}
           Cpu: !Sub ${AllocatedCpu}
@@ -113,7 +125,7 @@ Resources:
             - Name: !Sub ${EnvVarPrefix}CONTAINER_IMAGE
               Value: !Sub ${ImageName}
             - Name: !Sub ${EnvVarPrefix}TASK
-              Value: !Sub ${AWS::StackName}
+              Value: !Sub ${TaskName}
             - Name: !Sub ${EnvVarPrefix}PROVIDER
               Value: aws
             - Name: !Sub ${EnvVarPrefix}PLATFORM
@@ -125,4 +137,4 @@ Resources:
             Options:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub ${ResourceGroup}-${AWS::StackName}
+              awslogs-stream-prefix: !Sub ${AWS::StackName}

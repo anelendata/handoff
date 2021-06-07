@@ -13,8 +13,14 @@ def get_client(cred_keys: dict = {}):
     return cred.get_client("ecs", cred_keys)
 
 
-def describe_tasks(resource_group, region, running=True, stopped=True,
-        extras=None, cred_keys: dict = {}):
+def describe_tasks(
+        resource_group,
+        region,
+        running=True,
+        stopped=True,
+        extras=None,
+        cred_keys: dict = {},
+        ):
     client = get_client(cred_keys=cred_keys)
     account_id = sts.get_account_id(cred_keys=cred_keys)
     cluster = f"arn:aws:ecs:{region}:{account_id}:cluster/{resource_group}"

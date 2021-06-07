@@ -1,10 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
-  ResourceGroup:
-    Type: String
-    Description: The deploy group name
-    MaxLength: 27
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
   GranteeAccountId:
     Type: String
     Description: The AWS account ID that gets granted to assume the role
@@ -19,7 +14,7 @@ Resources:
   FargateDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ResourceGroup}-FargateDeployRole-for-${GranteeAccountId}
+      RoleName: !Sub handoff-FargateDeployRole-for-${GranteeAccountId}
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -27,7 +22,6 @@ Resources:
             AWS:
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:root"
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/handoffbot"
->>>>>>> master
           Action:
             - sts:AssumeRole
           Condition:
@@ -35,7 +29,7 @@ Resources:
               sts:ExternalId: !Sub ${ExternalId}
       Path: /
       Policies:
-        - PolicyName: !Sub ${ResourceGroup}-FargateDeployRole-for-${GranteeAccountId}
+        - PolicyName: !Sub handoff-FargateDeployRole-for-${GranteeAccountId}
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -48,7 +42,7 @@ Resources:
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
               Resource: "*"
-              # Resource: !Sub "arn:aws:cloudformation:*:*:stack/*${ResourceGroup}*/*"
+              # Resource: !Sub "arn:aws:cloudformation:*:*:stack/*/*"
             - Effect: Allow
               Action:
               - ec2:AssociateRouteTable
@@ -81,7 +75,8 @@ Resources:
               - ec2:ModifyVpcAttribute
               - ec2:RevokeSecurityGroupEgress
               - ec2:RevokeSecurityGroupEgress
-              Resource: !Sub "arn:aws:ec2:*:*:*${ResourceGroup}*"
+              Resource: "*"
+              # Resource: !Sub "arn:aws:ec2:*:*:*${ResourceGroup}*"
             - Effect: Allow
               Action:
               - ecr:BatchCheckLayerAvailability
@@ -112,7 +107,7 @@ Resources:
               - ecr:TagResource
               - ecr:UntagResource
               - ecr:UploadLayerPart
-              Resource: !Sub "arn:aws:ecr:*:*:*${ResourceGroup}*"
+              Resource: "*"
             - Effect: Allow
               Action:
               - ecs:CreateCluster
@@ -129,7 +124,7 @@ Resources:
               - ecs:StopTask
               - ecs:ListTasks
               Resource: "*"
-              # Resource: !Sub "arn:aws:ecs:*:*:*${ResourceGroup}*"
+              # Resource: !Sub "arn:aws:ecs:*:*:*"
             - Effect: Allow
               Action:
               - events:DeleteRule
@@ -139,13 +134,13 @@ Resources:
               - events:ListRules
               - events:ListTargetsByRule
               Resource: "*"
-              # Resource: !Sub "arn:aws:events:*:*:*${ResourceGroup}*"
+              # Resource: !Sub "arn:aws:events:*:*:*"
             - Effect: Allow
               Action:
               - iam:PassRole
               - iam:ListRoles
               Resource: "*"
-              # Resource: !Sub "arn:aws:iam::*:role/*${ResourceGroup}*"
+              # Resource: !Sub "arn:aws:iam::*:role/*"
             - Effect: Allow
               Action:
               - logs:CreateLogGroup
@@ -165,7 +160,7 @@ Resources:
               - logs:PutMetricFilter
               - logs:DeleteMetricFilter
               Resource: "*"
-              # Resource: !Sub "arn:aws:logs:*:*:*:*${ResourceGroup}*"
+              # Resource: !Sub "arn:aws:logs:*:*:*:*"
             - Effect: Allow
               Action:
               - s3:CreateBucket
@@ -176,7 +171,8 @@ Resources:
               - s3:PutBucketPublicAccessBlock
               - s3:PutEncryptionConfiguration
               - s3:PutObject
-              Resource: !Sub "arn:aws:s3::*:*${ResourceGroup}*"
+              Resource: "*"
+              # Resource: !Sub "arn:aws:s3::*:*"
             - Effect: Allow
               Action:
               - ssm:DeleteParameter
@@ -187,16 +183,18 @@ Resources:
               - ssm:GetParameters
               - ssm:GetParametersByPath
               - ssm:PutParameter
-              Resource: !Sub "arn:aws:ssm:*:*:*${ResourceGroup}*"
+              Resource: "arn:aws:ssm:*:*:*"
+              # Resource: !Sub "arn:aws:ssm:*:*:*"
             - Effect: Allow
               Action:
               - sts:AssumeRole
-              Resource: !Sub "arn:aws:sts::*:*${ResourceGroup}*"
+              Resource: "arn:aws:sts::*:*"
+              # Resource: !Sub "arn:aws:sts::*:*"
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ResourceGroup}-TaskExecutionRole
+      RoleName: handoff-TaskExecutionRole
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -207,7 +205,7 @@ Resources:
             - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: !Sub ${ResourceGroup}-TaskExecutionRolePolicy
+        - PolicyName: handoff-TaskExecutionRolePolicy
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -223,7 +221,7 @@ Resources:
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ResourceGroup}-TaskRole
+      RoleName: handoff-TaskRole
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -234,7 +232,7 @@ Resources:
             - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: !Sub ${ResourceGroup}-TaskRolePolicy
+        - PolicyName: handoff-TaskRolePolicy
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -244,7 +242,8 @@ Resources:
                 - s3:PutObject
                 - s3:DeleteObject
               Resource:
-                - !Sub arn:aws:s3:::${ResourceGroup}*/*
+                - "*"
+                # - !Sub arn:aws:s3:::*/*
 
             - Effect: Allow
               Action:
@@ -252,12 +251,12 @@ Resources:
                 - ssm:Get*
                 - ssm:List*
               Resource:
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ResourceGroup}*
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
 
   CloudWatchEventECSRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${ResourceGroup}-CloudWatchEventECSRole
+      RoleName: handoff-CloudWatchEventECSRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -269,7 +268,7 @@ Resources:
               - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: !Sub ${ResourceGroup}--CloudwatchEventsInvokeECSRunTask
+        - PolicyName: handoff-CloudwatchEventsInvokeECSRunTask
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -290,12 +289,12 @@ Outputs:
     Value:
       Ref: TaskExecutionRole
     Export:
-      Name:
-        "Fn::Sub": "${ResourceGroup}-TaskExecutionRoleArn"
+      Name: "handoff-TaskExecutionRoleArn"
+        # "Fn::Sub": "${ResourceGroup}-TaskExecutionRoleArn"
   TaskRoleArn:
     Description: TaskRole ARN
     Value:
       Ref: TaskRole
     Export:
-      Name:
-        "Fn::Sub": "${ResourceGroup}-TaskRoleArn"
+      Name: "handoff-TaskRoleArn"
+        # "Fn::Sub": "${ResourceGroup}-TaskRoleArn"

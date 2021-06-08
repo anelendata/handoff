@@ -19,6 +19,10 @@ def _get_github(access_token=None):
     return GITHUB
 
 
+def _get_callbacks(access_token):
+    return  pygit2.RemoteCallbacks(pygit2.UserPass(access_token, "x-oauth-basic"))
+
+
 def clone(
     project_dir: str,
     workspace_dir: str,
@@ -31,6 +35,7 @@ def clone(
     state = _get_state()
     access_token = vars.get("access_token", state.get(GITHUB_ACCESS_TOKEN))
     github = _get_github(access_token)
+
     repo_name = vars["repository"]
     org_name = vars.get("organization")
     local_dir = vars.get("local_dir", "./" + repo_name)
@@ -39,10 +44,77 @@ def clone(
             raise Exception("The directory already exists.")
         shutil.rmtree(local_dir)
     git_url = vars.get("url", "https://github.com/" + str(org_name) + "/" + repo_name + ".git")
-    callbacks = pygit2.RemoteCallbacks(pygit2.UserPass(access_token, "x-oauth-basic"))
+
+
     repo_clone = pygit2.clone_repository(
-            git_url, local_dir, callbacks=callbacks)
+            git_url, local_dir, callbacks=_get_callbacks(access_token))
+
     return {"status": "success", "repository": repo_name}
+
+
+def pull(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff github commit -v local_dir=<local_dir> commit_msg=<msg> branch=<branch>`
+    Commit all the outstanding changes to the remote branch. If the branch does not exist,
+    it will be created.
+    """
+    state = _get_state()
+    access_token = vars.get("access_token", state.get(GITHUB_ACCESS_TOKEN))
+    github = _get_github(access_token)
+
+    local_dir = vars["local_dir"]  # typically the "./{repository_name}"
+    repo = pygit2.Repository(local_dir + "/.git")
+    remote_name = "origin"
+
+    # Adopted from https://github.com/MichaelBoselowitz/pygit2-examples/blob/68e889e50a592d30ab4105a2e7b9f28fac7324c8/examples.py#L48
+    for remote in repo.remotes:
+        if remote.name == remote_name:
+            remote.fetch()
+            remote_master_id = repo.lookup_reference('refs/remotes/origin/master').target
+            merge_result, _ = repo.merge_analysis(remote_master_id)
+            # Up to date, do nothing
+            if merge_result & pygit2.GIT_MERGE_ANALYSIS_UP_TO_DATE:
+                return {
+                    "status": "success",
+                    "message": "Repository is up-to-date",
+                }
+
+            # We can just fastforward
+            elif merge_result & pygit2.GIT_MERGE_ANALYSIS_FASTFORWARD:
+                repo.checkout_tree(repo.get(remote_master_id))
+                master_ref = repo.lookup_reference('refs/heads/master')
+                master_ref.set_target(remote_master_id)
+                repo.head.set_target(remote_master_id)
+            elif merge_result & pygit2.GIT_MERGE_ANALYSIS_NORMAL:
+                repo.merge(remote_master_id)
+
+                if repo.index_conflicts:
+                    return {
+                        "status": "error",
+                        "mesage": repo.index.conflicts,
+                    }
+
+                user = repo.default_signature
+                tree = repo.index.write_tree()
+                commit = repo.create_commit('HEAD',
+                                            user,
+                                            user,
+                                            'Merge!',
+                                            tree,
+                                            [repo.head.target, remote_master_id])
+                repo.state_cleanup()
+                return {
+                    "status": "success",
+                    "message": "successfully fast forwarded the repository",
+                }
+            else:
+                return {
+                    "status": "error",
+                    "mesage": "Unknown merge analysis result"
+                }
 
 
 def commit (
@@ -54,14 +126,17 @@ def commit (
     Commit all the outstanding changes to the remote branch. If the branch does not exist,
     it will be created.
     """
-    access_token = vars.get("access_token")
+    state = _get_state()
+    access_token = vars.get("access_token", state.get(GITHUB_ACCESS_TOKEN))
     github = _get_github(access_token)
-    commit_msg = vars["commit_msg"]
-    local_dir = vars["local_dir"]  # typically the "./{repository_name}"
-    branch = vars.get("branch", "master")
 
+    local_dir = vars["local_dir"]  # typically the "./{repository_name}"
     repo = pygit2.Repository(local_dir + "/.git")
+
     user = github.get_user()
+
+    branch = vars.get("branch", "master")
+    commit_msg = vars["commit_msg"]
 
     # repo.remotes.set_url("origin", repo.clone_url)
     index = repo.index
@@ -82,7 +157,7 @@ def commit (
             )
 
     credentials = pygit2.UserPass(access_token, "x-oauth-basic")
-    callbacks = pygit2.RemoteCallbacks(credentials=credentials)
+    # callbacks = pygit2.RemoteCallbacks(credentials=credentials)
     remote = repo.remotes["origin"]
     remote.credentials = credentials
-    remote.push(["refs/heads/" + branch], callbacks=callbacks)
+    remote.push(["refs/heads/" + branch], callbacks=_get_callbacks(access_token))

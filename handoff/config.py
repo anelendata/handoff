@@ -162,7 +162,7 @@ class State(dict):
                                 (env, self._mandatory_envs[env], value))
                 invalid.append(env)
         if invalid:
-            print("Invalid environment variables: %s\n" % invalid +
+            ms = ("Invalid environment variables: %s\n" % invalid +
                   "1. Check if you properly defined environment variables " +
                   "  such as AWS_PROFILE.\n" +
                   f"  https://dev.handoff.cloud/en/v{VERSION_MINOR}" +
@@ -171,7 +171,10 @@ class State(dict):
                   "the project file.\n" +
                   f"  https://dev.handoff.cloud/en/v{VERSION_MINOR}" +
                   "/quick_reference.html")
-            exit(1)
+            return {
+                "status": "error",
+                "message": ms,
+                }
 
 
 STATE = None

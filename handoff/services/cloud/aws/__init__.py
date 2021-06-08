@@ -586,9 +586,12 @@ def update_task(**kwargs):
         response = create_task(update=True, cred_keys=_get_cred_keys(), **kwargs)
     except botocore.exceptions.ClientError as e:
         LOGGER.error(e)
-        exit(1)
-    print("Make sure to run `handoff cloud schedule` command to bump up " +
-          "the task version")
+        return {
+            "status": "error",
+            "message": str(e),
+            }
+    response["message"] = ("Make sure to run `handoff cloud schedule` command" +
+                           " to bump up the task version")
     return response
 
 

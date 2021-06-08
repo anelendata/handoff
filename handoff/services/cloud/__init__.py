@@ -60,6 +60,8 @@ def login_test(
     **kwargs) -> None:
     platform = get_platform()
     account_id = platform.get_account_id()
+    if not account_id:
+        return {"status": "not connected", "account_id": account_id}
     return {"status": "success", "account_id": account_id}
 
 
@@ -132,7 +134,7 @@ def role_delete(
     state = _get_state()
     platform = get_platform()
     account_id = platform.get_account_id()
-    state.validate_env()
+    # state.validate_env()
     if not vars.get("grantee_account_id"):
         LOGGER.warn("grantee_account_id was not set." +
                     "The grantee will be set for the same account. To set: ")
@@ -386,9 +388,11 @@ def schedule_create(
                       "extras_obj": extras_obj}]
 
     if not schedules and (not target_id or not cronexp):
-        print("Schedules not found in project.yml. You can also set " +
-              "'-v target_id=<ID> cron=<CRON>'")
-        exit(1)
+        return {
+                "status": "error",
+                "message": "Schedules not found in project.yml. You can also set "
+                           "'-v target_id=<ID> cron=<CRON>'",
+              }
 
     envs[STAGE] = state[STAGE]
 
@@ -425,8 +429,10 @@ def schedule_delete(
     platform = get_platform()
     state.validate_env()
     if not vars.get("target_id"):
-        print("Forgot to set '-v target_id=<ID>' ?")
-        exit(1)
+        return {
+            "status": "error",
+            "message": "Forgot to set '-v target_id=<ID>' ?",
+        }
     target_id = str(vars["target_id"])
     try:
         response = platform.unschedule_task(target_id)

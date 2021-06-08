@@ -476,7 +476,7 @@ def main() -> None:
         parser.print_help(sys.stderr)
         print_commands()
         print_update()
-        sys.exit(1)
+        return
 
     args = parser.parse_args()
 
@@ -484,7 +484,7 @@ def main() -> None:
         parser.print_help(sys.stderr)
         print_commands()
         print_update()
-        sys.exit(1)
+        return
 
     LOGGER.setLevel(args.log_level.upper())
 

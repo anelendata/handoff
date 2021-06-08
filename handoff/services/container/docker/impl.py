@@ -161,8 +161,11 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
                                           stdin_open=stdin_open, tty=tty):
             file_descriptor.write(line.decode("utf-8").replace("\\n", "\n"))
     except Exception as e:
-        print(str(e).replace("\\n", "\n"))
-        exit(1)
+        return {
+            "status": "error",
+            "message": (str(e).replace("\\n", "\n"))
+        }
+
 
 def push(username, password, registry, version=None, yes=False,
          file_descriptor=sys.stdout, **kwargs):

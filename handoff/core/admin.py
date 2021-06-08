@@ -299,7 +299,7 @@ def secrets_push(
 
     if not secrets:
         raise Exception("No secrets are defined.")
-    print("Putting the following keys to remote parameter store:")
+    print("Secrets to be pushed to the remote parameter store:")
 
     if "config" in secrets:
         raise Exception("secrets with name \"config\" is reserved by handoff.")
@@ -314,6 +314,7 @@ def secrets_push(
     if yes is None:
         response = input("Proceed? (y/N)")
     if yes is False or response.lower() not in ["yes", "y"]:
+        LOGGER.info("Not pushing the secrets by choice.")
         return "abort"
 
     for key in secrets:

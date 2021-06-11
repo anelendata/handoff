@@ -1,4 +1,4 @@
-import os, shutil
+import logging, os, shutil
 from typing import Dict
 import pygit2
 from github import Github
@@ -6,7 +6,7 @@ from github import Github
 from handoff.config import get_state as _get_state
 from handoff.config import GITHUB_ACCESS_TOKEN
 
-
+LOGGER = logging.getLogger(__name__)
 GITHUB = None
 
 
@@ -45,9 +45,13 @@ def clone(
         shutil.rmtree(local_dir)
     git_url = vars.get("url", "https://github.com/" + str(org_name) + "/" + repo_name + ".git")
 
-
-    repo_clone = pygit2.clone_repository(
-            git_url, local_dir, callbacks=_get_callbacks(access_token))
+    if vars.get("use_cli", False):
+        LOGGER.debug("Running git CLI")
+        git_url = git_url.replace("https://", f"https://{access_token}:x-oauth-basic@")
+        os.system(f"git clone {git_url}")
+    else:
+        repo_clone = pygit2.clone_repository(
+                git_url, local_dir, callbacks=_get_callbacks(access_token))
 
     return {"status": "success", "repository": repo_name}
 

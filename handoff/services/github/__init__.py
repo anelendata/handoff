@@ -48,7 +48,8 @@ def clone(
     if vars.get("use_cli", False):
         LOGGER.debug("Running git CLI")
         git_url = git_url.replace("https://", f"https://{access_token}:x-oauth-basic@")
-        os.system(f"git clone {git_url}")
+        git_path = os.environ.get("GIT_PATH", "git")
+        os.system(f"{git_path} clone {git_url}")
     else:
         repo_clone = pygit2.clone_repository(
                 git_url, local_dir, callbacks=_get_callbacks(access_token))

@@ -299,8 +299,11 @@ def do(
 
         if module_name == "cloud":
             if state.get_env(CONTAINER_IMAGE) and not state.get_env(IMAGE_VERSION):
-                image_version = service_modules["container"]._get_latest_image_version(
-                    project_dir, workspace_dir, **kwargs)
+                try:
+                    image_version = service_modules["container"]._get_latest_image_version(
+                            project_dir, workspace_dir, **kwargs)
+                except Exception as e:
+                    logger.warning("Could not get container image version: " + str(e))
                 if image_version:
                     state.set_env(IMAGE_VERSION, image_version)
 

@@ -303,7 +303,7 @@ def do(
                     image_version = service_modules["container"]._get_latest_image_version(
                             project_dir, workspace_dir, **kwargs)
                 except Exception as e:
-                    logger.warning("Could not get container image version: " + str(e))
+                    LOGGER.warning("Could not get container image version: " + str(e))
                 if image_version:
                     state.set_env(IMAGE_VERSION, image_version)
 

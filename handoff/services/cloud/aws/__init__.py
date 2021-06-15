@@ -326,6 +326,13 @@ def copy_dir_to_another_bucket(src_dir, dest_dir):
                                   bucket, dest_prefix, cred_keys=_get_cred_keys())
 
 
+def get_latest_container_image_version(image_name):
+    return ecr.get_latest_version(
+            image_name,
+            cred_keys=_get_cred_keys(),
+            )
+
+
 def get_docker_registry_credentials(registry_id=None):
     if not registry_id:
         registry_id = get_account_id()
@@ -682,7 +689,7 @@ def run_task(env={}, extras=None):
         extra_env.append({"name": key, "value": env[key]})
     response = ecs.run_fargate_task(
             account_id,
-            resource_group + "-" + task_name,
+            resource_group + "-" + task_name_naked,
             resource_group_stack,
             container_image,
             region,
@@ -696,7 +703,7 @@ def run_task(env={}, extras=None):
 def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
-    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
     container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
@@ -749,7 +756,7 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
 
 def unschedule_task(target_id):
     state = get_state()
-    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
     resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     try:
         response = events.unschedule_task(task_stack, resource_group_stack,
@@ -837,7 +844,7 @@ def write_logs(
     **extras
 ):
     state = get_state()
-    log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK)
+    log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
 
 
     if start_time and type(start_time) is str:

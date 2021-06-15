@@ -1,7 +1,10 @@
 import logging
+from packaging import version
+
 import boto3
 from botocore.exceptions import ClientError
 # from botocore.errorfactory import RepositoryNotFoundException
+
 from . import credentials as cred
 
 logger = logging.getLogger(__name__)
@@ -40,6 +43,21 @@ def list_images(image_name, cred_keys: dict = {}):
         ecr_images = ecr_images + response["imageIds"]
 
     return ecr_images
+
+
+def get_latest_version(image_name, ignore=["latest"], cred_keys: dict = {}):
+    images = list_images(image_name, cred_keys=cred_keys)
+
+    tags = list()
+    max_version = None
+    for image in images:
+        tags.append(image["imageTag"])
+    for tag in tags:
+        if (tag not in ignore and
+                (max_version is None or
+                 version.parse(max_version) < version.parse(tag))):
+            max_version = tag
+    return max_version
 
 
 def create_repository(repository_name, is_mutable, cred_keys: dict = {}):

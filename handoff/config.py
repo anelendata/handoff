@@ -139,7 +139,6 @@ class State(dict):
             keys = self._mandatory_envs.keys()
         for env in keys:
             value = self.get(env)
-            # value = os.environ.get(env)
             if not value:
                 msg = env + " environment variable is not defined."
                 if self._mandatory_envs.get(env, dict()).get("pattern"):
@@ -176,6 +175,9 @@ class State(dict):
                 "message": ms,
                 }
 
+        return {
+            "status": "success"
+        }
 
 STATE = None
 

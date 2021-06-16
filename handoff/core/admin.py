@@ -750,6 +750,19 @@ def project_push(
     return "success"
 
 
+def project_delete(
+    project_dir: str,
+    workspace_dir: str,
+    **kwargs) -> None:
+    """`handoff project push -p <project_directory>`
+    Push config, files, secrets all together
+    """
+    config_delete(project_dir, workspace_dir, **kwargs)
+    files_delete(project_dir, workspace_dir, **kwargs)
+    secrets_delete(project_dir, workspace_dir, **kwargs)
+    return "success"
+
+
 def workspace_init(
     project_dir: str,
     workspace_dir: str,

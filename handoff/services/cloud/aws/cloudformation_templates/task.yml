@@ -56,12 +56,18 @@ Parameters:
     Default: 512
     Description: Memory (in MB) allocated to the task
 
+  LogRetentionDays:
+    Type: Number
+    Default: 365
+    Description: Days before the log is deleted
+
 Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
     Properties: 
       LogGroupName: !Sub ${ResourceGroup}/${TaskNameNaked}
-      RetentionInDays: 365
+      RetentionInDays: !Ref LogRetentionDays
 
   ErrorLogMetricFilter:
     Type: AWS::Logs::MetricFilter

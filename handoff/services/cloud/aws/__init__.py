@@ -134,6 +134,11 @@ def login(
         state["AWS_ACCOUNT_ID"] = account_id
         if cred_keys.get("aws_region"):
             state["AWS_REGION"] = cred_keys["aws_region"]
+        else:
+            default_region = sts.get_default_region(cred_keys)
+            LOGGER.info(f"Default AWS Region is set to {default_region}")
+            if default_region:
+                state["AWS_REGION"] = default_region
         state["AWS_ACCESS_KEY_ID"] = cred_keys.get("aws_access_key_id")
         state["AWS_SECRET_ACCESS_KEY"] = cred_keys.get("aws_secret_access_key")
         state["AWS_SESSION_TOKEN"] = cred_keys.get("aws_session_token")
@@ -158,14 +163,19 @@ def get_platform_auth_env():
     return env
 
 
-def get_parameter(key, resource_group_level=False):
+def get_parameter_key_full_path(key, resource_group_level=False):
     state = get_state()
     if resource_group_level:
         prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
     else:
-        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
-                      "/" + key)
+        prefix_key = (
+                "/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK_NAKED) +
+                "/" + key)
+    return prefix_key
 
+
+def get_parameter(key, resource_group_level=False):
+    prefix_key = get_parameter_key_full_path(key, resource_group_level)
     value = None
     try:
         value = ssm.get_parameter(prefix_key, cred_keys=_get_cred_keys())
@@ -195,7 +205,7 @@ def get_all_parameters():
         key = p.split("/")[-1]
         params[key] = {"value": value, "path": p}
 
-    path = path + "/" + state.get(TASK)
+    path = path + "/" + state.get(TASK_NAKED)
     raw_params = ssm.get_parameters_by_path(path, cred_keys=cred_keys)
     for p in raw_params:
         value = raw_params[p]
@@ -215,11 +225,7 @@ def push_parameter(
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, "AWS_REGION"])
 
-    if resource_group_level:
-        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
-    else:
-        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
-                      "/" + key)
+    prefix_key = get_parameter_key_full_path(key, resource_group_level)
 
     if allow_advanced_tier:
         LOGGER.debug("Allowing AWS SSM Parameter Store to store with " +
@@ -249,14 +255,7 @@ def delete_parameter(
         key,
         resource_group_level=False,
         **kwargs):
-    state = get_state()
-
-    if resource_group_level:
-        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
-    else:
-        prefix_key = ("/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK) +
-                      "/" + key)
-
+    prefix_key = get_parameter_key_full_path(key, resource_group_level)
     ssm.delete_parameter(prefix_key, cred_keys=_get_cred_keys())
 
 
@@ -275,28 +274,28 @@ def set_env_var_from_ssm(
 def download_file(local_path, remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
-    remote_path = os.path.join(state.get(TASK), remote_path)
+    remote_path = os.path.join(state.get(TASK_NAKED), remote_path)
     s3.download_file(bucket, local_path, remote_path, cred_keys=_get_cred_keys())
 
 
 def upload_file(local_path, remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
-    remote_path = os.path.join(state.get(TASK), remote_path)
+    remote_path = os.path.join(state.get(TASK_NAKED), remote_path)
     s3.upload_file(bucket, local_path, remote_path, cred_keys=_get_cred_keys())
 
 
 def delete_file(remote_path):
     state = get_state()
     bucket = state.get(BUCKET)
-    remote_path = os.path.join(state.get(TASK), remote_path)
+    remote_path = os.path.join(state.get(TASK_NAKED), remote_path)
     s3.delete_file(bucket, remote_path, cred_keys=_get_cred_keys())
 
 
 def download_dir(local_dir_path, remote_dir_path):
     state = get_state()
     bucket = state.get(BUCKET)
-    remote_dir_path = os.path.join(state.get(TASK), remote_dir_path)
+    remote_dir_path = os.path.join(state.get(TASK_NAKED), remote_dir_path)
     s3.download_dir(bucket, local_dir_path, remote_dir_path, cred_keys=_get_cred_keys())
 
 
@@ -304,7 +303,7 @@ def upload_dir(local_dir_path, remote_dir_path):
     state = get_state()
     state.validate_env([BUCKET, "AWS_REGION"])
     bucket = state.get(BUCKET)
-    dest_prefix = os.path.join(state.get(TASK), remote_dir_path)
+    dest_prefix = os.path.join(state.get(TASK_NAKED), remote_dir_path)
     s3.upload_dir(bucket, local_dir_path, dest_prefix, cred_keys=_get_cred_keys())
     print(("See the files at https://s3.console.aws.amazon.com/s3/" +
              "buckets/%s/%s/") % (bucket, dest_prefix))
@@ -313,15 +312,15 @@ def upload_dir(local_dir_path, remote_dir_path):
 def delete_dir(remote_dir_path):
     state = get_state()
     bucket = state.get(BUCKET)
-    remote_dir = os.path.join(state.get(TASK), remote_dir_path)
+    remote_dir = os.path.join(state.get(TASK_NAKED), remote_dir_path)
     s3.delete_recurse(bucket, remote_dir, cred_keys=_get_cred_keys())
 
 
 def copy_dir_to_another_bucket(src_dir, dest_dir):
     state = get_state()
     bucket = state.get(BUCKET)
-    src_prefix = os.path.join(state.get(TASK), src_dir)
-    dest_prefix = os.path.join(state.get(TASK), dest_dir)
+    src_prefix = os.path.join(state.get(TASK_NAKED), src_dir)
+    dest_prefix = os.path.join(state.get(TASK_NAKED), dest_dir)
     s3.copy_dir_to_another_bucket(bucket, src_prefix,
                                   bucket, dest_prefix, cred_keys=_get_cred_keys())
 
@@ -844,7 +843,7 @@ def write_logs(
     **extras
 ):
     state = get_state()
-    log_group_name = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
+    log_group_name = state.get(RESOURCE_GROUP) + "/" + state.get(TASK_NAKED)
 
 
     if start_time and type(start_time) is str:

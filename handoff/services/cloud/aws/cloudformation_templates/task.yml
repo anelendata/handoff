@@ -60,7 +60,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
-      LogGroupName: !Sub ${AWS::StackName}
+      LogGroupName: !Sub ${ResourceGroup}/${TaskNameNaked}
       RetentionInDays: 365
 
   ErrorLogMetricFilter:
@@ -99,7 +99,7 @@ Resources:
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${AWS::StackName}
+      Family: !Sub ${ResourceGroup}-${TaskNameNaked}
       Cpu: !Sub ${AllocatedCpu}
       Memory: !Sub ${AllocatedMemory}
       NetworkMode: awsvpc
@@ -125,7 +125,7 @@ Resources:
             - Name: !Sub ${EnvVarPrefix}CONTAINER_IMAGE
               Value: !Sub ${ImageName}
             - Name: !Sub ${EnvVarPrefix}TASK
-              Value: !Sub ${TaskName}
+              Value: !Sub ${TaskNameNaked}
             - Name: !Sub ${EnvVarPrefix}PROVIDER
               Value: aws
             - Name: !Sub ${EnvVarPrefix}PLATFORM
@@ -137,4 +137,4 @@ Resources:
             Options:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub ${AWS::StackName}
+              awslogs-stream-prefix: !Sub ${ResourceGroup}/${TaskNameNaked}

@@ -157,7 +157,7 @@ def _validate_project(project) -> None:
 
 
 def _read_project_remote(workspace_dir: str) -> Dict:
-    """Read the config from remote parameters store (e.g. AWS SSM)
+    """Read the config from remote storage (e.g. S3)
     """
     state = get_state()
     LOGGER.debug("Reading precompiled config from remote.")
@@ -291,6 +291,9 @@ def secrets_push(
       # shared among the projects under the same group.
       level: "resource group"
     ```
+
+    The secrets are stored in the remote parameter store in the format:
+    - /(dev-)<resource-group-name>/<task-name>/<parameter-name>
     """
     state = get_state()
     state.validate_env([RESOURCE_GROUP, TASK, CLOUD_PROVIDER, CLOUD_PLATFORM])
@@ -305,10 +308,15 @@ def secrets_push(
         raise Exception("secrets with name \"config\" is reserved by handoff.")
 
     for key in secrets.keys():
+        level = secrets[key].get("level", "task")
+        full_path = platform.get_parameter_key_full_path(
+            key,
+            resource_group_level=(level.lower().strip() == "resource group"),
+            )
         skip_msg = ""
         if not secrets[key].get("push", True):
             skip_msg = " SKIP PUSH"
-        print("  - " + key + " (" + secrets[key].get("level", "task") +
+        print("  - " + full_path + " (" + secrets[key].get("level", "task") +
               " level)" + skip_msg)
 
     if yes is None:
@@ -571,7 +579,12 @@ def files_push(
     **kwargs) -> None:
     """`handoff files push -p <project_directory>`
     Push the contents of <project_dir>/files and <project_dir>/templates
-    to remote storage"""
+    to remote storage.
+
+    The bucket and path format is:
+    - bucket name: <account-id>-(dev-)<resource-name>
+    - path: <task-name>/<path>
+    """
     platform = cloud.get_platform()
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = FILES_DIR

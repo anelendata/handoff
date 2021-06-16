@@ -153,8 +153,11 @@ def _run_task_subcommand(
     config = dict()
     if command in remote_ops:
         if project_dir:
-            config = admin._config_get_local(project_dir, workspace_dir,
-                                             **kwargs)
+            config = admin._config_get_local(
+                    project_dir,
+                    workspace_dir,
+                    **kwargs,
+                    )
         if not state.get_env(RESOURCE_GROUP) or not state.get_env(TASK):
             raise Exception(
                 "To test run with remote config, you need to" +
@@ -454,7 +457,7 @@ def main() -> None:
                         help="Define environment variables. List after this option like: -e key1=value1 key2=value2...")
     parser.add_argument("-v", "--vars", type=str, nargs="*", default="",
                         help="Extra variables for the command. List after this option like: -v key1=value1 key2=value2...")
-    parser.add_argument("-y", "--yes", action="store_true",
+    parser.add_argument("-y", "--yes", type=bool, default=None,
                         help="Skip confirmations")
 
     parser.add_argument("-h", "--help", action="store_true")

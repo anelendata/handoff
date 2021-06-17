@@ -9,8 +9,8 @@ from handoff.services import cloud
 from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
                             BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONTAINER_IMAGE, FILES_DIR, TEMPLATES_DIR,
-                            SECRETS_DIR, SECRETS_FILE,
-                            RESOURCE_GROUP, PROJECT_FILE, TASK,
+                            SECRETS_DIR, SECRETS_FILE, RESOURCE_GROUP,
+                            RESOURCE_GROUP_NAKED, PROJECT_FILE, TASK, TASK_NAKED,
                             CLOUD_PROVIDER, CLOUD_PLATFORM, get_state)
 from handoff import utils
 from handoff.utils import pyvenvx
@@ -171,6 +171,8 @@ def _read_project_remote(workspace_dir: str) -> Dict:
     if not state.get(BUCKET):
         _set_bucket_name(state[RESOURCE_GROUP], account_id)
     project_file_path = os.path.join(workspace_dir, PROJECT_FILE)
+    state[TASK_NAKED] = state[TASK]
+    state[RESOURCE_GROUP_NAKED] = state[RESOURCE_GROUP]
     platform.download_file(project_file_path, PROJECT_FILE)
     with open(project_file_path, "r") as f:
         project = yaml.load(f, Loader=yaml.FullLoader)

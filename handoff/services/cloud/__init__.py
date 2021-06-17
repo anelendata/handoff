@@ -1,15 +1,17 @@
-import os, sys
+import os, shutil, sys, tarfile
 import yaml
 from importlib import import_module as _import_module
 from typing import Dict
 from types import ModuleType
 
 from handoff.core import admin
+from handoff import utils
 from handoff.utils import get_logger as _get_logger
 from handoff.config import (BUCKET, RESOURCE_GROUP, TASK, CONTAINER_IMAGE,
                             IMAGE_VERSION, CLOUD_PROVIDER, CLOUD_PLATFORM,
-                            STAGE)
+                            STAGE, TASK_NAKED)
 from handoff.config import get_state as _get_state
+
 
 LOGGER = _get_logger(__name__)
 
@@ -353,6 +355,70 @@ def run(
     target_envs.update(envs)
     target_envs[STAGE] = state[STAGE]
     return platform.run_task(env=target_envs, extras=extras_obj)
+
+
+def container_build(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    vars: Dict = {},
+    extras: str = None,
+    yes: bool = False,
+    **kwargs) -> None:
+    """`handoff cloud container build -v resource_group=<resource_group_name> task=<task_name> target_id=<target_id> -e vars='key1=val1 key2=val2...'`
+    build and push container in the cloud
+    """
+    state = _get_state()
+    platform = get_platform()
+    config = admin._config_get_local(project_dir, workspace_dir)
+    state.validate_env()
+
+    # Make the image repository if it does not exist
+    username, password, registry = platform.get_docker_registry_credentials()
+    image_name = state.get(CONTAINER_IMAGE)
+    try:
+        platform.get_repository_images(image_name)
+    except Exception:
+        if not yes:
+            sys.stdout.write("Repository %s does not exist. Create (y/N)?" %
+                             image_name)
+            response = input()
+            if response.lower() not in ["y", "yes"]:
+                return
+        LOGGER.info("Creating repository " + image_name)
+        platform.create_repository()
+
+    tar_file_name = state[TASK_NAKED] + ".tar.gz"
+    account_id = platform.get_account_id()
+    version = platform.get_latest_container_image_version(state[CONTAINER_IMAGE])
+    new_version = utils.increment_version(version)
+    destination = f"{account_id}.dkr.ecr.{state['AWS_REGION']}.amazonaws.com/{state[CONTAINER_IMAGE]}:{new_version}"
+    command = [
+        "--context", f"s3://{state[BUCKET]}/{state[TASK_NAKED]}/bundles/{tar_file_name}",
+        #"--context-sub-path", "./some_subdir",
+        #"--dockerfile", "myDockerfile",
+        "--destination", destination,
+        "--force",
+    ]
+
+    extras_obj = None
+    if extras:
+        with open(extras, "r") as f:
+            extras_obj = yaml.load(f)
+
+    target_envs = {}
+    target_envs.update(envs)
+    target_envs[STAGE] = state[STAGE]
+    target_envs["COMMAND"] = "container remote build"
+    target_envs[TASK] = state[TASK_NAKED]
+
+    return platform.run_task(
+            task_name="handoff-container-builder",
+            container_name="handoff-container-builder",
+            env=target_envs,
+            command=command,
+            extras=extras_obj,
+            )
 
 
 def schedule_create(

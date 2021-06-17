@@ -15,22 +15,6 @@ logger = utils.get_logger(__name__)
 DOCKERFILE = "Dockerfile"
 
 
-def _increment_version(ver, delimiter="."):
-    """Increment the last digit of the version numbers with delimiter "."
-    if it fails to increment, returns original version by adding ".1"
-    """
-    digits = ver.split(delimiter)
-    for i in range(len(digits) - 1, 0, -1):
-        try:
-            digit = int(digits[i])
-        except ValueError:
-            continue
-        digits[i] = str(digit + 1)
-        new_version = ".".join(digits)
-        return new_version
-    return (ver + ".1")
-
-
 def get_latest_version(image_name, ignore=["latest"]):
     client = docker.from_env()
     images = client.images.list(name=image_name)
@@ -50,69 +34,69 @@ def get_latest_version(image_name, ignore=["latest"]):
     return max_version
 
 
+def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
+    docker_file_dir, _ = os.path.split(__file__)
+    if not docker_file:
+        docker_file = os.path.join(docker_file_dir, DOCKERFILE)
+
+    cwd, _ = os.path.split(__file__)
+    logger.info("Current working directory: " + cwd)
+    handoff_dir = os.path.join(cwd, "../../../../")
+    logger.info("Looking for handoff source at " + handoff_dir)
+    if os.path.isfile(os.path.join(handoff_dir, "setup.py")):
+        logger.info("Found handoff. Copying to the build directory")
+        ho_build_dir = os.path.join(build_dir, "handoff")
+        os.mkdir(ho_build_dir)
+        shutil.copytree(os.path.join(handoff_dir, "handoff"),
+                        os.path.join(ho_build_dir, "handoff"))
+        files = [
+            "MANIFEST.in",
+            "README.md",
+            "requirements.txt",
+            "setup.cfg",
+            "setup.py",
+        ]
+        for fn in files:
+            shutil.copyfile(os.path.join(handoff_dir, fn),
+                            os.path.join(ho_build_dir, fn))
+    else:
+        logger.info("...not found")
+
+    shutil.copytree(project_dir, os.path.join(build_dir, "project"),
+                    symlinks=True)
+    shutil.copytree(os.path.join(docker_file_dir, "script"),
+                    os.path.join(build_dir, "script"))
+    shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
+
+    if files_dir:
+        logger.info(f"Copying the directory {files_dir} to {build_dir}")
+        path, dir_ = os.path.split(files_dir)
+        shutil.copytree(files_dir, os.path.join(build_dir, dir_))
+    return {"status": "success"}
+
+
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,
           nocache=False, yes=False, file_descriptor=sys.stdout, **kwargs):
     state = get_state()
     cli = docker_api_client()
     image_name = state[CONTAINER_IMAGE]
     if not image_name:
-        raise Exception("You need to set CONTAINER_IMAGE environment variable.")
-
-    docker_file_dir, _ = os.path.split(__file__)
-    if not docker_file:
-        docker_file = os.path.join(docker_file_dir, DOCKERFILE)
+        raise Exception(f"You need to set {CONTAINER_IMAGE} environment variable.")
 
     if not new_version:
         latest_version = get_latest_version(image_name)
-        if latest_version:
-            new_version = _increment_version(latest_version)
-        else:
-            new_version = "0.1"
+        new_version = utils.increment_version(latest_version)
 
     if not yes:
         sys.stdout.write("Build %s:%s (y/N)? " % (image_name, new_version))
         response = input()
         if response.lower() not in ["y", "yes"]:
-            return
+            return{"status": "canceled"}
 
     logger.info("Building %s:%s" % (image_name, new_version))
 
     with tempfile.TemporaryDirectory() as build_dir:
-        cwd, _ = os.path.split(__file__)
-        logger.info("Current working directory: " + cwd)
-        handoff_dir = os.path.join(cwd, "../../../../")
-        logger.info("Looking for handoff source at " + handoff_dir)
-        if os.path.isfile(os.path.join(handoff_dir, "setup.py")):
-            logger.info("Found handoff. Copying to the build directory")
-            ho_build_dir = os.path.join(build_dir, "handoff")
-            os.mkdir(ho_build_dir)
-            shutil.copytree(os.path.join(handoff_dir, "handoff"),
-                            os.path.join(ho_build_dir, "handoff"))
-            files = [
-                "MANIFEST.in",
-                "README.md",
-                "requirements.txt",
-                "setup.cfg",
-                "setup.py",
-            ]
-            for fn in files:
-                shutil.copyfile(os.path.join(handoff_dir, fn),
-                                os.path.join(ho_build_dir, fn))
-        else:
-            logger.info("...not found")
-
-        shutil.copytree(project_dir, os.path.join(build_dir, "project"),
-                        symlinks=True)
-        shutil.copytree(os.path.join(docker_file_dir, "script"),
-                        os.path.join(build_dir, "script"))
-        shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
-
-        if files_dir:
-            logger.info(("Copying the directory %s to Docker image build " +
-                         "temporary directory") % files_dir)
-            path, dir_ = os.path.split(files_dir)
-            shutil.copytree(files_dir, os.path.join(build_dir, dir_))
-
+        copy_files(project_dir, build_dir, docker_file, files_dir)
         for line in cli.build(path=build_dir,
                               tag=image_name + ":" + new_version,
                               nocache=nocache):
@@ -123,6 +107,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
                     continue
                 if msg.get("stream") and msg["stream"] != "\n":
                     file_descriptor.write(msg["stream"])
+        return{"status": "success"}
 
 
 def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
@@ -163,7 +148,7 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
     except Exception as e:
         return {
             "status": "error",
-            "message": (str(e).replace("\\n", "\n"))
+            "message": (str(e))
         }
 
 
@@ -182,7 +167,7 @@ def push(username, password, registry, version=None, yes=False,
                          (image_name, version, registry))
         response = input()
         if response.lower() not in ["y", "yes"]:
-            return
+            return {"status": "canceled"}
 
     client = docker.from_env()
 
@@ -214,3 +199,4 @@ def push(username, password, registry, version=None, yes=False,
                 if current_progress - progress[block] > 5:
                     progress[block] = current_progress
                     file_descriptor.write("id: %s %s\n" % (block, progress_bar))
+    return {"status": "success"}

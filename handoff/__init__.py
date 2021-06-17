@@ -32,10 +32,20 @@ def _strip_outer_quotes(string: str) -> str:
     return string
 
 
+def _load_param_from_file(path: str) -> Dict:
+    arg_list = []
+    with open(path, "r") as f:
+        for l in f.readlines():
+            arg_list.append(l.replace("\n", ""))
+    return arg_list
+
+
 def _load_param_list(arg_list: List) -> Dict:
     data = {}
     new_arg_list = []
 
+    if len(arg_list) == 1 and os.path.isfile(arg_list[0]):
+        arg_list = _load_param_from_file(arg_list[0])
     # fix the limitation in passing with $(eval echo $__VARS)
     for a in arg_list:
         if "=" in a:
@@ -207,7 +217,8 @@ def _run_task_subcommand(
 def project_required(command):
     if (not command.startswith("github") and
             not command.startswith("cloud role") and
-            not command.startswith("cloud login test")):
+            not command.startswith("cloud login test") and
+            not command.startswith("container remote build")):
         return True
     return False
 
@@ -457,7 +468,7 @@ def main() -> None:
                         help="Define environment variables. List after this option like: -e key1=value1 key2=value2...")
     parser.add_argument("-v", "--vars", type=str, nargs="*", default="",
                         help="Extra variables for the command. List after this option like: -v key1=value1 key2=value2...")
-    parser.add_argument("-y", "--yes", type=bool, default=None,
+    parser.add_argument("-y", "--yes", action="store_true", # type=bool, default=None,
                         help="Skip confirmations")
 
     parser.add_argument("-h", "--help", action="store_true")

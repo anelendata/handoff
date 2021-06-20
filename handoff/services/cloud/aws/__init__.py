@@ -424,6 +424,21 @@ def delete_role(grantee_account_id, template_file=None):
     return response
 
 
+def get_role_status(grantee_account_id):
+    state = get_state()
+    stack_name = "handoff-role-" + str(grantee_account_id)
+    try:
+        res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
+    except:
+        status = {"status": "not created", "message": "role does not exist"}
+    else:
+        status = {
+            "status": res["Stacks"][0]["StackStatus"],
+            "details": res["Stacks"][0]
+        }
+    return status
+
+
 def create_bucket(template_file=None, update=False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
@@ -461,6 +476,22 @@ def delete_bucket():
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     _log_stack_filter(state[BUCKET])
     return response
+
+
+def get_bucket_status(**kwargs):
+    state = get_state()
+    resource_group = state.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-bucket"
+    try:
+        res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
+    except:
+        status = {"status": "not created", "message": "bucket does not exist"}
+    else:
+        status = {
+            "status": res["Stacks"][0]["StackStatus"],
+            "details": res["Stacks"][0]
+        }
+    return status
 
 
 def create_resources(template_file=None, update=False, static_ip=False,
@@ -506,6 +537,22 @@ def delete_resources():
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     _log_stack_filter(resource_group)
     return response
+
+
+def get_resources_status(**kwargs):
+    state = get_state()
+    resource_group = state.get(RESOURCE_GROUP)
+    stack_name = resource_group + "-resources"
+    try:
+        res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
+    except:
+        status = {"status": "not created", "message": "resources do not exist"}
+    else:
+        status = {
+            "status": res["Stacks"][0]["StackStatus"],
+            "details": res["Stacks"][0]
+        }
+    return status
 
 
 def create_task(template_file=None, update=False, memory=512,
@@ -614,7 +661,24 @@ def delete_task():
     return response
 
 
-def list_tasks(full=False, running=True, stopped=True,
+def get_task_status(**kwargs):
+    state = get_state()
+    resource_group = state.get(RESOURCE_GROUP)
+    task_name = state.get(TASK_NAKED)
+    stack_name = resource_group + "-" + task_name
+    try:
+        res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
+    except:
+        status = {"status": "not created", "message": "task does not exist"}
+    else:
+        status = {
+            "status": res["Stacks"][0]["StackStatus"],
+            "details": res["Stacks"][0]
+        }
+    return status
+
+
+def list_jobs(full=False, running=True, stopped=True,
                resource_group_level=False, **kwargs):
     state = get_state()
     stack_name = state.get(TASK_NAKED)
@@ -662,7 +726,7 @@ def list_tasks(full=False, running=True, stopped=True,
     return outputs
 
 
-def stop_task(id=None, reason="Stopped by the user"):
+def stop_job(id=None, reason="Stopped by the user"):
     if not id:
         return({"success": False,
                 "message": "You must provide task ID by -v id=<arn or task id>"})
@@ -673,7 +737,7 @@ def stop_task(id=None, reason="Stopped by the user"):
     return response
 
 
-def run_task(task_name=None, container_name=None, env={}, command=None, extras=None):
+def run_job(task_name=None, container_name=None, env={}, command=None, extras=None):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
     if not task_name:
@@ -701,7 +765,7 @@ def run_task(task_name=None, container_name=None, env={}, command=None, extras=N
     return response
 
 
-def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
+def schedule_job(target_id, cronexp, env=[], role_arn=None, extras=None):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
     task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
@@ -725,7 +789,7 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
         extra_env.append({"name": key, "value": env[key]})
 
     try:
-        response = events.schedule_task(
+        response = events.schedule_job(
                 account_id,
                 task_stack,
                 resource_group_stack,
@@ -755,13 +819,15 @@ def schedule_task(target_id, cronexp, env=[], role_arn=None, extras=None):
     return response
 
 
-def unschedule_task(target_id):
+def unschedule_job(target_id):
     state = get_state()
     task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
-    resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     try:
-        response = events.unschedule_task(task_stack, resource_group_stack,
-                                          target_id, cred_keys=_get_cred_keys())
+        response = events.unschedule_job(
+                task_stack,
+                target_id,
+                cred_keys=_get_cred_keys(),
+        )
     except Exception as e:
         raise Exception("No schedules found")
     params = {
@@ -778,9 +844,8 @@ def unschedule_task(target_id):
 def list_schedules(full=False, **kwargs):
     state = get_state()
     task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
-    resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
     try:
-        response = events.list_schedules(task_stack, resource_group_stack, cred_keys=_get_cred_keys())
+        response = events.list_schedules(task_stack, cred_keys=_get_cred_keys())
     except Exception as e:
         LOGGER.error(e)
         response = []

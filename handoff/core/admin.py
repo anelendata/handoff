@@ -88,8 +88,8 @@ def _get_secret(key: str) -> str:
 
 def _set_bucket_name(resource_group_name, aws_account_id):
     state = get_state()
-    state.set_env(BUCKET, (aws_account_id + "-" + resource_group_name))
-    LOGGER.debug("Environment variable %s was set autoamtically as %s" %
+    state[BUCKET] = aws_account_id + "-" + resource_group_name
+    LOGGER.debug("State variable %s was set autoamtically as %s" %
                 (BUCKET, state[BUCKET]))
 
 

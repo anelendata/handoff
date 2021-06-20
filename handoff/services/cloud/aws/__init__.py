@@ -259,18 +259,6 @@ def delete_parameter(
     ssm.delete_parameter(prefix_key, cred_keys=_get_cred_keys())
 
 
-def set_env_var_from_ssm(
-        project,
-        name,
-        ):
-    """
-    Not used?
-    """
-    state = get_state()
-    value = get_parameter(project, name)
-    state.set_env(name, value, trust=True)
-
-
 def download_file(local_path, remote_path):
     state = get_state()
     bucket = state.get(BUCKET)

@@ -19,6 +19,13 @@ Resources:
         Statement:
         - Effect: Allow
           Principal:
+            Service:
+              - ecs-tasks.amazonaws.com
+          Action:
+            - sts:AssumeRole
+
+        - Effect: Allow
+          Principal:
             AWS:
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:root"
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/handoffbot"
@@ -123,6 +130,7 @@ Resources:
               - ecs:StartTask
               - ecs:StopTask
               - ecs:ListTasks
+              - ecs:ListTaskDefinitions
               Resource: "*"
               # Resource: !Sub "arn:aws:ecs:*:*:*"
             - Effect: Allow
@@ -216,6 +224,13 @@ Resources:
                 - ecr:BatchGetImage
                 - logs:CreateLogStream
                 - logs:PutLogEvents
+
+                # Required for container build in Fargate
+                - ecr:InitiateLayerUpload
+                - ecr:UploadLayerPart
+                - ecr:CompleteLayerUpload
+                - ecr:PutImage
+
               Resource: "*"
 
   TaskRole:
@@ -284,17 +299,21 @@ Resources:
                       ecs-tasks.amazonaws.com
 
 Outputs:
+  FargateDeployRoleArn:
+    Description: FargateDeployRole ARN
+    Value:
+      Ref: FargateDeployRole
+    Export:
+      Name: "handoff-FargateDeployRoleArn"
   TaskExecutionRoleArn:
     Description: TaskExecutionRole ARN
     Value:
       Ref: TaskExecutionRole
     Export:
       Name: "handoff-TaskExecutionRoleArn"
-        # "Fn::Sub": "${ResourceGroup}-TaskExecutionRoleArn"
   TaskRoleArn:
     Description: TaskRole ARN
     Value:
       Ref: TaskRole
     Export:
       Name: "handoff-TaskRoleArn"
-        # "Fn::Sub": "${ResourceGroup}-TaskRoleArn"

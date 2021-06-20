@@ -480,6 +480,17 @@ def create_resources(template_file=None, update=False, static_ip=False,
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
+    bucket = state.get(BUCKET)
+    parameters = [
+        {
+            "ParameterKey": "ResourceGroup",
+            "ParameterValue": resource_group,
+        },
+        {
+            "ParameterKey": "Bucket",
+            "ParameterValue": bucket,
+        },
+    ]
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         if static_ip:
@@ -488,16 +499,16 @@ def create_resources(template_file=None, update=False, static_ip=False,
             template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources.yml")
 
     if not update:
-        response = cloudformation.create_stack(stack_name, template_file, cred_keys=_get_cred_keys())
+        response = cloudformation.create_stack(stack_name, template_file, parameters, cred_keys=_get_cred_keys())
     else:
-        response = cloudformation.update_stack(stack_name, template_file, cred_keys=_get_cred_keys())
+        response = cloudformation.update_stack(stack_name, template_file, parameters, cred_keys=_get_cred_keys())
 
     _log_stack_info(response)
     return response
 
 
-def update_resources(template_file=None):
-    create_resources(template_file, update=True, cred_keys=_get_cred_keys())
+def update_resources(template_file=None, **kwargs):
+    create_resources(template_file, update=True, **kwargs)
 
 
 def delete_resources():
@@ -521,6 +532,7 @@ def create_task(template_file=None, update=False, memory=512,
     _, _, image_domain = get_docker_registry_credentials()
     container_image = state.get(CONTAINER_IMAGE)
     image_version = state.get(IMAGE_VERSION)
+
     parameters = [
         {
             "ParameterKey": "ResourceGroup",
@@ -673,12 +685,13 @@ def stop_task(id=None, reason="Stopped by the user"):
     return response
 
 
-def run_task(env={}, extras=None):
+def run_task(task_name=None, container_name=None, env={}, command=None, extras=None):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
-    task_name = state.get(TASK)
-    task_name_naked = state.get(TASK_NAKED)
-    container_image = state.get(CONTAINER_IMAGE)
+    if not task_name:
+        task_name = state.get(TASK_NAKED)
+    if not container_name:
+        container_name = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group = state.get(RESOURCE_GROUP)
     resource_group_stack = resource_group + "-resources"
@@ -688,11 +701,12 @@ def run_task(env={}, extras=None):
         extra_env.append({"name": key, "value": env[key]})
     response = ecs.run_fargate_task(
             account_id,
-            resource_group + "-" + task_name_naked,
+            resource_group + "-" + task_name,
             resource_group_stack,
-            container_image,
+            container_name,
             region,
             extra_env,
+            command=command,
             extras=extras,
             cred_keys=_get_cred_keys())
     _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)

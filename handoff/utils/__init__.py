@@ -16,6 +16,24 @@ def get_logger(name="handoff"):
     return LOGGER
 
 
+def increment_version(ver, delimiter="."):
+    """Increment the last digit of the version numbers with delimiter "."
+    if it fails to increment, returns original version by adding ".1"
+    """
+    if ver is None:
+        return "0.1"
+    digits = ver.split(delimiter)
+    for i in range(len(digits) - 1, 0, -1):
+        try:
+            digit = int(digits[i])
+        except ValueError:
+            continue
+        digits[i] = str(digit + 1)
+        new_version = ".".join(digits)
+        return new_version
+    return (ver + ".1")
+
+
 class bcolors:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"

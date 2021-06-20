@@ -20,6 +20,34 @@ def _envs(
     _ = admin._config_get_local(project_dir, workspace_dir, **kwargs)
 
 
+def bundle(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """Make a copy of the files to be bundled in the Docker image
+    Must have -v build_dir="path_to/build_dir"
+    If you want to feed a custom Dockerfile, use --vars (-v) option:
+      --vars docker_file="/path_to/Dockerfile"
+    If you have extra files to copy to the image's workspace directory,
+    use --vars option. Every file under the directory will be copied:
+      --vars files_dir="/path_to/extra_files_dir"
+    """
+    # _envs(project_dir, workspace_dir, vars=vars, **kwargs)
+    build_dir = vars["build_dir"]
+    files_dir = vars.get("files_dir")
+    docker_file = vars.get("docker_file")
+    if docker_file:
+        LOGGER.info("Using Dockerfile at: " + docker_file)
+    response = impl.copy_files(
+            project_dir,
+            build_dir,
+            docker_file=docker_file,
+            files_dir=files_dir,
+    )
+    return response
+
+
 def build(
     project_dir: str,
     workspace_dir: str,
@@ -57,7 +85,7 @@ def run(
     state.validate_env([CONTAINER_IMAGE])
 
     platform = cloud.get_platform()
-    env = platform.get_platform_auth_env(vars)
+    env = platform.get_platform_auth_env()
     env.update(envs)
     kwargs.update(vars)
     try:

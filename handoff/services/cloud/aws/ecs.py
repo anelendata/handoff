@@ -49,11 +49,14 @@ def stop_task(resource_group, region, task_id, reason, extras=None,
 
 def run_fargate_task(
         account_id,
-        task_stack,
+        task_name,
         resource_group_stack,
-        container_image,
+        container_name,
         region,
-        env=[], extras=None, cred_keys: dict = {}):
+        env=[],
+        extras=None,
+        command=None,
+        cred_keys: dict = {}):
     """Run a fargate task
     extras overwrite the kwargs given to run_task boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.run_task
@@ -66,16 +69,6 @@ def run_fargate_task(
         resource_group_stack,
         cred_keys=cred_keys,
     )["StackResources"]
-
-    task_resources = cfn.describe_stack_resources(
-        task_stack,
-        cred_keys=cred_keys,
-    )["StackResources"]
-    task_def_arn = None
-    for r in task_resources:
-        if r["ResourceType"] == "AWS::ECS::TaskDefinition":
-            task_def_arn = r["PhysicalResourceId"]
-            break
 
     rg_resources = cfn.describe_stack_resources(
         resource_group_stack,
@@ -97,8 +90,33 @@ def run_fargate_task(
                    "account_id": account_id,
                    "phys_rsrc_id": r["PhysicalResourceId"]})
 
-    logger.debug("%s\n%s\n%s\n%s" %
-                 (cluster_arn, task_def_arn, subnets, security_groups))
+    logger.info(task_name)
+#     task_resources = cfn.describe_stack_resources(
+#         task_name,
+#         cred_keys=cred_keys,
+#     )["StackResources"]
+#     task_def_arn = None
+#     for r in task_resources:
+#         if r["ResourceType"] == "AWS::ECS::TaskDefinition":
+#             task_def_arn = r["PhysicalResourceId"]
+#             break
+    task_def_arn = client.list_task_definitions(
+        familyPrefix=task_name,
+        status="ACTIVE",
+        sort="DESC",
+        maxResults=1,
+    )["taskDefinitionArns"][0]
+
+    logger.debug(
+        "%s \n%s \n%s \n%s" % (cluster_arn, task_def_arn, subnets, security_groups)
+    )
+
+    container_override = {
+        "name": container_name,
+        "environment": env,
+    }
+    if command:
+        container_override["command"] = command
 
     kwargs = {
         "cluster": cluster_arn,
@@ -113,12 +131,7 @@ def run_fargate_task(
             }
         },
         "overrides": {
-            "containerOverrides": [
-                {
-                 "name": container_image,
-                 "environment": env
-                 }
-            ]
+            "containerOverrides": [container_override]
         }
     }
     if extras:

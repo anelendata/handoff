@@ -470,13 +470,32 @@ def container_build(
     target_envs["COMMAND"] = "container remote build"
     target_envs[TASK] = state[TASK_NAKED]
 
-    return platform.run_task(
+    return platform.run_job(
             task_name="handoff-container-builder",
             container_name="handoff-container-builder",
             env=target_envs,
             command=command,
             extras=extras_obj,
             )
+
+
+def container_version(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    vars: Dict = {},
+    extras: str = None,
+    yes: bool = False,
+    **kwargs) -> None:
+    state = _get_state()
+    platform = get_platform()
+    image_name = state.get(CONTAINER_IMAGE)
+    try:
+        version = platform.get_latest_container_image_version(state[CONTAINER_IMAGE])
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    return {"status": "success", "version": version}
 
 
 def schedule_create(

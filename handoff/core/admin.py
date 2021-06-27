@@ -150,10 +150,7 @@ def _validate_project(project) -> None:
                           error_message.split("\n")[5])
         type_ = re.sub(r".*\{\'type\'\: \[\'.*\', \'(.*)\'\]\}.*",
                        r"\1", error_message.split("\n")[3])
-        LOGGER.error("project.yml has an invalid format")
-        LOGGER.error(instance)
-        LOGGER.error(type_)
-        raise
+        raise Exception(f"project.yml has an invalid format: {instance} - {type_}")
 
 
 def _read_project_remote(workspace_dir: str) -> Dict:

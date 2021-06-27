@@ -406,7 +406,7 @@ def run(
     target_envs = dict()
     if target_id:
         for s in config.get("schedules", []):
-            if str(s["target_id"]) == target_id:
+            if str(s["target_id"]) == str(target_id):
                 for e in s.get("envs"):
                     target_envs[e["key"]] = e["value"]
                 break

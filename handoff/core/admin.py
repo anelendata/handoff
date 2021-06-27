@@ -321,9 +321,10 @@ def secrets_push(
         print("  - " + full_path + " (" + secrets[key].get("level", "task") +
               " level)" + skip_msg)
 
+    response = ""
     if yes is None:
         response = input("Proceed? (y/N)")
-    if yes is False or response.lower() not in ["yes", "y"]:
+    if not yes and response.lower() not in ["yes", "y"]:
         LOGGER.info("Not pushing the secrets by choice.")
         return "abort"
 

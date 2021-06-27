@@ -147,6 +147,22 @@ def role_delete(
     )
 
 
+def role_status(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff cloud role status -p <project_directory>` -s <stage>
+    Check the status of role
+    """
+    state = _get_state()
+    platform = get_platform()
+    state.validate_env()
+    return platform.get_role_status(
+        grantee_account_id=str(vars.get("grantee_account_id", account_id))
+    )
+
+
 def bucket_create(
     project_dir: str,
     workspace_dir: str,
@@ -184,6 +200,20 @@ def bucket_delete(
     platform = get_platform()
     state.validate_env()
     return platform.delete_bucket()
+
+
+def bucket_status(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff cloud bucket status -p <project_directory>` -s <stage>
+    Check the status of bucket
+    """
+    state = _get_state()
+    platform = get_platform()
+    state.validate_env()
+    return platform.get_bucket_status(**vars)
 
 
 def resources_create(
@@ -239,6 +269,20 @@ def resources_delete(
     return platform.delete_resources()
 
 
+def resources_status(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff cloud resources status -p <project_directory>` -s <stage>
+    Check the status of resources
+    """
+    state = _get_state()
+    platform = get_platform()
+    state.validate_env()
+    return platform.get_resources_status(**vars)
+
+
 def task_create(
     project_dir: str,
     workspace_dir: str,
@@ -289,7 +333,21 @@ def task_status(
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud task status -p <project_directory> -v full=False running=True stopped=True resource_group_level=False`
+    """`handoff cloud task status -p <project_directory>` -s <stage>
+    Check the status of task
+    """
+    state = _get_state()
+    platform = get_platform()
+    state.validate_env()
+    return platform.get_task_status(**vars)
+
+
+def job_status(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff cloud job status -p <project_directory> -v full=False running=True stopped=True resource_group_level=False`
     list task status
 
     AWS options:
@@ -301,15 +359,15 @@ def task_status(
     state = _get_state()
     platform = get_platform()
     state.validate_env()
-    return platform.list_tasks(**vars)
+    return platform.list_jobs(**vars)
 
 
-def task_stop(
+def job_stop(
     project_dir: str,
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> None:
-    """`handoff cloud task stop -p <project_directory> -v id=<task_id> reason=<reason>`
+    """`handoff cloud job stop -p <project_directory> -v id=<task_id> reason=<reason>`
     stop a running task
     Options:
     - reason
@@ -317,7 +375,7 @@ def task_stop(
     state = _get_state()
     platform = get_platform()
     state.validate_env()
-    return platform.stop_task(**vars)
+    return platform.stop_job(**vars)
 
 
 def run(
@@ -354,7 +412,7 @@ def run(
                 break
     target_envs.update(envs)
     target_envs[STAGE] = state[STAGE]
-    return platform.run_task(env=target_envs, extras=extras_obj)
+    return platform.run_job(env=target_envs, extras=extras_obj)
 
 
 def container_build(
@@ -412,13 +470,32 @@ def container_build(
     target_envs["COMMAND"] = "container remote build"
     target_envs[TASK] = state[TASK_NAKED]
 
-    return platform.run_task(
+    return platform.run_job(
             task_name="handoff-container-builder",
             container_name="handoff-container-builder",
             env=target_envs,
             command=command,
             extras=extras_obj,
             )
+
+
+def container_version(
+    project_dir: str,
+    workspace_dir: str,
+    envs: Dict = {},
+    vars: Dict = {},
+    extras: str = None,
+    yes: bool = False,
+    **kwargs) -> None:
+    state = _get_state()
+    platform = get_platform()
+    image_name = state.get(CONTAINER_IMAGE)
+    try:
+        version = platform.get_latest_container_image_version(state[CONTAINER_IMAGE])
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    return {"status": "success", "version": version}
 
 
 def schedule_create(
@@ -474,7 +551,7 @@ def schedule_create(
             e[e1["key"]] = e1["value"]
         # priority of the values schedule section < envs section < command line
         e.update(envs)
-        r = platform.schedule_task(
+        r = platform.schedule_job(
             str(s["target_id"]), "cron(" + s["cron"] + ")",
             env=e,
             extras=s.get("extras_obj"))
@@ -501,7 +578,7 @@ def schedule_delete(
         }
     target_id = str(vars["target_id"])
     try:
-        response = platform.unschedule_task(target_id)
+        response = platform.unschedule_job(target_id)
     except Exception as e:
         response = str(e)
     return response

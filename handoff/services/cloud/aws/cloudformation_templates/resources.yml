@@ -136,7 +136,6 @@ Resources:
 
   LogGroup:
     Type: AWS::Logs::LogGroup
-    DeletionPolicy: Retain
     Properties: 
       LogGroupName: !Sub ${ResourceGroup}/${TaskName}
       RetentionInDays: !Ref LogRetentionDays

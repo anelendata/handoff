@@ -80,6 +80,11 @@ def delete_stack(stack_name, cred_keys: dict = {}):
     return response
 
 
+def describe_stacks(stack_name, cred_keys: dict = {}):
+    client = get_client(cred_keys)
+    return client.describe_stacks(StackName=stack_name)
+
+
 def describe_stack_resources(stack_name, query=None, cred_keys: dict = {}):
     client = get_client(cred_keys)
     return client.describe_stack_resources(StackName=stack_name)

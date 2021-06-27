@@ -13,7 +13,7 @@ def get_client(cred_keys: dict = {}):
     return cred.get_client("events", cred_keys)
 
 
-def schedule_task(
+def schedule_job(
         account_id,
         task_stack,
         resource_group_stack,
@@ -31,7 +31,7 @@ def schedule_task(
     """
     client = get_client(cred_keys)
 
-    rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
+    rule_name = task_stack + "-" + target_id
 
     kwargs = {
         "Name": rule_name,
@@ -105,13 +105,12 @@ def schedule_task(
     return client.put_targets(**kwargs)
 
 
-def unschedule_task(
+def unschedule_job(
         task_stack,
-        resource_group_stack,
         target_id,
         cred_keys: dict = {}):
     client = get_client(cred_keys)
-    rule_name = resource_group_stack + "-" + task_stack + "-" + target_id
+    rule_name = task_stack + "-" + target_id
     kwargs = {
         "Rule": rule_name,
         "Ids": [target_id]
@@ -122,11 +121,10 @@ def unschedule_task(
 
 def list_schedules(
         task_stack,
-        resource_group_stack,
         cred_keys: dict = {},
         ):
     client = get_client(cred_keys)
-    rule_prefix = resource_group_stack + "-" + task_stack
+    rule_prefix = task_stack
     kwargs = {
         "NamePrefix": rule_prefix,
     }

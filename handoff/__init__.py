@@ -294,7 +294,10 @@ def do(
         if workspace_dir:
             admin.workspace_init(project_dir, workspace_dir, **kwargs)
         admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        response = admin_commands[command](project_dir, workspace_dir, **kwargs)
+        try:
+            response = admin_commands[command](project_dir, workspace_dir, **kwargs)
+        except Exception as e:
+            response = {"status": "error", "message": str(e)}
 
         os.chdir(prev_wd)
 
@@ -321,9 +324,18 @@ def do(
                     LOGGER.warning("Could not get container image version: " + str(e))
                 if image_version:
                     state.set_env(IMAGE_VERSION, image_version)
-
-        return _run_subcommand(service_modules[module_name], sub_command,
-                project_dir, workspace_dir, show_help, **kwargs)
+        try:
+            response = _run_subcommand(
+                    service_modules[module_name],
+                    sub_command,
+                    project_dir,
+                    workspace_dir,
+                    show_help,
+                    **kwargs,
+            )
+        except Exception as e:
+            response = {"status": "error", "message": str(e)}
+        return response
 
     if module_name in plugin_modules.keys():
         if show_help:
@@ -333,8 +345,18 @@ def do(
 
         if project_dir:
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
-        return _run_subcommand(plugin_modules[module_name], sub_command, project_dir,
-                               workspace_dir, show_help, **kwargs)
+        try:
+            response = _run_subcommand(
+                    plugin_modules[module_name],
+                    sub_command,
+                    project_dir,
+                    workspace_dir,
+                    show_help,
+                    **kwargs,
+            )
+        except Exception as e:
+            response = {"status": "error", "message": str(e)}
+        return response
 
     return("Unrecognized command %s. Run handoff -h for help." % command)
 

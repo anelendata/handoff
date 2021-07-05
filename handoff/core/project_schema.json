@@ -118,6 +118,41 @@
         }
       }
     },
+    "secrets": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "level": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": "null"
+          }
+        }
+      }
+    },
     "tasks": {
       "type": [
         "null",

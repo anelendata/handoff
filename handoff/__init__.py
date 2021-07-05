@@ -291,10 +291,10 @@ def do(
             os.chdir(prev_wd)
             return response
 
-        if workspace_dir:
-            admin.workspace_init(project_dir, workspace_dir, **kwargs)
-        admin._config_get_local(project_dir, workspace_dir, **kwargs)
         try:
+            if workspace_dir:
+                admin.workspace_init(project_dir, workspace_dir, **kwargs)
+            admin._config_get_local(project_dir, workspace_dir, **kwargs)
             response = admin_commands[command](project_dir, workspace_dir, **kwargs)
         except Exception as e:
             response = {"status": "error", "message": str(e)}

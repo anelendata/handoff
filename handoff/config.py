@@ -144,7 +144,7 @@ class State(dict):
                 if self._mandatory_envs.get(env, dict()).get("pattern"):
                     msg = (msg + " Valid pattern: " +
                            self._mandatory_envs[env]["pattern"])
-                LOGGER.critical(msg)
+                LOGGER.error(msg)
                 invalid.append(env)
                 continue
             is_valid = (
@@ -156,7 +156,7 @@ class State(dict):
                 (not self._mandatory_envs.get(env, dict()).get("max") or
                  self._mandatory_envs[env]["max"] >= len(value)))
             if not is_valid:
-                LOGGER.critical(("%s environment variable is not following" +
+                LOGGER.error(("%s environment variable is not following" +
                                  " the pattern %s. value: %s") %
                                 (env, self._mandatory_envs[env], value))
                 invalid.append(env)

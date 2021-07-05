@@ -228,8 +228,10 @@ def do(
     project_dir: str = None,
     workspace_dir: str = None,
     show_help: bool = False,
+    log_level: str = "info",
     **kwargs) -> None:
     """Determine the command to run"""
+    LOGGER.setLevel(log_level.upper())
     init_state(kwargs.get("stage", os.environ.get(STAGE, DEFAULT_STAGE)))
     state = get_state()
 
@@ -526,14 +528,13 @@ def main() -> None:
         print_update()
         return
 
-    LOGGER.setLevel(args.log_level.upper())
-
     args.vars = _load_param_list(args.vars)
     args.envs = _load_param_list(args.envs)
 
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help
     kwargs["yes"] = args.yes
+    kwargs["log_level"] = args.log_level.upper()
 
     if (args.project_dir and args.workspace_dir and
             args.project_dir == args.workspace_dir):

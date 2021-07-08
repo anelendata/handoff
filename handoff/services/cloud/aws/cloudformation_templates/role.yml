@@ -281,6 +281,13 @@ Resources:
                 - events.amazonaws.com
             Action:
               - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+            Action:
+              - sts:AssumeRole
+
       Path: /
       Policies:
         - PolicyName: handoff-CloudwatchEventsInvokeECSRunTask
@@ -291,12 +298,54 @@ Resources:
                 Action: ecs:RunTask
                 Resource: "*"
               - Effect: Allow
+                Action:
+                  - ecs:StopTask
+                  - ecs:DescribeTasks
+                Resource: "*"
+              - Effect: Allow
                 Action: iam:PassRole
                 Resource: "*"
                 Condition:
                   StringLike:
                     iam:PassedToService:
                       ecs-tasks.amazonaws.com
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - events:PutTargets
+                  - events:PutRule
+                  - events:DescribeRule
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:UpdateLogDelivery
+                  - logs:DeleteLogDelivery
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:DescribeResourcePolicies
+                  - logs:DescribeLogGroups
+                  # May not need below
+                  - logs:CreateLogGroup
+                  - logs:DeleteLogGroup
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:FilterLogEvents
+                  - logs:GetLogDelivery
+                  - logs:GetLogEvents
+                  - logs:GetLogGroupFields
+                  - logs:GetLogRecord
+                  - logs:GetQueryResults
+                  - logs:PutRetentionPolicy
+                  - logs:StartQuery
+                  - logs:StopQuery
+                  - logs:TestMetricFilter
+                  - logs:PutMetricFilter
+                  - logs:DeleteMetricFilter
+                Resource: "*"
 
 Outputs:
   FargateDeployRoleArn:

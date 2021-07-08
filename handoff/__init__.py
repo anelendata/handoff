@@ -232,6 +232,7 @@ def do(
     **kwargs) -> None:
     """Determine the command to run"""
     LOGGER.setLevel(log_level.upper())
+    LOGGER.info(f"Set log level to {log_level.upper()}")
     init_state(kwargs.get("stage", os.environ.get(STAGE, DEFAULT_STAGE)))
     state = get_state()
 

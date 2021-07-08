@@ -52,6 +52,7 @@ def get_platform(
         raise Exception(
             f"Login to {provider_name} failed. Credentials may not be set correctly.")
 
+    PLATFORM_MODULE.set_log_level()
     return PLATFORM_MODULE
 
 

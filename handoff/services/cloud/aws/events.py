@@ -3,10 +3,12 @@ import json, logging, os
 import boto3
 
 from . import credentials as cred
-from . import cloudformation as cfn, iam, sts
+from . import cloudformation as cfn, iam, sts, stepfunctions as stepfns
+
+from handoff import utils
 
 
-logger = logging.getLogger(__name__)
+LOGGER = utils.get_logger()
 
 
 def get_client(cred_keys: dict = {}):
@@ -23,6 +25,7 @@ def schedule_job(
         cronexp,
         role_arn,
         env=[],
+        state_machine=True,
         extras=None,
         cred_keys: dict = {}):
     """Schedule a task
@@ -58,45 +61,75 @@ def schedule_job(
     security_groups = list()
     for r in rg_resources:
         if not cluster_arn and r["ResourceType"] == "AWS::ECS::Cluster":
-            cluster_arn = "arn:aws:ecs:{region}:{account_id}:cluster/{phys_rsrc_id}".format(
-                **{"region": region,
-                   "account_id": account_id,
-                   "phys_rsrc_id": r["PhysicalResourceId"]})
+            phys_rsrc_id= r["PhysicalResourceId"]
+            cluster_arn = f"arn:aws:ecs:{region}:{account_id}:cluster/{phys_rsrc_id}"
         # PublicSubnetTwo is <= v0.3.4
-        if (r["ResourceType"] == "AWS::EC2::Subnet" and
+        elif (r["ResourceType"] == "AWS::EC2::Subnet" and
                 r["LogicalResourceId"] in ["PublicSubnetTwo", "Subnet2"]):
             subnets.append(r["PhysicalResourceId"])
-        if r["ResourceType"] == "AWS::EC2::SecurityGroup":
+        elif r["ResourceType"] == "AWS::EC2::SecurityGroup":
             security_groups.append(r["PhysicalResourceId"])
 
-    logger.debug("%s\n%s\n%s\n%s" %
-                 (cluster_arn, task_def_arn, subnets, security_groups))
+    task_resources = cfn.describe_stack_resources(
+            task_stack,
+            cred_keys=cred_keys,
+        )["StackResources"]
+    log_group_arn = None
+    for r in task_resources:
+        if r["ResourceType"] == "AWS::Logs::LogGroup":
+            phys_rsrc_id = r["PhysicalResourceId"]
+            log_group_arn = f"arn:aws:logs:{region}:{account_id}:log-group:{phys_rsrc_id}:*"
 
-    input_json = json.dumps(
-        {"containerOverrides": [{"name": container_image, "environment": env}]})
+    LOGGER.debug(f"{cluster_arn}\n{task_def_arn}\n{subnets}\n{security_groups}\n{log_group_arn}")
+
+    overrides = {
+        "ContainerOverrides": [{
+            "Name": container_image,
+            "Environment": env,
+        }]
+    }
+
+    if not state_machine:
+        target = {
+            "Id": target_id,
+            "Arn": cluster_arn,
+            "RoleArn": role_arn,
+            "EcsParameters": {
+                "TaskDefinitionArn": task_def_arn,
+                "TaskCount": 1,
+                "LaunchType": "FARGATE",
+                "NetworkConfiguration": {
+                    "awsvpcConfiguration": {
+                        "Subnets": subnets,
+                        "SecurityGroups": security_groups,
+                        "AssignPublicIp": "ENABLED"
+                    }
+                }
+            },
+            "Input": json.dumps(overrides)
+        }
+    else:
+        sm_arn = stepfns.create_state_machine(
+            rule_name,
+            cluster_arn,
+            task_def_arn,
+            subnets,
+            security_groups,
+            role_arn,
+            overrides=overrides,
+            log_group_arn=log_group_arn,
+            cred_keys=cred_keys,
+        )
+        target = {
+            "Id": target_id,
+            "Arn": sm_arn,
+            "RoleArn": role_arn,
+            "Input": json.dumps(overrides),
+        }
 
     kwargs = {
         "Rule": rule_name,
-        "Targets": [
-            {
-                "Id": target_id,
-                "Arn": cluster_arn,
-                "RoleArn": role_arn,
-                "EcsParameters": {
-                    "TaskDefinitionArn": task_def_arn,
-                    "TaskCount": 1,
-                    "LaunchType": "FARGATE",
-                    "NetworkConfiguration": {
-                        "awsvpcConfiguration": {
-                            "Subnets": subnets,
-                            "SecurityGroups": security_groups,
-                            "AssignPublicIp": "ENABLED"
-                        }
-                    }
-                },
-                "Input": input_json
-            }
-        ]
+        "Targets": [target]
     }
 
     if extras:
@@ -111,9 +144,17 @@ def unschedule_job(
         cred_keys: dict = {}):
     client = get_client(cred_keys)
     rule_name = task_stack + "-" + target_id
+    targets = client.list_targets_by_rule(Rule=rule_name)
+    target_ids = []
+    for target in targets["Targets"]:
+        target_ids.append(target["Id"])
+        if "stateMachine" in target["Arn"]:
+            LOGGER.debug(f"Removing stepfunction {target['Arn']}")
+            stepfns.delete_state_machine(target["Arn"])
+
     kwargs = {
         "Rule": rule_name,
-        "Ids": [target_id]
+        "Ids": target_ids
     }
     client.remove_targets(**kwargs)
     client.delete_rule(Name=rule_name)

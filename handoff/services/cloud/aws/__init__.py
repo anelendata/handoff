@@ -878,8 +878,15 @@ def list_schedules(full=False, **kwargs):
         input_str = r["targets"][0].get("Input")
         if input_str:
             input_ = json.loads(input_str.replace("\\\\", ""))
-            record["envs"] = [{"key": e["name"], "value": e["value"]}
-                              for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
+            coverrides = input_.get("containerOverrides", input_.get("ContainerOverrides", None))
+            LOGGER.debug(coverrides)
+            if coverrides:
+                envs = coverrides[0].get("environment", coverrides[0].get("Environment", None))
+                if envs:
+                    record["envs"] = [{
+                        "key": e.get("name", e.get("Name", None)),
+                        "value": e.get("value", e.get("Value", None)),
+                        } for e in envs if e.get("name", e.get("Name", None)) != STAGE]
         schedules.append(record)
     yml_clean = re.sub(r"'([a-zA-Z_]*)':",
                        "\\1:",

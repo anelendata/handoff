@@ -149,7 +149,9 @@ def _run_task_subcommand(
     command: str,
     project_dir: str,
     workspace_dir: str,
-    push_artifacts: bool = False, **kwargs) -> None:
+    push_artifacts: bool = False,
+    debug_mode=False,
+    **kwargs) -> None:
     state = get_state()
     prev_wd = os.getcwd()
     commands = _list_commands(task)
@@ -194,6 +196,8 @@ def _run_task_subcommand(
     try:
         commands[command](config, **kwargs)
     except Exception as e:
+        if debug_mode:
+            raise
         LOGGER.error(str(e))
         exit_code = 1
 
@@ -300,6 +304,8 @@ def do(
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
             response = admin_commands[command](project_dir, workspace_dir, **kwargs)
         except Exception as e:
+            if log_level.lower() == "debug":
+                raise
             response = {"status": "error", "message": str(e)}
 
         os.chdir(prev_wd)
@@ -337,6 +343,8 @@ def do(
                     **kwargs,
             )
         except Exception as e:
+            if log_level.lower() == "debug":
+                raise
             response = {"status": "error", "message": str(e)}
         return response
 
@@ -358,6 +366,8 @@ def do(
                     **kwargs,
             )
         except Exception as e:
+            if log_level.lower() == "debug":
+                raise
             response = {"status": "error", "message": str(e)}
         return response
 

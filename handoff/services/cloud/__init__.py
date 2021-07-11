@@ -584,6 +584,7 @@ def schedule_delete(
         response = str(e)
     return response
 
+
 def schedule_list(
     project_dir: str,
     workspace_dir: str,

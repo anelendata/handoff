@@ -150,7 +150,10 @@ def unschedule_job(
         target_ids.append(target["Id"])
         if "stateMachine" in target["Arn"]:
             LOGGER.debug(f"Removing stepfunction {target['Arn']}")
-            stepfns.delete_state_machine(target["Arn"])
+            stepfns.delete_state_machine(
+                target["Arn"],
+                cred_keys=cred_keys,
+            )
 
     kwargs = {
         "Rule": rule_name,

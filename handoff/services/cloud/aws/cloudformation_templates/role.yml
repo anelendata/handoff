@@ -198,6 +198,14 @@ Resources:
               - sts:AssumeRole
               Resource: "arn:aws:sts::*:*"
               # Resource: !Sub "arn:aws:sts::*:*"
+            - Effect: Allow
+              Action:
+              - states:ListStateMachines
+              - states:DescribeStateMachine
+              - states:CreateStateMachine
+              - states:UpdateStateMachine
+              - states:DeleteStateMachine
+              Resource: "*"
 
   TaskExecutionRole:
     Type: AWS::IAM::Role

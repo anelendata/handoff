@@ -26,8 +26,10 @@ def schedule_job(
         role_arn,
         env=[],
         state_machine=True,
+        state_machine_timeout=3600 * 4,
         extras=None,
-        cred_keys: dict = {}):
+        cred_keys: dict = {},
+        **kwargs):
     """Schedule a task
     extras overwrite the kwargs given to put_targets boto3 command.
     See: https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets
@@ -118,6 +120,7 @@ def schedule_job(
             role_arn,
             overrides=overrides,
             log_group_arn=log_group_arn,
+            timeout=state_machine_timeout,
             cred_keys=cred_keys,
         )
         target = {

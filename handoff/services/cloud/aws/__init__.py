@@ -783,7 +783,8 @@ def schedule_job(
         env=[],
         role_arn=None,
         state_machine=True,
-        extras=None):
+        extras=None,
+        **kwargs):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
     task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
@@ -819,6 +820,7 @@ def schedule_job(
                 state_machine=state_machine,
                 extras=extras,
                 cred_keys=_get_cred_keys(),
+                **kwargs,
                 )
     except Exception as e:
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %

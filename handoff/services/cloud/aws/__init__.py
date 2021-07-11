@@ -782,7 +782,6 @@ def schedule_job(
         cronexp,
         env=[],
         role_arn=None,
-        state_machine=True,
         extras=None,
         **kwargs):
     state = get_state()
@@ -817,7 +816,6 @@ def schedule_job(
                 cronexp,
                 role_arn,
                 env=extra_env,
-                state_machine=state_machine,
                 extras=extras,
                 cred_keys=_get_cred_keys(),
                 **kwargs,

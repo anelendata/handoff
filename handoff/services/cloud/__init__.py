@@ -518,8 +518,12 @@ def schedule_create(
     state = _get_state()
     platform = get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
+    platform_config = config.get("deploy", {}).get("platform_config")
     state.validate_env()
     schedules = config.get("schedules")
+
+    kwargs = {}
+    kwargs.update(platform_config)
 
     target_id = vars.get("target_id")
     cronexp = vars.get("cron")
@@ -555,7 +559,8 @@ def schedule_create(
         r = platform.schedule_job(
             str(s["target_id"]), "cron(" + s["cron"] + ")",
             env=e,
-            extras=s.get("extras_obj"))
+            extras=s.get("extras_obj"),
+            **kwargs)
         responses.append(r)
     return responses
 

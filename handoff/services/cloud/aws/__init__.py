@@ -777,7 +777,12 @@ def run_job(task_name=None, container_name=None, env={}, command=None, extras=No
     return response
 
 
-def schedule_job(target_id, cronexp, env=[], role_arn=None, state_machine=True,
+def schedule_job(
+        target_id,
+        cronexp,
+        env=[],
+        role_arn=None,
+        state_machine=True,
         extras=None):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]

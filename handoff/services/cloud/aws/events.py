@@ -38,11 +38,11 @@ def schedule_job(
 
     rule_name = task_stack + "-" + target_id
 
-    kwargs = {
+    rule_kwargs = {
         "Name": rule_name,
         "ScheduleExpression": cronexp
     }
-    client.put_rule(**kwargs)
+    client.put_rule(**rule_kwargs)
 
     task_resources = cfn.describe_stack_resources(
             task_stack,
@@ -122,6 +122,7 @@ def schedule_job(
             log_group_arn=log_group_arn,
             timeout=state_machine_timeout,
             cred_keys=cred_keys,
+            **kwargs,
         )
         target = {
             "Id": target_id,
@@ -130,15 +131,15 @@ def schedule_job(
             "Input": json.dumps(overrides),
         }
 
-    kwargs = {
+    rule_kwargs = {
         "Rule": rule_name,
         "Targets": [target]
     }
 
     if extras:
-        kwargs.update(extras)
+        rule_kwargs.update(extras)
 
-    return client.put_targets(**kwargs)
+    return client.put_targets(**rule_kwargs)
 
 
 def unschedule_job(

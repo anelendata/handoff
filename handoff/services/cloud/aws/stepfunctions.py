@@ -23,7 +23,11 @@ def create_state_machine(
         overrides,
         log_group_arn=None,
         timeout=3600 * 4,
-        cred_keys: dict = {}):
+        retry_interval=1800,
+        max_retries=4,
+        backoff_rate=1,
+        cred_keys: dict = {},
+        **kwargs):
     client = get_client(cred_keys)
     definition = {
         "Version": "1.0",
@@ -52,9 +56,9 @@ def create_state_machine(
                         "ErrorEquals": [
                             "States.TaskFailed"
                         ],
-                        "IntervalSeconds": 1800,
-                        "MaxAttempts": 4,
-                        "BackoffRate": 1
+                        "IntervalSeconds": retry_interval,
+                        "MaxAttempts": max_retries,
+                        "BackoffRate": backoff_rate,
                     }
                 ],
                 "End": True

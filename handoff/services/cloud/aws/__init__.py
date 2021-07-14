@@ -567,7 +567,7 @@ def get_resources_status(**kwargs):
 
 
 def create_task(template_file=None, update=False, memory=512,
-                cpu=256, **kwargs):
+                cpu=256, image_version=None, **kwargs):
     state = get_state()
     task_name = state.get(TASK)
     task_name_naked = state.get(TASK_NAKED)
@@ -577,7 +577,8 @@ def create_task(template_file=None, update=False, memory=512,
     bucket = state.get(BUCKET)
     _, _, image_domain = get_docker_registry_credentials()
     container_image = state.get(CONTAINER_IMAGE)
-    image_version = state.get(IMAGE_VERSION)
+    if not image_version:
+        image_version = state.get(IMAGE_VERSION)
 
     parameters = [
         {
@@ -829,11 +830,14 @@ def schedule_job(
     region= state.get("AWS_REGION")
     resource_group = state.get(RESOURCE_GROUP)
     response["instructions"] = (
-        "Check the status at https://console.aws.amazon.com/ecs/"
-        f"home?region={region}#/clusters/{resource_group}-resources"
-        "/scheduledTasks\n"
-        "For state machine enabled tasks, check the schedules at"
-        f"https://console.aws.amazon.com/cloudwatch/home?region={region}#rules:")
+        "Check the status at\n"
+        "https://console.aws.amazon.com/cloudwatch/home?"
+        f"region={region}#rules:name={resource_group}-"
+        f"{state.get(TASK_NAKED)}-{target_id}\n"
+        "For state machine enabled tasks, check the statemachines at\n"
+        "https://console.aws.amazon.com/states/home?region="
+        f"{region}#/statemachines"
+    )
     return response
 
 
@@ -852,9 +856,9 @@ def unschedule_job(target_id):
     region = state.get("AWS_REGION")
     resource_group = state.get(RESOURCE_GROUP)
     response["instructions"] = (
-        "Check the status at https://console.aws.amazon.com/ecs/"
-        f"home?region={region}#/clusters/{resource_group}-resources"
-        "/scheduledTasks")
+        "Check the status at https://console.aws.amazon.com/cloudwatch/home?"
+        f"region={region}#rules:name={resource_group}-"
+        f"{state.get(TASK_NAKED)}-{target_id}")
     return response
 
 

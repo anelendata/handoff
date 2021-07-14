@@ -332,6 +332,7 @@ def do(
                 except Exception as e:
                     LOGGER.warning("Could not get container image version: " + str(e))
                 if image_version:
+                    LOGGER.info(f"Container image version: {image_version}")
                     state.set_env(IMAGE_VERSION, image_version)
         try:
             response = _run_subcommand(

@@ -197,7 +197,7 @@ def _read_project_local(project_file: str) -> Dict:
             state[full_key + "_NAKED"] = value
             value = state["_stage-"] + value
         if state.is_allowed_env(full_key):
-            state.set_env(full_key, value)
+            state.set_env(full_key, str(value))
         else:
             state[full_key] = value
 

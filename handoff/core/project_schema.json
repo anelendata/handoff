@@ -287,6 +287,13 @@
             "string"
           ]
         },
+        "image_version": {
+          "type": [
+            "null",
+            "number",
+            "string"
+          ]
+        },
         "task": {
           "type": [
             "null",

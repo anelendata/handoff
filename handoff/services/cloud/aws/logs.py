@@ -12,6 +12,15 @@ def get_client(cred_keys: dict = {}):
     return cred.get_client("logs", cred_keys)
 
 
+def get_log_group_arn(log_group_name, cred_keys: dict = {}):
+    client = get_client(cred_keys)
+    info = client.describe_log_groups(
+            logGroupNamePrefix=log_group_name,
+            limit=1,
+            )
+    return info["logGroups"][0]["arn"]
+
+
 def filter_log_events(
     log_group_name,
     start_time=None,

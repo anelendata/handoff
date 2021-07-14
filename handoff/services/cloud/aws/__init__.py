@@ -12,8 +12,6 @@ from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
 from handoff.services.cloud.aws import credentials as cred
 
 
-logging.getLogger("boto").setLevel(logging.WARNING)
-
 NAME = "aws"
 TEMPLATE_DIR = "cloudformation_templates"
 LOGGER = utils.get_logger()
@@ -40,7 +38,7 @@ def _log_stack_info(response):
     state = get_state()
     params = {"stack_id": response["StackId"],
               "region": state["AWS_REGION"]}
-    print(("Check the progress at https://console.aws.amazon.com/" +
+    return (("Check the progress at https://console.aws.amazon.com/" +
            "cloudformation/home?region={region}#/stacks/stackinfo" +
            "?viewNested=true&hideStacks=false" +
            "&stackId={stack_id}").format(**params))
@@ -49,7 +47,7 @@ def _log_stack_info(response):
 def _log_stack_filter(stack_name):
     state = get_state()
     params = {"stack_name": stack_name, "region": state["AWS_REGION"]}
-    print(("Check the progress at https://console.aws.amazon.com/" +
+    return (("Check the progress at https://console.aws.amazon.com/" +
            "cloudformation/home?region={region}#/stacks/stackinfo" +
            "?filteringText={stack_name}").format(**params))
 
@@ -62,7 +60,7 @@ def _log_task_run_filter(task_name, response):
     params = {"task": task_name,
               "region": state["AWS_REGION"],
               "task_id": task_id}
-    print(("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
+    return (("Check the task at https://us-east-1.console.aws.amazon.com/ecs/home?region=" +
            "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
@@ -88,6 +86,10 @@ def _assume_role(
     state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
 
     return response
+
+
+def set_log_level(log_level=logging.WARNING):
+    logging.getLogger("boto").setLevel(log_level)
 
 
 def find_cred_keys(vars_: dict):
@@ -243,12 +245,17 @@ def push_parameter(
                              "You must use -d allow_advanced_tier=true option.") % len(value))
     LOGGER.debug("Putting parameter %s to AWS SSM Parameter Store with %s tier" %
                  (prefix_key, tier))
-    ssm.put_parameter(prefix_key, value, cred_keys=_get_cred_keys(), tier=tier)
-    print("See the parameters at https://console.aws.amazon.com/" +
-          "systems-manager/parameters/?region=" +
-          state.get("AWS_REGION") +
-          "&tab=Table#list_parameter_filters=Name:Contains:" +
-          prefix_key)
+    details = ssm.put_parameter(prefix_key, value, cred_keys=_get_cred_keys(), tier=tier)
+    response = {
+        "status": "success",
+        "instructions": (
+            "See the parameters at https://console.aws.amazon.com/"
+            f"systems-manager/parameters/?region={state.get('AWS_REGION')}"
+            f"&tab=Table#list_parameter_filters=Name:Contains:{prefix_key}"
+        ),
+        "details": details
+    }
+    return response
 
 
 def delete_parameter(
@@ -293,8 +300,14 @@ def upload_dir(local_dir_path, remote_dir_path):
     bucket = state.get(BUCKET)
     dest_prefix = os.path.join(state.get(TASK_NAKED), remote_dir_path)
     s3.upload_dir(bucket, local_dir_path, dest_prefix, cred_keys=_get_cred_keys())
-    print(("See the files at https://s3.console.aws.amazon.com/s3/" +
-             "buckets/%s/%s/") % (bucket, dest_prefix))
+    response = {
+        "status": "success",
+        "instructions": (
+            "See the files at https://s3.console.aws.amazon.com/s3/"
+            f"buckets/{bucket}/{dest_prefix}/"
+        )
+    }
+    return response
 
 
 def delete_dir(remote_dir_path):
@@ -371,7 +384,7 @@ def create_role(
         aws_response = cloudformation.update_stack(
                 stack_name, template_file, parameters, cred_keys=_get_cred_keys())
 
-    _log_stack_info(aws_response)
+    instructions = _log_stack_info(aws_response)
 
     account_id = get_account_id()
     role_name = f"handoff-FargateDeployRole-for-{grantee_account_id}"
@@ -380,7 +393,7 @@ def create_role(
 
     region = state.get("AWS_REGION")
 
-    instruction = f"""Add this info to ~/.aws/credentials (Linux & Mac)\n
+    instructions = instructions + f"""\nAdd this info to ~/.aws/credentials (Linux & Mac)\n
 %USERPROFILE%\\.aws\\credentials (Windows)
 
     [<new-profile-name>]
@@ -396,15 +409,13 @@ And update the environment varialbe:
 Learn more about AWS name profiles at
 https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html
 """
-    print(instruction)
-
     response = {
         "aws_response": aws_response,
         "account_id": account_id,
         "role_arn": role_arn,
         "external_id": external_id,
         "region": region,
-        "instruction": instruction,
+        "instructions": instructions,
         }
     return response
 
@@ -419,8 +430,8 @@ def delete_role(grantee_account_id, template_file=None):
     stack_name = "handoff-role-" + str(grantee_account_id)
     # stack_name = resource_group + "-role-" + str(grantee_account_id)
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
-    _log_stack_filter(stack_name)
-    print("Don't forget to update ~/.aws/credentials and AWS_PROFILE")
+    instructions = _log_stack_filter(stack_name)
+    response["instructions"] = instructions + "\nDon't forget to update ~/.aws/credentials and AWS_PROFILE"
     return response
 
 
@@ -459,7 +470,7 @@ def create_bucket(template_file=None, update=False):
         LOGGER.error("Error creating/updating %s bucket: %s" %
                      (bucket, str(e)))
     else:
-        _log_stack_info(response)
+        response["instructions"] = _log_stack_info(response)
         return response
 
 
@@ -474,7 +485,7 @@ def delete_bucket():
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-bucket"
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
-    _log_stack_filter(state[BUCKET])
+    response["instructions"] = _log_stack_filter(state[BUCKET])
     return response
 
 
@@ -522,7 +533,7 @@ def create_resources(template_file=None, update=False, static_ip=False,
     else:
         response = cloudformation.update_stack(stack_name, template_file, parameters, cred_keys=_get_cred_keys())
 
-    _log_stack_info(response)
+    response["instructions"] = _log_stack_info(response)
     return response
 
 
@@ -535,7 +546,7 @@ def delete_resources():
     resource_group = state.get(RESOURCE_GROUP)
     stack_name = resource_group + "-resources"
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
-    _log_stack_filter(resource_group)
+    response["instructions"] = _log_stack_filter(resource_group)
     return response
 
 
@@ -630,7 +641,7 @@ def create_task(template_file=None, update=False, memory=512,
                 cred_keys=_get_cred_keys(),
                 )
 
-    _log_stack_info(response)
+    response["instructions"] = _log_stack_info(response)
     return response
 
 
@@ -657,7 +668,7 @@ def delete_task():
             resource_group + "-" + task_name_naked,
             cred_keys=_get_cred_keys(),
             )
-    _log_stack_filter(resource_group + "-" + task_name_naked)
+    response["instructions"] = _log_stack_filter(resource_group + "-" + task_name_naked)
     return response
 
 
@@ -761,11 +772,18 @@ def run_job(task_name=None, container_name=None, env={}, command=None, extras=No
             command=command,
             extras=extras,
             cred_keys=_get_cred_keys())
-    _log_task_run_filter(state[RESOURCE_GROUP] + "-resources", response)
+    response["instructions"] = _log_task_run_filter(
+        state[RESOURCE_GROUP] + "-resources", response)
     return response
 
 
-def schedule_job(target_id, cronexp, env=[], role_arn=None, extras=None):
+def schedule_job(
+        target_id,
+        cronexp,
+        env=[],
+        role_arn=None,
+        extras=None,
+        **kwargs):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
     task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
@@ -786,8 +804,7 @@ def schedule_job(target_id, cronexp, env=[], role_arn=None, extras=None):
 
     extra_env = []
     for key in env.keys():
-        extra_env.append({"name": key, "value": env[key]})
-
+        extra_env.append({"Name": key, "Value": env[key]})
     try:
         response = events.schedule_job(
                 account_id,
@@ -801,6 +818,7 @@ def schedule_job(target_id, cronexp, env=[], role_arn=None, extras=None):
                 env=extra_env,
                 extras=extras,
                 cred_keys=_get_cred_keys(),
+                **kwargs,
                 )
     except Exception as e:
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
@@ -808,14 +826,14 @@ def schedule_job(target_id, cronexp, env=[], role_arn=None, extras=None):
         LOGGER.critical(str(e))
         return
 
-    params = {
-        "region": state.get("AWS_REGION"),
-        "resource_group": state.get(RESOURCE_GROUP),
-        "task": state.get(TASK)
-    }
-    print(("Check the status at https://console.aws.amazon.com/ecs/" +
-           "home?region={region}#/clusters/{resource_group}-resources" +
-           "/scheduledTasks").format(**params))
+    region= state.get("AWS_REGION")
+    resource_group = state.get(RESOURCE_GROUP)
+    response["instructions"] = (
+        "Check the status at https://console.aws.amazon.com/ecs/"
+        f"home?region={region}#/clusters/{resource_group}-resources"
+        "/scheduledTasks\n"
+        "For state machine enabled tasks, check the schedules at"
+        f"https://console.aws.amazon.com/cloudwatch/home?region={region}#rules:")
     return response
 
 
@@ -829,15 +847,14 @@ def unschedule_job(target_id):
                 cred_keys=_get_cred_keys(),
         )
     except Exception as e:
-        raise Exception("No schedules found")
-    params = {
-        "region": state.get("AWS_REGION"),
-        "resource_group": state.get(RESOURCE_GROUP),
-        "task": state.get(TASK)
-    }
-    print(("Check the status at https://console.aws.amazon.com/ecs/" +
-           "home?region={region}#/clusters/{resource_group}-resources" +
-           "/scheduledTasks").format(**params))
+        raise Exception(f"No schedules found: {str(e)}")
+
+    region = state.get("AWS_REGION")
+    resource_group = state.get(RESOURCE_GROUP)
+    response["instructions"] = (
+        "Check the status at https://console.aws.amazon.com/ecs/"
+        f"home?region={region}#/clusters/{resource_group}-resources"
+        "/scheduledTasks")
     return response
 
 
@@ -866,8 +883,15 @@ def list_schedules(full=False, **kwargs):
         input_str = r["targets"][0].get("Input")
         if input_str:
             input_ = json.loads(input_str.replace("\\\\", ""))
-            record["envs"] = [{"key": e["name"], "value": e["value"]}
-                              for e in input_["containerOverrides"][0]["environment"] if e["name"] != STAGE]
+            coverrides = input_.get("containerOverrides", input_.get("ContainerOverrides", None))
+            LOGGER.debug(coverrides)
+            if coverrides:
+                envs = coverrides[0].get("environment", coverrides[0].get("Environment", None))
+                if envs:
+                    record["envs"] = [{
+                        "key": e.get("name", e.get("Name", None)),
+                        "value": e.get("value", e.get("Value", None)),
+                        } for e in envs if e.get("name", e.get("Name", None)) != STAGE]
         schedules.append(record)
     yml_clean = re.sub(r"'([a-zA-Z_]*)':",
                        "\\1:",

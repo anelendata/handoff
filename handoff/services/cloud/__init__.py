@@ -52,6 +52,7 @@ def get_platform(
         raise Exception(
             f"Login to {provider_name} failed. Credentials may not be set correctly.")
 
+    PLATFORM_MODULE.set_log_level()
     return PLATFORM_MODULE
 
 
@@ -517,8 +518,12 @@ def schedule_create(
     state = _get_state()
     platform = get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
+    platform_config = config.get("deploy", {}).get("platform_config")
     state.validate_env()
     schedules = config.get("schedules")
+
+    kwargs = {}
+    kwargs.update(platform_config)
 
     target_id = vars.get("target_id")
     cronexp = vars.get("cron")
@@ -554,7 +559,8 @@ def schedule_create(
         r = platform.schedule_job(
             str(s["target_id"]), "cron(" + s["cron"] + ")",
             env=e,
-            extras=s.get("extras_obj"))
+            extras=s.get("extras_obj"),
+            **kwargs)
         responses.append(r)
     return responses
 
@@ -582,6 +588,7 @@ def schedule_delete(
     except Exception as e:
         response = str(e)
     return response
+
 
 def schedule_list(
     project_dir: str,

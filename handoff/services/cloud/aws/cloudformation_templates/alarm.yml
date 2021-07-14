@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ResourceGroup:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  TaskName:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  StateMachineArn:
+    Type: String
+    Description: Email subscribing to the alarm
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  AlarmEmail:
+    Type: String
+    Description: Email subscribing to the alarm
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+Resources:
+  AlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+      - Endpoint: !Sub ${AlarmEmail}
+        Protocol: email
+  ExecutionsFailedAlarm:
+    Condition: HasAlertingModule
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'Failure while executing scheduled task.'
+      Namespace: 'AWS/States'
+      MetricName: ExecutionsFailed
+      Dimensions:
+      - Name: StateMachineArn
+        Value: !Sub ${StateMachineArn}
+      Statistic: Sum
+      Period: 300
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Threshold: 0
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+      - !Ref AlarmSNSTopic
+  ExecutionsTimeoutAlarm:
+    Condition: HasAlertingModule
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmDescription: 'Executing scheduled task timed out.'
+      Namespace: 'AWS/States'
+      MetricName: ExecutionsTimedOut
+      Dimensions:
+      - Name: StateMachineArn
+        Value: !Sub ${StateMachineArn}
+      Statistic: Sum
+      Period: 300
+      DatapointsToAlarm: 1
+      EvaluationPeriods: 1
+      Threshold: 0
+      TreatMissingData: notBreaching
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+      - !Ref AlarmSNSTopic
+  

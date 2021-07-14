@@ -269,6 +269,12 @@
             "string"
           ]
         },
+        "platform_config": {
+          "type": [
+            "null",
+            "object"
+          ]
+        },
         "resource_group": {
           "type": [
             "null",

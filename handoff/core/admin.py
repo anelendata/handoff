@@ -251,7 +251,7 @@ def _secrets_get_local(
         secrets_dict[key] = secret
         if not key:
             raise Exception("key must be defined for secret")
-        if secret.get("value"):
+        if secret.get("value") is not None:
             SECRETS[key] = secret["value"]
         elif secret.get("file"):
             rel_path = os.path.join(secrets_dir,
@@ -333,7 +333,10 @@ def secrets_push(
             key, SECRETS[key],
             resource_group_level=(level.lower().strip() == "resource group"),
             **kwargs)
-    return "success"
+    return {
+        "status": "success",
+        "message": f"Uploaded {list(secrets.keys())}",
+    }
 
 
 def secrets_delete(
@@ -381,7 +384,11 @@ def secrets_delete(
         except Exception:
             LOGGER.warning("%s does not exist in remote parameter store." %
                            key)
-    return "success"
+    return {
+        "status": "success",
+        "message": f"Deleted {list(secrets.keys())}",
+    }
+
 
 
 def secrets_print(

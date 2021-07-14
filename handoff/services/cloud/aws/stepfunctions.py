@@ -65,9 +65,9 @@ def create_state_machine(
             }
         }
     }
-    kwargs = {}
+    sfn_kwargs = {}
     if log_group_arn:
-        kwargs["loggingConfiguration"] = {
+        sfn_kwargs["loggingConfiguration"] = {
             "level": "ALL",
             "includeExecutionData": False,
             "destinations": [
@@ -83,7 +83,7 @@ def create_state_machine(
         name=name,
         definition=json.dumps(definition),
         roleArn=role_arn,
-        **kwargs,
+        **sfn_kwargs,
     )
     sm_arn = response["stateMachineArn"]
     return sm_arn

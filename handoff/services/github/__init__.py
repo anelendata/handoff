@@ -105,10 +105,9 @@ def pull(
 
     if vars.get("use_cli", False):
         LOGGER.debug("Running git CLI")
-        git_url = git_url.replace("https://", f"https://{access_token}:x-oauth-basic@")
         git_path = os.environ.get("GIT_PATH", "git")
-        os.mkdir(local_dir)
-        os.system(f"{git_path} pull {git_url}")
+        os.chdir(local_dir)
+        os.system(f"{git_path} pull")
         # TODO: handle merge conflict
         return {
             "status": "success",

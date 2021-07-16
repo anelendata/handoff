@@ -103,6 +103,18 @@ def pull(
     repo = pygit2.Repository(local_dir + "/.git")
     remote_name = "origin"
 
+    if vars.get("use_cli", False):
+        LOGGER.debug("Running git CLI")
+        git_url = git_url.replace("https://", f"https://{access_token}:x-oauth-basic@")
+        git_path = os.environ.get("GIT_PATH", "git")
+        os.mkdir(local_dir)
+        os.system(f"{git_path} pull {git_url}")
+        # TODO: handle merge conflict
+        return {
+            "status": "success",
+            "message": "successfully fast forwarded the repository",
+        }
+
     # Adopted from https://github.com/MichaelBoselowitz/pygit2-examples/blob/68e889e50a592d30ab4105a2e7b9f28fac7324c8/examples.py#L48
     for remote in repo.remotes:
         if remote.name == remote_name:

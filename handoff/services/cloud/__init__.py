@@ -518,10 +518,10 @@ def schedule_create(
     state = _get_state()
     platform = get_platform()
     config = admin._config_get_local(project_dir, workspace_dir)
-    platform_config = config.get("deploy", {}).get("platform_config", {})
     state.validate_env()
     schedules = config.get("schedules")
 
+    platform_config = config.get("deploy", {}).get("platform_config", {})
     kwargs = {}
     kwargs.update(platform_config)
 

@@ -699,7 +699,7 @@ def get_task_status(**kwargs):
                 )
         status["config_pushed_at"] = res["LastModified"]
     except Exception as e:
-        status["config_pushed_at"] = bucket + " " + str(e)
+        status["config_pushed_at"] = None
     return status
 
 

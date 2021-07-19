@@ -677,9 +677,13 @@ def get_task_status(**kwargs):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     task_name = state.get(TASK_NAKED)
+    bucket = state.get(BUCKET)
     stack_name = resource_group + "-" + task_name
     try:
-        res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
+        res = cloudformation.describe_stacks(
+                stack_name,
+                cred_keys=_get_cred_keys(),
+                )
     except:
         status = {"status": "not created", "message": "task does not exist"}
     else:
@@ -687,6 +691,15 @@ def get_task_status(**kwargs):
             "status": res["Stacks"][0]["StackStatus"],
             "details": res["Stacks"][0]
         }
+    try:
+        res = s3.get_file_info(
+                bucket,
+                task_name + "/project.yml",
+                cred_keys=_get_cred_keys(),
+                )
+        status["config_pushed_at"] = res["LastModified"]
+    except Exception as e:
+        status["config_pushed_at"] = bucket + " " + str(e)
     return status
 
 

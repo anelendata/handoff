@@ -182,6 +182,21 @@ def delete_recurse(bucket_name, prefix, cred_keys: dict = {}):
     logger.info("Deleted %s" % objects)
 
 
+def get_file_info(bucket_name, remote_path, cred_keys: dict = {}):
+    client = get_client(cred_keys)
+    response = client.list_objects_v2(
+        Bucket=bucket_name,
+        # Delimiter="string",
+        # EncodingType="url",
+        # Marker="string",
+        MaxKeys=1,
+        Prefix=remote_path,
+        # RequestPayer="requester",
+        # ExpectedBucketOwner="string"
+    )
+    return response["Contents"][0]
+
+
 def download_file(bucket_name, local_path, remote_path, cred_keys: dict = {}):
     client = get_client(cred_keys)
     client.download_file(bucket_name, remote_path, local_path)

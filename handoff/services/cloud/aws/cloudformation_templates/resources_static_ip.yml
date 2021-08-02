@@ -1,11 +1,53 @@
 AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ResourceGroup:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  Bucket:
+    Type: String
+    Description: The name of the bucket to store configs and artifacts
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9-.]*"
+
+  EnvVarPrefix:
+    Type: String
+    Description: Prefix for environment variables
+    Default: HO_
+    AllowedPattern: "[A-Z][A-Z0-9_]*"
+  TaskName:
+    Type: String
+    Description: Container image builder task name
+    Default: handoff-container-builder
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  Image:
+    Type: String
+    Description: Container image location for container-builder task
+    Default: "public.ecr.aws/m5u3u5p2/handoff-container-builder:0.1"
+    # AllowedPattern: "[A-Z][A-Z0-9_]*"
+  AllocatedCpu:
+    Type: Number
+    Default: 512
+    Description: CPU units allocated to the task
+  AllocatedMemory:
+    Type: Number
+    Default: 2048
+    Description: Memory (in MB) allocated to the task
+
+  LogRetentionDays:
+    Type: Number
+    Default: 365
+    Description: Days before the log is deleted
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
       EnableDnsSupport: true
       EnableDnsHostnames: true
-      CidrBlock: 10.0.0.0/16
+      CidrBlock: 172.31.0.0/16
 
   Subnet1:
     Type: AWS::EC2::Subnet
@@ -15,7 +57,7 @@ Resources:
         - !GetAZs 
           Ref: AWS::Region
       VpcId: !Ref VPC
-      CidrBlock: 10.0.0.0/24
+      CidrBlock: 172.31.1.0/24
       MapPublicIpOnLaunch: true
 
   Subnet2:
@@ -26,7 +68,7 @@ Resources:
         - !GetAZs 
           Ref: AWS::Region
       VpcId: !Ref VPC
-      CidrBlock: 10.0.1.0/24
+      CidrBlock: 172.31.2.0/24
       MapPublicIpOnLaunch: true
 
   InternetGateway:
@@ -130,3 +172,52 @@ Resources:
     Type: AWS::ECS::Cluster
     Properties:
       ClusterName: !Sub ${AWS::StackName}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub ${ResourceGroup}/${TaskName}
+      RetentionInDays: !Ref LogRetentionDays
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ResourceGroup}-${TaskName}
+      Cpu: !Sub ${AllocatedCpu}
+      Memory: !Sub ${AllocatedMemory}
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !ImportValue
+        "Fn::Sub": "handoff-TaskExecutionRoleArn"
+      TaskRoleArn: !ImportValue
+        "Fn::Sub": "handoff-FargateDeployRoleArn"
+      ContainerDefinitions:
+        - Name: !Sub ${TaskName}
+          Cpu: !Sub ${AllocatedCpu}
+          Memory: !Sub ${AllocatedMemory}
+          Image: !Sub ${Image}
+          PortMappings:
+            - ContainerPort: 22
+              HostPort: 22
+          Environment:
+            - Name: !Sub ${EnvVarPrefix}RESOURCE_GROUP
+              Value: !Sub ${ResourceGroup}
+            - Name: !Sub ${EnvVarPrefix}BUCKET
+              Value: !Sub ${Bucket}
+            - Name: !Sub HO_CONTAINER_IMAGE
+              Value: !Sub ${TaskName}
+            - Name: !Sub ${EnvVarPrefix}TASK
+              Value: !Sub ${TaskName}
+            - Name: !Sub ${EnvVarPrefix}PROVIDER
+              Value: aws
+            - Name: !Sub ${EnvVarPrefix}PLATFORM
+              Value: fargate
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub ${ResourceGroup}/${TaskName}

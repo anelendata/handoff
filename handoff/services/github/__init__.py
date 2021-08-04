@@ -72,8 +72,11 @@ def clone(
         git_url = git_url.replace("https://", f"https://{access_token}:x-oauth-basic@")
         git_path = os.environ.get("GIT_PATH", "git")
         os.mkdir(local_dir)
-        os.system(f"{git_path} init {repo_name}")
+        os.system(f"{git_path} init {local_dir}")
+        cur_dir = os.getcwd()
+        os.chdir(local_dir)
         os.system(f"{git_path} pull {git_url}")
+        os.chdir(cur_dir)
     else:
         repo_clone = pygit2.init_repository(local_dir, True)
         repo_clone.remotes.create("origin", git_url)

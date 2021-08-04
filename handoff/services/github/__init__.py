@@ -109,8 +109,10 @@ def pull(
     if vars.get("use_cli", False):
         LOGGER.debug("Running git CLI")
         git_path = os.environ.get("GIT_PATH", "git")
+        cur_dir = os.getcwd()
         os.chdir(local_dir)
         os.system(f"{git_path} pull")
+        os.chdir(cur_dir)
         # TODO: handle merge conflict
         return {
             "status": "success",

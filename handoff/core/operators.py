@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import io, json, logging, subprocess, sys, os, re
+import io, json, logging, subprocess, sys, os, re, threading
 from typing import Dict
 import jinja2
 from jinja2 import Template as _Template
@@ -239,6 +239,24 @@ def _run_pipeline(task: Dict, state: Dict,
     return task
 
 
+def _proc_wait(pipeline, proc, exit_codes):
+    LOGGER.info("Checking return code of pid %d" % proc.pid)
+    exit_codes[proc] = proc.wait()
+
+    LOGGER.debug("Process %d exited with code %d" %
+                 (proc.pid, exit_codes[proc]))
+    if exit_codes[proc] > 0:
+        LOGGER.warning("Process %d exited with code %d" %
+                       (proc.pid, exit_codes[proc]))
+        for command_obj in pipeline:
+            other_proc = command_obj.get("proc")
+            if not other_proc or proc == other_proc:
+                continue
+            LOGGER.warning("Terminating Process (%d) (%s)" %
+                           (other_proc.pid, command_obj["command"]))
+            other_proc.terminate()
+
+
 def _wait_for_pipeline(task: Dict, state: Dict,
                        artifacts_dir: str = "artifacts",
                        kill_downstream_on_fail: str = True):
@@ -249,36 +267,35 @@ def _wait_for_pipeline(task: Dict, state: Dict,
     if state.get("_line"):
         name = name + "_" + state.get("_line")
     pipeline = task["pipeline"]
+    threads = []
+    exit_codes = {}
     for command_obj in pipeline:
         proc = command_obj.get("proc")
         if not proc:
             LOGGER.debug("No process found for %s" % command_obj)
             continue
-        if killed:  # Upstream in the pipeline exited with non-zero status
-            LOGGER.warning("Terminating Process (%d) (%s)" %
-                           (proc.pid, command_obj["command"]))
-            proc.terminate()
-            continue
-
-        LOGGER.info("Checking return code of pid %d" % proc.pid)
-        exit_code = proc.wait()
         last_proc = proc
-        LOGGER.debug("Process %d (%s) exited with code %d" %
-                     (proc.pid, str(command_obj.get("command")), exit_code))
+        thread = threading.Thread(target=_proc_wait, args=(pipeline, proc, exit_codes))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    killed = False
+    exit_code = 0
+    for ec in exit_codes.values():
+        exit_code = ec
         if exit_code > 0:
-            LOGGER.warning("Process %d (%s) exited with code %d" %
-                           (proc.pid, command_obj["command"], exit_code))
             killed = True
+            break
 
     if last_proc and last_proc.stdin and last_proc.stdin.closed:
-        return exit_code
-
-    if last_proc:
-        last_proc.wait()
+        return exit_codes[last_proc]
 
     if killed and kill_downstream_on_fail:
         raise Exception(
-            f"Task {name} ended with exit code {exit_code}.")
+            f"Task {name} ended with exit code {exit_code}. Won't run downstream tasks.")
 
     return exit_code
 

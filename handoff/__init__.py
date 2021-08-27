@@ -506,6 +506,8 @@ def main() -> None:
                         help="Extra variables for the command. List after this option like: -v key1=value1 key2=value2...")
     parser.add_argument("-y", "--yes", action="store_true", # type=bool, default=None,
                         help="Skip confirmations")
+    parser.add_argument("-d", "--debug", action="store_true", # type=bool, default=None,
+                        help="Run task in debug mode")
 
     parser.add_argument("-h", "--help", action="store_true")
     parser.add_argument("-l", "--log-level", type=str, default="info",
@@ -546,6 +548,7 @@ def main() -> None:
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help
     kwargs["yes"] = args.yes
+    kwargs["debug_mode"] = args.debug
     kwargs["log_level"] = args.log_level.upper()
 
     if (args.project_dir and args.workspace_dir and

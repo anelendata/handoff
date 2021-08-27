@@ -1,0 +1,25 @@
+version: 0.4.0
+
+kill_downstream_on_fail: True
+
+tasks:
+- name: generate_files
+  kill_downstream_on_fail: True
+  pipeline:
+  - command: cat
+    args: files/in.txt
+  - fork:
+    - name: python
+      pipeline:
+      - command: "python3 files/run.py"
+      - command: "cat >> list_1.txt"
+    - name: sed 
+      pipeline:
+      - command: "sed 's/\\([0-9]\\)/\\1\\1/g' > ./artifacts/list_2.txt"
+
+- name: verify_result
+  pipeline:
+  - command: ls
+    args: "artifacts/list_*.txt"
+  - command: wc
+    args: -l

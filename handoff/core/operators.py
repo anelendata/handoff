@@ -75,12 +75,21 @@ def _get_command_string(command, argstring, params):
     return command
 
 
-def _foreach(foreach_obj, params, stdin,
-             kill_downstream_on_fail=True):
+def _foreach(
+    foreach_obj,
+    params,
+    stdin,
+    kill_downstream_on_fail=True,
+    kill_loop_on_fail=True,
+):
     if isinstance(stdin, int) and stdin == subprocess.PIPE:
         raise Exception("You cannot nest control flow operators. Dump in a file.")
 
+    exit_code = 0
     for line in stdin:
+        if exit_code > 0 and kill_loop_on_fail:
+            LOGGER.warning("Exiting from the loop on error.")
+            break
         line = line.decode("utf-8").strip()
         params["_line"] = line
         safe_name = re.sub(r"[^a-zA-Z0-9-_.]+", "_", line)
@@ -89,17 +98,38 @@ def _foreach(foreach_obj, params, stdin,
         for task in foreach_obj:
             if not task.get("active", True):
                 continue
-            kill_downstream_on_fail = not task.get(
-                "run_downstream_on_fail", False)
+            kill_on_fail = task.get(
+                "kill_downstream_on_fail",
+                kill_downstream_on_fail,
+            )
             cur_task = {}
             cur_task.update(task)
             cur_task["name"] = cur_task["name"] + "_" + safe_name
-            _ = _run_task(cur_task, params,
-                          kill_downstream_on_fail=kill_downstream_on_fail)
+            try:
+                current_exit_code = _run_task(
+                        cur_task,
+                        params,
+                        kill_downstream_on_fail=kill_on_fail,
+                    )
+            except Exception as e:
+                if kill_loop_on_fail and kill_downstream_on_fail:
+                    raise
+                LOGGER.error(cur_task["name"] + ": " + str(e))
+                current_exit_code = 1
+            exit_code = max(exit_code, current_exit_code)
+            if current_exit_code > 0 and kill_downstream_on_fail:
+                break
+    return {"exit_code": exit_code}
 
 
-def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
-          kill_downstream_on_fail=True):
+def _fork(
+    fork_obj,
+    state,
+    stdin=None,
+    artifacts_dir="artifacts",
+    kill_downstream_on_fail=True,
+    kill_loop_on_fail=True,
+):
     tasks = []
     for task in fork_obj:
         if not task.get("pipeline"):
@@ -107,9 +137,16 @@ def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
         if not task.get("active", True):
             LOGGER.debug(f'Skipping {task["name"]}')
             continue
-        tasks.append(_run_pipeline(task, state, artifacts_dir,
-                                   kill_downstream_on_fail,
-                                   stdin=subprocess.PIPE))
+        tasks.append(
+            _run_pipeline(
+                task,
+                state,
+                artifacts_dir,
+                kill_downstream_on_fail,
+                kill_loop_on_fail,
+                stdin=subprocess.PIPE,
+            )
+        )
     first_procs = []
     for task in tasks:
         pipeline = task["pipeline"]
@@ -128,15 +165,23 @@ def _fork(fork_obj, state, stdin=None, artifacts_dir="artifacts",
     for proc in first_procs:
         proc.stdin.close()
 
+    exit_code = 0
     for task in tasks:
-        _wait_for_pipeline(task, state, artifacts_dir=artifacts_dir,
-                           kill_downstream_on_fail=kill_downstream_on_fail)
-    return None
+        ec = _wait_for_pipeline(
+            task,
+            state,
+            artifacts_dir=artifacts_dir,
+            kill_downstream_on_fail=kill_downstream_on_fail,
+        )
+        exit_code = max(exit_code, ec)
+    return {"exit_code": exit_code}
 
 
-def _run_commands(task: Dict, state: Dict,
-                  artifacts_dir: str = "artifacts",
-                  kill_downstream_on_fail=True) -> None:
+def _run_commands(
+    task: Dict, state: Dict,
+    artifacts_dir: str = "artifacts",
+    kill_downstream_on_fail=True,
+) -> None:
     commands = task["commands"]
     name = task.get("name", "")
     LOGGER.info("Running commands " + name)
@@ -167,7 +212,7 @@ def _run_commands(task: Dict, state: Dict,
                                               params)
             proc = subprocess.Popen([command_str], stdout=stdout, stderr=stderr,
                                     env=env, shell=True)
-            LOGGER.debug("Checking return code of pid %d" % proc.pid)
+            LOGGER.debug(f"Checking return code of {name}: {command_obj['command']}... (pid {proc.pid})")
             exit_code = proc.wait()
             LOGGER.debug("Process %d (%s) exited with code %d" %
                          (proc.pid, command_obj["command"], exit_code))
@@ -185,16 +230,21 @@ def _run_commands(task: Dict, state: Dict,
     return exit_code
 
 
-def _run_pipeline(task: Dict, state: Dict,
-                  artifacts_dir: str = "artifacts",
-                  kill_downstream_on_fail=True,
-                  stdin=None) -> None:
+def _run_pipeline(
+    task: Dict,
+    state: Dict,
+    artifacts_dir: str = "artifacts",
+    kill_downstream_on_fail=True,
+    kill_loop_on_fail=True,
+    stdin=None,
+) -> None:
     pipeline = task["pipeline"]
     name = task.get("name", "")
-    LOGGER.info("Running pipeline " + name)
+    LOGGER.info("Running pipeline task " + name)
     last_proc = None
     env = _get_env()
-    for command_obj in pipeline:
+    for index in range(len(pipeline)):
+        command_obj = pipeline[index]
         if not command_obj.get("active", True):
             continue
 
@@ -207,8 +257,15 @@ def _run_pipeline(task: Dict, state: Dict,
             if stdin is None:
                 raise Exception("foreach requires stdin")
             LOGGER.info("Running foreach loop")
-            command_obj["proc"] = _foreach(command_obj["foreach"], params, stdin,
-                                           kill_downstream_on_fail)
+            command_obj["proc"] = _foreach(
+                command_obj["foreach"],
+                params,
+                stdin,
+                kill_downstream_on_fail,
+                kill_loop_on_fail,
+            )
+            if index + 1 < len(pipeline):
+                LOGGER.warning("You cannot place a command after foreach. Ignoring...")
             break
 
         if command_obj.get("fork"):
@@ -216,9 +273,14 @@ def _run_pipeline(task: Dict, state: Dict,
                 raise Exception("fork requires stdin")
             LOGGER.info("Forking the downstream...")
             # TODO: It hangs if the parent process errors...
-            command_obj["proc"] = _fork(command_obj["fork"], params, stdin,
-                                        artifacts_dir,
-                                        kill_downstream_on_fail)
+            command_obj["proc"] = _fork(
+                command_obj["fork"], params, stdin,
+                artifacts_dir,
+                kill_downstream_on_fail,
+                kill_loop_on_fail,
+            )
+            if index + 1 < len(pipeline):
+                LOGGER.warning("You cannot place a command after fork. Ignoring...")
             break
 
         command_str = _get_command_string(command_obj["command"],
@@ -257,22 +319,26 @@ def _proc_wait(pipeline, proc, exit_codes):
             other_proc.terminate()
 
 
-def _wait_for_pipeline(task: Dict, state: Dict,
-                       artifacts_dir: str = "artifacts",
-                       kill_downstream_on_fail: str = True):
+def _wait_for_pipeline(
+    task: Dict,
+    state: Dict,
+    artifacts_dir: str = "artifacts",
+    kill_downstream_on_fail: str = True,
+):
     killed = False
     exit_code = 0
     last_proc = None
     name = task.get("name", "")
-    if state.get("_line"):
-        name = name + "_" + state.get("_line")
     pipeline = task["pipeline"]
     threads = []
     exit_codes = {}
     for command_obj in pipeline:
         proc = command_obj.get("proc")
-        if not proc:
+        if not isinstance(proc, subprocess.Popen):
             LOGGER.debug("No process found for %s" % command_obj)
+            if proc is None:
+                raise Exception(command_obj)
+            exit_codes[str(command_obj)] = proc["exit_code"]
             continue
         last_proc = proc
         thread = threading.Thread(target=_proc_wait, args=(pipeline, proc, exit_codes))
@@ -300,8 +366,14 @@ def _wait_for_pipeline(task: Dict, state: Dict,
     return exit_code
 
 
-def _run_task(task: Dict, state: Dict, artifacts_dir="artifacts",
-              kill_downstream_on_fail=True, stdin=None) -> None:
+def _run_task(
+    task: Dict,
+    state: Dict,
+    artifacts_dir="artifacts",
+    kill_downstream_on_fail=True,
+    kill_loop_on_fail=True,
+    stdin=None,
+) -> None:
     """`handoff run -w <workspace_directory> -e resource_group=<resource_group_name> task=<task_name>`
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
@@ -325,25 +397,58 @@ def _run_task(task: Dict, state: Dict, artifacts_dir="artifacts",
         exit_code = 0
 
         for subtask in task["tasks"]:
-            kill_downstream_on_fail = not subtask.get(
-                "run_downstream_on_fail", False)
+            kill_ds_on_fail = subtask.get(
+                "kill_downstream_on_fail",
+                kill_downstream_on_fail,
+            )
+            kill_lp_on_fail = subtask.get(
+                "kill_loop_on_fail",
+                kill_loop_on_fail,
+            )
             exit_code = _run_task(
-                subtask, state, artifacts_dir=artifacts_dir,
-                kill_downstream_on_fail=kill_downstream_on_fail, stdin=stdin)
+                subtask,
+                state,
+                artifacts_dir=artifacts_dir,
+                kill_downstream_on_fail=kill_ds_on_fail,
+                kill_loop_on_fail=kill_lp_on_fail,
+                stdin=stdin
+            )
+            if (exit_code > 0 and
+                    task.get(
+                        "kill_downstream_on_fail",
+                        kill_downstream_on_fail,
+                    )):
+                LOGGER.warning(
+                    f"Subtask exited with code {exit_code}. "
+                    "Not running downstream tasks.")
+                break
         return exit_code
 
     if state.get("_line"):
-        task_name = task_name + "_" + str(state.get("_line"))
+        task_name = task_name + "[" + str(state.get("_line")) + "]"
 
     if task.get("pipeline"):
-        task_w_process = _run_pipeline(task, state, artifacts_dir,
-                                       kill_downstream_on_fail,
-                                       stdin=stdin)
-        exit_code = _wait_for_pipeline(task_w_process, state, artifacts_dir,
-                                       kill_downstream_on_fail)
+        task_w_process = _run_pipeline(
+            task,
+            state,
+            artifacts_dir,
+            kill_downstream_on_fail,
+            kill_loop_on_fail,
+            stdin=stdin,
+        )
+        exit_code = _wait_for_pipeline(
+            task_w_process,
+            state,
+            artifacts_dir,
+            kill_downstream_on_fail,
+        )
     elif task.get("commands"):
-        exit_code = _run_commands(task, state, artifacts_dir,
-                                  kill_downstream_on_fail)
+        exit_code = _run_commands(
+            task,
+            state,
+            artifacts_dir,
+            kill_downstream_on_fail,
+        )
     else:
         raise Exception(
             "Neither pipline or commands record was found in this task")

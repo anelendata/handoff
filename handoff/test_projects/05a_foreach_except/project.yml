@@ -1,0 +1,26 @@
+version: 0.4.0
+
+kill_downstream_on_fail: False
+
+tasks:
+- name: generate_files
+  kill_loop_on_fail: True
+  kill_downstream_on_fail: False
+  pipeline:
+  - command: cat
+    args: files/in.txt
+  - foreach:
+    - name: make_id_files
+      pipeline:
+      - command: python3 files/run.py {{ _line }}
+      - command: "cat >> ./artifacts/list_double.txt"
+    - name: make_number_list
+      commands:
+      - command: "echo {{ _line }} >> ./artifacts/list.txt"
+
+- name: verify_result
+  pipeline:
+  - command: ls
+    args: "artifacts/out_*.txt"
+  - command: wc
+    args: -l

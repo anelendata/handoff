@@ -247,6 +247,12 @@
                 }
               }
             }
+          },
+          "kill_downstream_on_fail": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         }
       }

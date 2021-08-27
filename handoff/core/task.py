@@ -17,21 +17,37 @@ def run(config: Dict, **kwargs) -> None:
     Run the task by the configurations and files stored in the remote parameter store and the file store.
     """
     state = get_state()
+    kill_downstream_on_fail = config.get("kill_downstream_on_fail", True)
+    kill_loop_on_fail = config.get("kill_loop_on_fail", True)
     exit_code = 0
-
-    for pipe in config["tasks"]:
-        if not pipe.get("active", True):
+    for task in config["tasks"]:
+        if not task.get("active", True):
             continue
-        kill_downstream_on_fail = not pipe.get(
-            "run_downstream_on_fail", False)
-
-        exit_code = _run_task(pipe, state, ARTIFACTS_DIR,
-                              kill_downstream_on_fail=kill_downstream_on_fail)
-
-        LOGGER.info("Pipeline %s exited with code %d" %
-                    (pipe.get("name", ""), exit_code))
-        if exit_code != 0:
-            break
+        kill_ds_on_fail = task.get(
+            "kill_downstream_on_fail",
+            kill_downstream_on_fail,
+        )
+        kill_lp_on_fail = task.get(
+            "kill_loop_on_fail",
+            kill_loop_on_fail,
+        )
+        try:
+            exit_code = _run_task(
+                task,
+                state,
+                ARTIFACTS_DIR,
+                kill_downstream_on_fail=kill_ds_on_fail,
+                kill_loop_on_fail=kill_lp_on_fail,
+            )
+        except Exception as e:
+            LOGGER.error(str(e))
+            exit_code = 1
+        LOGGER.info("Task %s exited with code %d" %
+                    (task.get("name", ""), exit_code))
+        if exit_code > 0:
+            if kill_downstream_on_fail:
+                LOGGER.warning("Not running the rest of the tasks.")
+                break
     return exit_code
 
 

@@ -724,7 +724,7 @@ def list_jobs(full=False, running=True, stopped=True,
     outputs = []
     digest = ["taskArn", "taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
     if not response:
-        return None
+        return []
     for task in response["tasks"]:
         output = {}
         t = task["taskDefinitionArn"].split(":")[-2].split("/")[-1]

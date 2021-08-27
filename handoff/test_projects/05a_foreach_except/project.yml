@@ -4,7 +4,7 @@ kill_downstream_on_fail: False
 
 tasks:
 - name: generate_files
-  kill_loop_on_fail: True
+  kill_loop_on_fail: False
   kill_downstream_on_fail: False
   pipeline:
   - command: cat

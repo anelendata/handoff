@@ -20,5 +20,23 @@ def test_05_foreach():
         with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
                                "verify_result_stdout.log")) as f:
             s = f.readline()
-            # TODO: Cannot get stdout when running do() from pytest...
-            # assert int(s.strip("\n").strip()) == 5
+            assert int(s.strip("\n").strip()) == 5
+
+
+def test_05a_foreach_no_kill_on_fail():
+    project_name = "05a_foreach_except"
+    project_dir = os.path.join(TEST_PROJECTS_DIR, project_name)
+    data = dict()
+    with tempfile.TemporaryDirectory() as root_dir:
+        workspace_dir = os.path.join(root_dir, "workspace")
+        handoff.do("run local", project_dir, workspace_dir, data,
+                   cloud_provider="aws",
+                   cloud_platform="fargate",
+                   container_provider="docker",
+                   stage="prod",
+                   push_artifacts=False)
+        with open(os.path.join(workspace_dir, ARTIFACTS_DIR,
+                               "verify_result_stdout.log")) as f:
+            s = f.readline()
+            # The output line sums to 4 with 1, 2, 3, 5 (skipping the fail on 4)
+            assert int(s.strip("\n").strip()) == 4

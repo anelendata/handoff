@@ -612,6 +612,8 @@ def schedule_list(
         local_schedules = config.get("schedules", [])
         for s in local_schedules:
             s["target_id"] = str(s["target_id"])
+            if s.get("envs") is None:
+                s["envs"] = []
             status = ""
             try:
                 index = target_ids.index(str(s["target_id"]))
@@ -623,6 +625,8 @@ def schedule_list(
 
             remote = {}
             remote.update(schedules["schedules"][index])
+            if remote.get("envs") is None:
+                remote["envs"] = []
             if remote.get("status"):
                 remote.pop("status")
             if remote.get("name"):
@@ -630,6 +634,8 @@ def schedule_list(
             if s.get("description"):
                 s.pop("description")
             if s != remote:
+                LOGGER.debug(f"local : {str(s)}")
+                LOGGER.debug(f"remote: {str(remote)}")
                 schedules["schedules"][index] = s
                 status = status or "edited"
                 schedules["schedules"][index]["status"] = status

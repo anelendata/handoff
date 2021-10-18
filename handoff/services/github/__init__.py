@@ -141,6 +141,7 @@ def pull(
         os.chdir(local_dir)
         os.system(f"{git_path} fetch")
         os.system(f"{git_path} checkout {branch}")
+        os.system(f"{git_path} pull")
         os.chdir(cur_dir)
         # TODO: handle merge conflict
         return {

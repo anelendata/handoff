@@ -14,6 +14,7 @@ before_install:
   - export
   - ls /opt/python/
   - /opt/python/3.6/bin/python --version
+  - sudo apt-get -y install python3-pygit2
 
 install:
   - /opt/python/3.6/bin/python -m venv ./venv
@@ -30,8 +31,3 @@ script:
   - pytest -s tests/local_run_no_install
   - pytest -s tests/local_run_install
     #  - tests/install_test.sh
-
-addons:
-  apt:
-    packages:
-      - python3-pygit2

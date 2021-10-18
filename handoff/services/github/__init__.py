@@ -42,6 +42,33 @@ def token_test(
     return {"status": "auth failure", "detail": res}
 
 
+def branch(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff github branch -v organization=<github_org> repository=<github_repo> local_dir=<local_dir> force=False`
+    List local and remote branches. If local_dir is omitted, ./<repository> is used.
+    """
+    state = _get_state()
+    access_token = vars.get("access_token", state.get(GITHUB_ACCESS_TOKEN))
+    github = _get_github(access_token)
+
+    local_dir = vars["local_dir"]  # typically the "./{repository_name}"
+    branch = vars.get("branch", "master")
+    repo = pygit2.Repository(local_dir + "/.git")
+
+    branches = set(repo.branches.local)
+    for b in repo.branches.remote:
+        branch = b.split("/")[-1]
+        branches.add(branch)
+
+    return {
+        "status": "success",
+        "branches": list(branches),
+    }
+
+
 def clone(
     project_dir: str,
     workspace_dir: str,
@@ -76,6 +103,7 @@ def clone(
         cur_dir = os.getcwd()
         os.chdir(local_dir)
         os.system(f"{git_path} pull {git_url}")
+        os.system(f"{git_path} remote add origin {git_url}")
         os.chdir(cur_dir)
     else:
         repo_clone = pygit2.init_repository(local_dir, True)
@@ -111,7 +139,8 @@ def pull(
         git_path = os.environ.get("GIT_PATH", "git")
         cur_dir = os.getcwd()
         os.chdir(local_dir)
-        os.system(f"{git_path} pull")
+        os.system(f"{git_path} fetch")
+        os.system(f"{git_path} checkout {branch}")
         os.chdir(cur_dir)
         # TODO: handle merge conflict
         return {
@@ -119,6 +148,7 @@ def pull(
             "message": "successfully fast forwarded the repository",
         }
 
+    # PyGit mode
     # Adopted from https://github.com/MichaelBoselowitz/pygit2-examples/blob/68e889e50a592d30ab4105a2e7b9f28fac7324c8/examples.py#L48
     for remote in repo.remotes:
         if remote.name == remote_name:

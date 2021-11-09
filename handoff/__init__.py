@@ -504,8 +504,10 @@ def main() -> None:
                         help="Define environment variables. List after this option like: -e key1=value1 key2=value2...")
     parser.add_argument("-v", "--vars", type=str, nargs="*", default="",
                         help="Extra variables for the command. List after this option like: -v key1=value1 key2=value2...")
-    parser.add_argument("-y", "--yes", action="store_true", # type=bool, default=None,
-                        help="Skip confirmations")
+    parser.add_argument("-y", "--yes", action="store_true", default=None,
+                        help="Auto confirm with yes")
+    parser.add_argument("-n", "--no", action="store_true", default=None,
+                        help="Auto confirm with no")
     parser.add_argument("-d", "--debug", action="store_true", # type=bool, default=None,
                         help="Run task in debug mode")
 
@@ -547,7 +549,13 @@ def main() -> None:
 
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help
-    kwargs["yes"] = args.yes
+    if args.yes and args.no:
+        raise Exception("You cannot set yes and no at the same time")
+    kwargs["yes"] = None
+    if args.yes:
+        kwargs["yes"] = True
+    elif args.no:
+        kwargs["yes"] = False
     kwargs["debug_mode"] = args.debug
     kwargs["log_level"] = args.log_level.upper()
 

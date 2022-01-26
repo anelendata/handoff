@@ -844,8 +844,9 @@ def schedule_job(
     resource_group = state.get(RESOURCE_GROUP)
     response["instructions"] = (
         "Check the status at\n"
-        "https://console.aws.amazon.com/cloudwatch/home?"
-        f"region={region}#rules:name={resource_group}-"
+        "https://console.aws.amazon.com/events/home?"
+        f"region={region}#/eventbus/default/rules/"
+        f"{resource_group}-"
         f"{state.get(TASK_NAKED)}-{target_id}\n"
         "For state machine enabled tasks, check the statemachines at\n"
         "https://console.aws.amazon.com/states/home?region="

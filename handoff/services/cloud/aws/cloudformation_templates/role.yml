@@ -48,10 +48,12 @@ Resources:
               - cloudformation:DescribeStackResources
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
-              Resource: "*"
-              # Resource: !Sub "arn:aws:cloudformation:*:*:stack/*/*"
+              Resource:
+                - !Sub arn:aws:cloudformation:*:${AWS::AccountId}:*/handoff*
+
             - Effect: Allow
               Action:
+              - ec2:allocateAddress
               - ec2:AssociateRouteTable
               - ec2:AttachInternetGateway
               - ec2:AuthorizeSecurityGroupEgress
@@ -82,8 +84,9 @@ Resources:
               - ec2:ModifyVpcAttribute
               - ec2:RevokeSecurityGroupEgress
               - ec2:RevokeSecurityGroupEgress
-              Resource: "*"
-              # Resource: !Sub "arn:aws:ec2:*:*:*${ResourceGroup}*"
+              Resource:
+                - !Sub arn:aws:ec2:*:${AWS::AccountId}:*
+
             - Effect: Allow
               Action:
               - ecr:BatchCheckLayerAvailability
@@ -97,13 +100,11 @@ Resources:
               - ecr:DescribeImageScanFindings
               - ecr:DescribeImages
               - ecr:DescribeRepositories
-              - ecr:GetAuthorizationToken
               - ecr:GetDownloadUrlForLayer
               - ecr:GetLifecyclePolicy
               - ecr:GetLifecyclePolicyPreview
               - ecr:GetRepositoryPolicy
               - ecr:InitiateLayerUpload
-              - ecr:ListImages
               - ecr:ListTagsForResource
               - ecr:PutImage
               - ecr:PutImageScanningConfiguration
@@ -114,41 +115,72 @@ Resources:
               - ecr:TagResource
               - ecr:UntagResource
               - ecr:UploadLayerPart
-              Resource: "*"
+              Resource:
+              - !Sub arn:aws:ecr:*:${AWS::AccountId}:repository/*
+
             - Effect: Allow
               Action:
-              - ecs:CreateCluster
+              - ecr:ListImages
+              - ecr:GetAuthorizationToken
+              Resource: "*"
+               
+            - Effect: Allow
+              Action:
               - ecs:DeleteCluster
               - ecs:DeregisterContainerInstance
-              - ecs:DeregisterTaskDefinition
               - ecs:DescribeClusters
               - ecs:DescribeTasks
               - ecs:Poll
               - ecs:RegisterContainerInstance
-              - ecs:RegisterTaskDefinition
               - ecs:RunTask
               - ecs:StartTask
               - ecs:StopTask
+              Resource:
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/*:*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-set/*/*/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:capacity-provider/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:task/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:container-instance/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*
+                
+            - Effect: Allow
+              Action:
+              - ecs:CreateCluster
+              - ecs:DeregisterTaskDefinition
+              - ecs:RegisterTaskDefinition
               - ecs:ListTasks
               - ecs:ListTaskDefinitions
               Resource: "*"
-              # Resource: !Sub "arn:aws:ecs:*:*:*"
+
             - Effect: Allow
               Action:
               - events:DeleteRule
               - events:PutRule
               - events:PutTargets
               - events:RemoveTargets
+              Resource:
+                - !Sub arn:aws:events:*:${AWS::AccountId}:*/handoff*
+
+            - Effect: Allow
+              Action:
               - events:ListRules
               - events:ListTargetsByRule
-              Resource: "*"
-              # Resource: !Sub "arn:aws:events:*:*:*"
+              Resource:
+              - !Sub arn:aws:events:*:${AWS::AccountId}:*
+
             - Effect: Allow
               Action:
               - iam:PassRole
+              Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/handoff*
+
+            - Effect: Allow
+              Action:
               - iam:ListRoles
-              Resource: "*"
-              # Resource: !Sub "arn:aws:iam::*:role/*"
+              Resource:
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/*
+
             - Effect: Allow
               Action:
               - logs:CreateLogGroup
@@ -167,8 +199,11 @@ Resources:
               - logs:TestMetricFilter
               - logs:PutMetricFilter
               - logs:DeleteMetricFilter
-              Resource: "*"
-              # Resource: !Sub "arn:aws:logs:*:*:*:*"
+              Resource:
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:destination:*handoff*
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*handoff*
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*handoff*:log-stream:*
+
             - Effect: Allow
               Action:
               - s3:CreateBucket
@@ -179,8 +214,9 @@ Resources:
               - s3:PutBucketPublicAccessBlock
               - s3:PutEncryptionConfiguration
               - s3:PutObject
-              Resource: "*"
-              # Resource: !Sub "arn:aws:s3::*:*"
+              Resource:
+                - !Sub arn:aws:s3:::*handoff*
+
             - Effect: Allow
               Action:
               - ssm:DeleteParameter
@@ -189,15 +225,22 @@ Resources:
               - ssm:GetParameter
               - ssm:GetParameterHistory
               - ssm:GetParameters
-              - ssm:GetParametersByPath
               - ssm:PutParameter
-              Resource: "arn:aws:ssm:*:*:*"
-              # Resource: !Sub "arn:aws:ssm:*:*:*"
+              Resource:
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/handoff*/*
+
+            - Effect: Allow
+              Action:
+              - ssm:GetParametersByPath
+              Resource:
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
+
             - Effect: Allow
               Action:
               - sts:AssumeRole
-              Resource: "arn:aws:sts::*:*"
-              # Resource: !Sub "arn:aws:sts::*:*"
+              Resource:
+                - !Sub arn:aws:sts::${AWS::AccountId}:*/handoff*
+
             - Effect: Allow
               Action:
               - states:ListStateMachines
@@ -205,7 +248,8 @@ Resources:
               - states:CreateStateMachine
               - states:UpdateStateMachine
               - states:DeleteStateMachine
-              Resource: "*"
+              Resource:
+                - !Sub arn:aws:states:*:${AWS::AccountId}:*:handoff*
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -226,20 +270,28 @@ Resources:
             Statement:
             - Effect: Allow
               Action:
-                - ecr:GetAuthorizationToken
                 - ecr:BatchCheckLayerAvailability
                 - ecr:GetDownloadUrlForLayer
                 - ecr:BatchGetImage
-                - logs:CreateLogStream
-                - logs:PutLogEvents
-
                 # Required for container build in Fargate
                 - ecr:InitiateLayerUpload
                 - ecr:UploadLayerPart
                 - ecr:CompleteLayerUpload
                 - ecr:PutImage
+              Resource:
+                - !Sub arn:aws:ecr:*:${AWS::AccountId}:repository/*
 
+            - Effect: Allow
+              Action:
+                - ecr:GetAuthorizationToken
               Resource: "*"
+
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource:
+                - !Sub arn:aws:logs:*:${AWS::AccountId}:*:handoff*
 
   TaskRole:
     Type: AWS::IAM::Role
@@ -265,14 +317,23 @@ Resources:
                 - s3:PutObject
                 - s3:DeleteObject
               Resource:
-                - "*"
-                # - !Sub arn:aws:s3:::*/*
+                - !Sub arn:aws:s3:::*handoff*
 
             - Effect: Allow
               Action:
-                - ssm:Describe*
-                - ssm:Get*
-                - ssm:List*
+              - ssm:DeleteParameter
+              - ssm:DeleteParameters
+              - ssm:DescribeParameters
+              - ssm:GetParameter
+              - ssm:GetParameterHistory
+              - ssm:GetParameters
+              - ssm:PutParameter
+              Resource:
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/handoff*/*
+
+            - Effect: Allow
+              Action:
+              - ssm:GetParametersByPath
               Resource:
                 - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
 
@@ -303,56 +364,84 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: ecs:RunTask
-                Resource: "*"
-              - Effect: Allow
                 Action:
+                  - ecs:RunTask
+                  - ecs:StartTask
                   - ecs:StopTask
                   - ecs:DescribeTasks
+                Resource:
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/*:*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-set/*/*/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:capacity-provider/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:task/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:container-instance/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*
+
+              - Effect: Allow
+                Action:
+                  - ecs:ListTasks
                 Resource: "*"
+
               - Effect: Allow
                 Action: iam:PassRole
-                Resource: "*"
+                Resource:
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/handoff*
                 Condition:
                   StringLike:
                     iam:PassedToService:
                       ecs-tasks.amazonaws.com
+
               - Effect: Allow
                 Action: states:StartExecution
-                Resource: "*"
+                Resource:
+                  - !Sub arn:aws:states:*:${AWS::AccountId}:*:handoff*
+
               - Effect: Allow
                 Action:
                   - events:PutTargets
                   - events:PutRule
                   - events:DescribeRule
-                Resource: "*"
+                Resource:
+                  - !Sub arn:aws:events:*:${AWS::AccountId}:*
+
               - Effect: Allow
                 Action:
-                  - logs:CreateLogDelivery
                   - logs:GetLogDelivery
-                  - logs:UpdateLogDelivery
-                  - logs:DeleteLogDelivery
-                  - logs:ListLogDeliveries
-                  - logs:PutResourcePolicy
-                  - logs:DescribeResourcePolicies
                   - logs:DescribeLogGroups
-                  # May not need below
                   - logs:CreateLogGroup
                   - logs:DeleteLogGroup
                   - logs:DescribeLogGroups
                   - logs:DescribeLogStreams
                   - logs:FilterLogEvents
-                  - logs:GetLogDelivery
-                  - logs:GetLogEvents
                   - logs:GetLogGroupFields
-                  - logs:GetLogRecord
-                  - logs:GetQueryResults
                   - logs:PutRetentionPolicy
                   - logs:StartQuery
-                  - logs:StopQuery
-                  - logs:TestMetricFilter
                   - logs:PutMetricFilter
                   - logs:DeleteMetricFilter
+                Resource:
+                  - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*
+
+              - Effect: Allow
+                Action:
+                  - logs:GetLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:*:${AWS::AccountId}:destination:*
+                  - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
+
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogDelivery
+                  - logs:DescribeResourcePolicies
+                  - logs:DeleteLogDelivery
+                  - logs:GetLogDelivery
+                  - logs:GetLogRecord
+                  - logs:GetQueryResults
+                  - logs:ListLogDeliveries
+                  - logs:PutResourcePolicy
+                  - logs:StopQuery
+                  - logs:TestMetricFilter
+                  - logs:UpdateLogDelivery
                 Resource: "*"
 
 Outputs:

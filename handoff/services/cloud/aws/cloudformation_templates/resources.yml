@@ -1,5 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
+  ApplicationPrefix:
+    Type: String
+    Description: A prefix to restrict resource access from this role
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Default: handoff
   ResourceGroup:
     Type: String
     Description: A name to group the task belongs to
@@ -137,13 +143,13 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties: 
-      LogGroupName: !Sub ${ResourceGroup}/${TaskName}
+      LogGroupName: !Sub ${ApplicationPrefix}/${ResourceGroup}/${TaskName}
       RetentionInDays: !Ref LogRetentionDays
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub ${ResourceGroup}-${TaskName}
+      Family: !Sub ${ApplicationPrefix}-${ResourceGroup}-${TaskName}
       Cpu: !Sub ${AllocatedCpu}
       Memory: !Sub ${AllocatedMemory}
       NetworkMode: awsvpc
@@ -181,4 +187,4 @@ Resources:
             Options:
               awslogs-group: !Ref LogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub ${ResourceGroup}/${TaskName}
+              awslogs-stream-prefix: !Sub ${ApplicationPrefix}/${ResourceGroup}/${TaskName}

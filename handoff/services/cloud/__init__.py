@@ -360,7 +360,8 @@ def job_status(
     state = _get_state()
     platform = get_platform()
     state.validate_env()
-    return platform.list_jobs(**vars)
+    ret = platform.list_jobs(**vars)
+    return ret
 
 
 def job_stop(
@@ -562,7 +563,7 @@ def schedule_create(
             extras=s.get("extras_obj"),
             **kwargs)
         responses.append(r)
-    return responses
+    return {"status": "success", "result": responses}
 
 
 
@@ -587,7 +588,7 @@ def schedule_delete(
         response = platform.unschedule_job(target_id)
     except Exception as e:
         response = str(e)
-    return response
+    return {"status": "success", "result": responses}
 
 
 def schedule_list(

@@ -1,5 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
 Parameters:
+  ApplicationPrefix:
+    Type: String
+    Description: A prefix to restrict resource access from this role
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Default: handoff
   GranteeAccountId:
     Type: String
     Description: The AWS account ID that gets granted to assume the role
@@ -14,7 +20,7 @@ Resources:
   FargateDeployRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub handoff-FargateDeployRole-for-${GranteeAccountId}
+      RoleName: !Sub ${ApplicationPrefix}-FargateDeployRole-for-${GranteeAccountId}
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -28,7 +34,7 @@ Resources:
           Principal:
             AWS:
               - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:root"
-              - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/handoffbot"
+              - "Fn::Sub": "arn:aws:iam::${GranteeAccountId}:role/${ApplicationPrefix}bot"
           Action:
             - sts:AssumeRole
           Condition:
@@ -36,7 +42,7 @@ Resources:
               sts:ExternalId: !Sub ${ExternalId}
       Path: /
       Policies:
-        - PolicyName: !Sub handoff-FargateDeployRole-for-${GranteeAccountId}
+        - PolicyName: !Sub ${ApplicationPrefix}-FargateDeployRole-for-${GranteeAccountId}
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -49,7 +55,7 @@ Resources:
               - cloudformation:DescribeStacks
               - cloudformation:UpdateStack
               Resource:
-                - !Sub arn:aws:cloudformation:*:${AWS::AccountId}:*/handoff*
+                - !Sub arn:aws:cloudformation:*:${AWS::AccountId}:*/${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -141,10 +147,10 @@ Resources:
               - ecs:StopTask
               - ecr:DescribeImages
               Resource:
-                - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/*:*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/${ApplicationPrefix}*:*
                 - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-set/*/*/*
                 - !Sub arn:aws:ecs:*:${AWS::AccountId}:capacity-provider/*
-                - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/*
+                - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/${ApplicationPrefix}*
                 - !Sub arn:aws:ecs:*:${AWS::AccountId}:task/*
                 - !Sub arn:aws:ecs:*:${AWS::AccountId}:container-instance/*
                 - !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*
@@ -165,7 +171,7 @@ Resources:
               - events:PutTargets
               - events:RemoveTargets
               Resource:
-                - !Sub arn:aws:events:*:${AWS::AccountId}:*/handoff*
+                - !Sub arn:aws:events:*:${AWS::AccountId}:*/${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -178,7 +184,7 @@ Resources:
               Action:
               - iam:PassRole
               Resource:
-              - !Sub arn:aws:iam::${AWS::AccountId}:role/handoff*
+              - !Sub arn:aws:iam::${AWS::AccountId}:role/${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -205,9 +211,9 @@ Resources:
               - logs:PutMetricFilter
               - logs:DeleteMetricFilter
               Resource:
-              - !Sub arn:aws:logs:*:${AWS::AccountId}:destination:*handoff*
-              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*handoff*
-              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*handoff*:log-stream:*
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:destination:*
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*
+              - !Sub arn:aws:logs:*:${AWS::AccountId}:log-group:*:log-stream:*
 
             - Effect: Allow
               Action:
@@ -220,7 +226,7 @@ Resources:
               - s3:PutEncryptionConfiguration
               - s3:PutObject
               Resource:
-                - !Sub arn:aws:s3:::*handoff*
+                - !Sub arn:aws:s3:::*${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -232,7 +238,7 @@ Resources:
               - ssm:GetParameters
               - ssm:PutParameter
               Resource:
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/handoff*/*
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ApplicationPrefix}*/*
 
             - Effect: Allow
               Action:
@@ -244,7 +250,7 @@ Resources:
               Action:
               - sts:AssumeRole
               Resource:
-                - !Sub arn:aws:sts::${AWS::AccountId}:*/handoff*
+                - !Sub arn:aws:sts::${AWS::AccountId}:*/${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -254,12 +260,12 @@ Resources:
               - states:UpdateStateMachine
               - states:DeleteStateMachine
               Resource:
-                - !Sub arn:aws:states:*:${AWS::AccountId}:*:handoff*
+                - !Sub arn:aws:states:*:${AWS::AccountId}:*:${ApplicationPrefix}*
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: handoff-TaskExecutionRole
+      RoleName: !Sub ${ApplicationPrefix}-TaskExecutionRole
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -270,7 +276,7 @@ Resources:
             - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: handoff-TaskExecutionRolePolicy
+        - PolicyName: !Sub ${ApplicationPrefix}-TaskExecutionRolePolicy
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -296,12 +302,12 @@ Resources:
                 - logs:CreateLogStream
                 - logs:PutLogEvents
               Resource:
-                - !Sub arn:aws:logs:*:${AWS::AccountId}:*:handoff*
+                - !Sub arn:aws:logs:*:${AWS::AccountId}:*:${ApplicationPrefix}*
 
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: handoff-TaskRole
+      RoleName: !Sub ${ApplicationPrefix}-TaskRole
       AssumeRolePolicyDocument:
         Statement:
         - Effect: Allow
@@ -312,7 +318,7 @@ Resources:
             - sts:AssumeRole
       Path: /
       Policies:
-        - PolicyName: handoff-TaskRolePolicy
+        - PolicyName: !Sub ${ApplicationPrefix}-TaskRolePolicy
           PolicyDocument:
             Statement:
             - Effect: Allow
@@ -322,7 +328,7 @@ Resources:
                 - s3:PutObject
                 - s3:DeleteObject
               Resource:
-                - !Sub arn:aws:s3:::*handoff*
+                - !Sub arn:aws:s3:::*${ApplicationPrefix}*
 
             - Effect: Allow
               Action:
@@ -334,7 +340,7 @@ Resources:
               - ssm:GetParameters
               - ssm:PutParameter
               Resource:
-                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/handoff*/*
+                - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/${ApplicationPrefix}*/*
 
             - Effect: Allow
               Action:
@@ -345,7 +351,7 @@ Resources:
   CloudWatchEventECSRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: handoff-CloudWatchEventECSRole
+      RoleName: !Sub ${ApplicationPrefix}-CloudWatchEventECSRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -364,7 +370,7 @@ Resources:
 
       Path: /
       Policies:
-        - PolicyName: handoff-CloudwatchEventsInvokeECSRunTask
+        - PolicyName: !Sub ${ApplicationPrefix}-CloudwatchEventsInvokeECSRunTask
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -375,10 +381,10 @@ Resources:
                   - ecs:StopTask
                   - ecs:DescribeTasks
                 Resource:
-                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/*:*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-definition/${ApplicationPrefix}*:*
                   - !Sub arn:aws:ecs:*:${AWS::AccountId}:task-set/*/*/*
                   - !Sub arn:aws:ecs:*:${AWS::AccountId}:capacity-provider/*
-                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/*
+                  - !Sub arn:aws:ecs:*:${AWS::AccountId}:cluster/${ApplicationPrefix}*
                   - !Sub arn:aws:ecs:*:${AWS::AccountId}:task/*
                   - !Sub arn:aws:ecs:*:${AWS::AccountId}:container-instance/*
                   - !Sub arn:aws:ecs:*:${AWS::AccountId}:service/*
@@ -391,7 +397,7 @@ Resources:
               - Effect: Allow
                 Action: iam:PassRole
                 Resource:
-                  - !Sub arn:aws:iam::${AWS::AccountId}:role/handoff*
+                  - !Sub arn:aws:iam::${AWS::AccountId}:role/${ApplicationPrefix}*
                 Condition:
                   StringLike:
                     iam:PassedToService:
@@ -400,7 +406,7 @@ Resources:
               - Effect: Allow
                 Action: states:StartExecution
                 Resource:
-                  - !Sub arn:aws:states:*:${AWS::AccountId}:*:handoff*
+                  - !Sub arn:aws:states:*:${AWS::AccountId}:*:${ApplicationPrefix}*
 
               - Effect: Allow
                 Action:
@@ -455,16 +461,16 @@ Outputs:
     Value:
       Ref: FargateDeployRole
     Export:
-      Name: "handoff-FargateDeployRoleArn"
+      Name: !Sub "${ApplicationPrefix}-FargateDeployRoleArn"
   TaskExecutionRoleArn:
     Description: TaskExecutionRole ARN
     Value:
       Ref: TaskExecutionRole
     Export:
-      Name: "handoff-TaskExecutionRoleArn"
+      Name: !Sub "${ApplicationPrefix}-TaskExecutionRoleArn"
   TaskRoleArn:
     Description: TaskRole ARN
     Value:
       Ref: TaskRole
     Export:
-      Name: "handoff-TaskRoleArn"
+      Name: !Sub "${ApplicationPrefix}-TaskRoleArn"

@@ -1,4 +1,4 @@
-import datetime, json, logging, os, re, shutil, sys, subprocess
+import datetime, hashlib, json, logging, os, re, shutil, sys, subprocess
 from typing import Dict, Tuple
 import yaml
 from jinja2 import Template as _Template
@@ -6,8 +6,8 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
 from handoff.services import cloud
-from handoff.config import (ENV_PREFIX, VERSION, ARTIFACTS_DIR, BUCKET,
-                            BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
+from handoff.config import (APP_PREFIX, ENV_PREFIX, VERSION, ARTIFACTS_DIR,
+                            BUCKET, BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
                             CONTAINER_IMAGE, FILES_DIR, TEMPLATES_DIR,
                             SECRETS_DIR, SECRETS_FILE, RESOURCE_GROUP,
                             RESOURCE_GROUP_NAKED, PROJECT_FILE, TASK, TASK_NAKED,
@@ -88,7 +88,8 @@ def _get_secret(key: str) -> str:
 
 def _set_bucket_name(resource_group_name, aws_account_id):
     state = get_state()
-    state[BUCKET] = aws_account_id + "-" + resource_group_name
+    hashed_id = hashlib.md5(aws_account_id.encode('utf-8')).hexdigest()[-8:]
+    state[BUCKET] = f"{APP_PREFIX}-{resource_group_name}-{hashed_id}"
     LOGGER.debug("State variable %s was set autoamtically as %s" %
                 (BUCKET, state[BUCKET]))
 
@@ -323,7 +324,7 @@ def secrets_push(
         response = input("Proceed? (y/N)")
     if not yes and response.lower() not in ["yes", "y"]:
         LOGGER.info("Not pushing the secrets by choice.")
-        return "abort"
+        return {"status": "abort"}
 
     for key in secrets:
         if not secrets[key].get("push", True):
@@ -369,7 +370,7 @@ def secrets_delete(
     if not yes:
         response = input("Proceed? (y/N)")
         if response.lower() not in ["yes", "y"]:
-            return "abort"
+            return {"status": "abort"}
 
     for key in secrets:
         if not secrets[key].get("push", True):
@@ -417,7 +418,7 @@ def secrets_print(
             "level": level,
             "value": params[key]["value"]
         })
-    return secret_list
+    return {"status": "success", "secrets": secret_list}
 
 
 def artifacts_archive(
@@ -442,7 +443,7 @@ def artifacts_archive(
                             datetime.datetime.utcnow().isoformat())
     platform.copy_dir_to_another_bucket(
         os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX), dest_dir)
-    return "success"
+    return {"status": "success"}
 
 
 def artifacts_get(
@@ -468,7 +469,7 @@ def artifacts_get(
     remote_dir = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
 
     platform.download_dir(artifacts_dir, remote_dir)
-    return "success"
+    return {"status": "success"}
 
 
 def artifacts_push(
@@ -494,7 +495,7 @@ def artifacts_push(
     artifacts_dir = os.path.join(workspace_dir, ARTIFACTS_DIR)
     prefix = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.upload_dir(artifacts_dir, prefix)
-    return "success"
+    return {"status": "success"}
 
 
 def artifacts_delete(
@@ -515,7 +516,7 @@ def artifacts_delete(
     platform = cloud.get_platform()
     dir_name = os.path.join(ARTIFACTS_DIR, BUCKET_CURRENT_PREFIX)
     platform.delete_dir(dir_name)
-    return "success"
+    return {"status": "success"}
 
 
 def files_get(
@@ -548,7 +549,7 @@ def files_get(
     platform.download_dir(templates_dir, remote_dir)
     # Parse and save to workspace/files
     _parse_template_files(templates_dir, files_dir)
-    return "success"
+    return {"status": "success"}
 
 
 def files_get_local(
@@ -577,7 +578,7 @@ def files_get_local(
         if os.path.exists(files_dir):
             shutil.rmtree(files_dir)
         _parse_template_files(project_files_dir, files_dir)
-    return "success"
+    return {"status": "success"}
 
 
 def files_push(
@@ -596,7 +597,7 @@ def files_push(
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = FILES_DIR
     platform.upload_dir(files_dir, prefix)
-    return "success"
+    return {"status": "success"}
 
 
 def files_delete(
@@ -612,7 +613,7 @@ def files_delete(
     platform = cloud.get_platform()
     dir_name = FILES_DIR
     platform.delete_dir(dir_name)
-    return "success"
+    return {"status": "success"}
 
 
 def _config_get(
@@ -693,7 +694,7 @@ def config_push(
     """
     platform = cloud.get_platform()
     platform.upload_file(os.path.join(project_dir, PROJECT_FILE), PROJECT_FILE)
-    return "success"
+    return {"status": "success"}
 
 
 def config_delete(
@@ -705,7 +706,7 @@ def config_delete(
     """
     platform = cloud.get_platform()
     platform.delete_file(PROJECT_FILE)
-    return "success"
+    return {"status": "success"}
 
 
 def config_deleteold(
@@ -717,7 +718,7 @@ def config_deleteold(
     """
     platform = cloud.get_platform()
     platform.delete_parameter("config")
-    return "success"
+    return {"status": "success"}
 
 
 def config_print(
@@ -754,7 +755,7 @@ def project_push(
     config_push(project_dir, workspace_dir, **kwargs)
     files_push(project_dir, workspace_dir, **kwargs)
     secrets_push(project_dir, workspace_dir, **kwargs)
-    return "success"
+    return {"status": "success"}
 
 
 def project_delete(
@@ -767,7 +768,7 @@ def project_delete(
     config_delete(project_dir, workspace_dir, **kwargs)
     files_delete(project_dir, workspace_dir, **kwargs)
     secrets_delete(project_dir, workspace_dir, **kwargs)
-    return "success"
+    return {"status": "success"}
 
 
 def workspace_init(
@@ -785,7 +786,7 @@ def workspace_init(
         os.mkdir(artifacts_dir)
     if not os.path.isdir(files_dir):
         os.mkdir(files_dir)
-    return "success"
+    return {"status": "success"}
 
 
 def workspace_install(
@@ -810,7 +811,7 @@ def workspace_install(
         if install.get("venv"):
             _make_python_venv(install["venv"])
         _install(install["command"], install.get("venv"))
-    return "sucess"
+    return {"status": "success"}
 
 
 def version(
@@ -819,4 +820,4 @@ def version(
     **kwargs) -> None:
     """Print handoff version
     """
-    return VERSION
+    return {"handoff_version": VERSION}

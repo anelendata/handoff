@@ -6,6 +6,7 @@ from handoff import utils
 
 LOGGER = utils.get_logger(__name__)
 
+APP_PREFIX = "handoff"
 HANDOFF_DIR = ".handoff"
 ARTIFACTS_DIR = "artifacts"
 TEMPLATES_DIR = "templates"

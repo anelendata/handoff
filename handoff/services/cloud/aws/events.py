@@ -91,26 +91,7 @@ def schedule_job(
         }]
     }
 
-    if not state_machine:
-        target = {
-            "Id": target_id,
-            "Arn": cluster_arn,
-            "RoleArn": role_arn,
-            "EcsParameters": {
-                "TaskDefinitionArn": task_def_arn,
-                "TaskCount": 1,
-                "LaunchType": "FARGATE",
-                "NetworkConfiguration": {
-                    "awsvpcConfiguration": {
-                        "Subnets": subnets,
-                        "SecurityGroups": security_groups,
-                        "AssignPublicIp": "ENABLED"
-                    }
-                }
-            },
-            "Input": json.dumps(overrides)
-        }
-    else:
+    if state_machine:
         sm_arn = stepfns.create_state_machine(
             rule_name,
             cluster_arn,
@@ -129,6 +110,25 @@ def schedule_job(
             "Arn": sm_arn,
             "RoleArn": role_arn,
             "Input": json.dumps(overrides),
+        }
+    else:
+        target = {
+            "Id": target_id,
+            "Arn": cluster_arn,
+            "RoleArn": role_arn,
+            "EcsParameters": {
+                "TaskDefinitionArn": task_def_arn,
+                "TaskCount": 1,
+                "LaunchType": "FARGATE",
+                "NetworkConfiguration": {
+                    "awsvpcConfiguration": {
+                        "Subnets": subnets,
+                        "SecurityGroups": security_groups,
+                        "AssignPublicIp": "ENABLED"
+                    }
+                }
+            },
+            "Input": json.dumps(overrides)
         }
 
     rule_kwargs = {

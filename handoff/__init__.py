@@ -235,6 +235,7 @@ def do(
     log_level: str = "info",
     **kwargs) -> None:
     """Determine the command to run"""
+    response = {"handoff_version": VERSION}
     LOGGER.setLevel(log_level.upper())
     LOGGER.info(f"Set log level to {log_level.upper()}")
     init_state(kwargs.get("stage", os.environ.get(STAGE, DEFAULT_STAGE)))
@@ -302,11 +303,12 @@ def do(
             if workspace_dir:
                 admin.workspace_init(project_dir, workspace_dir, **kwargs)
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
-            response = admin_commands[command](project_dir, workspace_dir, **kwargs)
+            r = admin_commands[command](project_dir, workspace_dir, **kwargs)
+            response.update(r)
         except Exception as e:
             if log_level.lower() == "debug":
                 raise
-            response = {"status": "error", "message": str(e)}
+            response.update({"status": "error", "message": str(e)})
 
         os.chdir(prev_wd)
 
@@ -335,7 +337,7 @@ def do(
                     LOGGER.info(f"Container image version: {image_version}")
                     state.set_env(IMAGE_VERSION, image_version)
         try:
-            response = _run_subcommand(
+            r = _run_subcommand(
                     service_modules[module_name],
                     sub_command,
                     project_dir,
@@ -343,10 +345,11 @@ def do(
                     show_help,
                     **kwargs,
             )
+            response.update(r)
         except Exception as e:
             if log_level.lower() == "debug":
                 raise
-            response = {"status": "error", "message": str(e)}
+            response.update({"status": "error", "message": str(e)})
         return response
 
     if module_name in plugin_modules.keys():
@@ -358,7 +361,7 @@ def do(
         if project_dir:
             admin._config_get_local(project_dir, workspace_dir, **kwargs)
         try:
-            response = _run_subcommand(
+            r = _run_subcommand(
                     plugin_modules[module_name],
                     sub_command,
                     project_dir,
@@ -366,10 +369,11 @@ def do(
                     show_help,
                     **kwargs,
             )
+            response.update(r)
         except Exception as e:
             if log_level.lower() == "debug":
                 raise
-            response = {"status": "error", "message": str(e)}
+            response.update({"status": "error", "message": str(e)})
         return response
 
     return("Unrecognized command %s. Run handoff -h for help." % command)

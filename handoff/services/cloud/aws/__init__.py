@@ -4,7 +4,7 @@ import botocore
 import dateutil
 
 from handoff import utils
-from handoff.config import (BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
+from handoff.config import (APP_PREFIX, BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
                             IMAGE_VERSION, RESOURCE_GROUP, RESOURCE_GROUP_NAKED,
                             STAGE, TASK, TASK_NAKED, get_state)
 from handoff.services.cloud.aws import (ecs, ecr, events, iam, logs, s3, ssm,
@@ -74,8 +74,8 @@ def _assume_role(
     if not role_arn:
         account_id = sts.get_account_id(cred_keys=cred_keys)
         resource_group = state.get(RESOURCE_GROUP)
-        role_name = ("FargateDeployRole-%s-%s" %
-                     (resource_group, account_id))
+        role_name = ("%s-FargateDeployRole-%s-%s" %
+                     (APP_PREFIX, resource_group, account_id))
         if not target_account_id:
             target_account_id = account_id
         role_arn = (f"arn:aws:iam::{target_account_id}:role/{role_name}")
@@ -168,11 +168,9 @@ def get_platform_auth_env():
 def get_parameter_key_full_path(key, resource_group_level=False):
     state = get_state()
     if resource_group_level:
-        prefix_key = "/" + state.get(RESOURCE_GROUP) + "/" + key
+        prefix_key = f"/{APP_PREFIX}/{state.get(RESOURCE_GROUP)}/{key}"
     else:
-        prefix_key = (
-                "/" + state.get(RESOURCE_GROUP) + "/" + state.get(TASK_NAKED) +
-                "/" + key)
+        prefix_key = f"/{APP_PREFIX}/{state.get(RESOURCE_GROUP)}/{state.get(TASK_NAKED)}/{key}"
     return prefix_key
 
 
@@ -197,7 +195,7 @@ def get_parameter(key, resource_group_level=False):
 def get_all_parameters():
     state = get_state()
     params = {}
-    path = "/" + state.get(RESOURCE_GROUP)
+    path = f"/{APP_PREFIX}/{state.get(RESOURCE_GROUP)}"
     cred_keys = _get_cred_keys()
     raw_params = ssm.get_parameters_by_path(path, cred_keys=cred_keys)
     for p in raw_params:
@@ -207,7 +205,7 @@ def get_all_parameters():
         key = p.split("/")[-1]
         params[key] = {"value": value, "path": p}
 
-    path = path + "/" + state.get(TASK_NAKED)
+    path = path + f"/{state.get(TASK_NAKED)}"
     raw_params = ssm.get_parameters_by_path(path, cred_keys=cred_keys)
     for p in raw_params:
         value = raw_params[p]
@@ -387,8 +385,7 @@ def create_role(
     instructions = _log_stack_info(aws_response)
 
     account_id = get_account_id()
-    role_name = f"handoff-FargateDeployRole-for-{grantee_account_id}"
-    # role_name = f"{resource_group}-FargateDeployRole-for-{grantee_account_id}"
+    role_name = f"{APP_PREFIX}-FargateDeployRole-for-{grantee_account_id}"
     role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
 
     region = state.get("AWS_REGION")
@@ -424,11 +421,14 @@ def update_role(grantee_account_id, external_id, template_file=None):
     return create_role(grantee_account_id, external_id, template_file, update=True)
 
 
+def _get_role_stack_name(grantee_account_id):
+    stack_name = f"{APP_PREFIX}-role-{str(grantee_account_id)}"
+    return stack_name
+
+
 def delete_role(grantee_account_id, template_file=None):
     state = get_state()
-    # resource_group = state.get(RESOURCE_GROUP)
-    stack_name = "handoff-role-" + str(grantee_account_id)
-    # stack_name = resource_group + "-role-" + str(grantee_account_id)
+    stack_name = _get_role_stack_name(grantee_account_id)
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     instructions = _log_stack_filter(stack_name)
     response["instructions"] = instructions + "\nDon't forget to update ~/.aws/credentials and AWS_PROFILE"
@@ -437,7 +437,7 @@ def delete_role(grantee_account_id, template_file=None):
 
 def get_role_status(grantee_account_id):
     state = get_state()
-    stack_name = "handoff-role-" + str(grantee_account_id)
+    stack_name = _get_role_stack_name(grantee_account_id)
     try:
         res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
     except:
@@ -450,11 +450,16 @@ def get_role_status(grantee_account_id):
     return status
 
 
+def _get_bucket_stack_name(resource_group):
+    stack_name = f"{APP_PREFIX}-{resource_group}-bucket"
+    return stack_name
+
+
 def create_bucket(template_file=None, update=False):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
+    stack_name = _get_bucket_stack_name(resource_group)
     bucket = state.get(BUCKET)
-    stack_name = resource_group + "-bucket"
     if not template_file:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "s3.yml")
@@ -483,7 +488,7 @@ def delete_bucket():
     LOGGER.warning("This will only delete the CloudFormation stack. " +
                    "The bucket %s will be retained." % state.get(BUCKET))
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-bucket"
+    stack_name = _get_bucket_stack_name(resource_group)
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     response["instructions"] = _log_stack_filter(state[BUCKET])
     return response
@@ -492,7 +497,7 @@ def delete_bucket():
 def get_bucket_status(**kwargs):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-bucket"
+    stack_name = _get_bucket_stack_name(resource_group)
     try:
         res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
     except:
@@ -505,11 +510,16 @@ def get_bucket_status(**kwargs):
     return status
 
 
+def _get_resource_group_stack_name(resource_group):
+    stack_name = f"{APP_PREFIX}-{resource_group}-resources"
+    return stack_name
+
+
 def create_resources(template_file=None, update=False, static_ip=False,
         **kwargs):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-resources"
+    stack_name = _get_resource_group_stack_name(resource_group)
     bucket = state.get(BUCKET)
     parameters = [
         {
@@ -544,7 +554,7 @@ def update_resources(template_file=None, **kwargs):
 def delete_resources():
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-resources"
+    stack_name = _get_resource_group_stack_name(resource_group)
     response = cloudformation.delete_stack(stack_name, cred_keys=_get_cred_keys())
     response["instructions"] = _log_stack_filter(resource_group)
     return response
@@ -553,7 +563,7 @@ def delete_resources():
 def get_resources_status(**kwargs):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
-    stack_name = resource_group + "-resources"
+    stack_name = _get_resource_group_stack_name(resource_group)
     try:
         res = cloudformation.describe_stacks(stack_name, cred_keys=_get_cred_keys())
     except:
@@ -564,6 +574,14 @@ def get_resources_status(**kwargs):
             "details": res["Stacks"][0]
         }
     return status
+
+
+def _get_task_stack_name():
+    state = get_state()
+    task_name_naked = state.get(TASK_NAKED)
+    resource_group = state.get(RESOURCE_GROUP)
+    stack_name = f"{APP_PREFIX}-{resource_group}-{task_name_naked}"
+    return stack_name
 
 
 def create_task(template_file=None, update=False, memory=512,
@@ -629,14 +647,14 @@ def create_task(template_file=None, update=False, memory=512,
 
     if not update:
         response = cloudformation.create_stack(
-                resource_group + "-" + task_name_naked,
+                _get_task_stack_name(),
                 template_file,
                 parameters,
                 cred_keys=_get_cred_keys(),
                 )
     else:
         response = cloudformation.update_stack(
-                resource_group + "-" + task_name_naked,
+                _get_task_stack_name(),
                 template_file,
                 parameters,
                 cred_keys=_get_cred_keys(),
@@ -666,7 +684,7 @@ def delete_task():
     task_name_naked = state.get(TASK_NAKED)
     resource_group = state.get(RESOURCE_GROUP)
     response = cloudformation.delete_stack(
-            resource_group + "-" + task_name_naked,
+            _get_task_stack_name(),
             cred_keys=_get_cred_keys(),
             )
     response["instructions"] = _log_stack_filter(resource_group + "-" + task_name_naked)
@@ -678,10 +696,9 @@ def get_task_status(**kwargs):
     resource_group = state.get(RESOURCE_GROUP)
     task_name = state.get(TASK_NAKED)
     bucket = state.get(BUCKET)
-    stack_name = resource_group + "-" + task_name
     try:
         res = cloudformation.describe_stacks(
-                stack_name,
+                _get_task_stack_name(),
                 cred_keys=_get_cred_keys(),
                 )
     except:
@@ -708,10 +725,12 @@ def list_jobs(full=False, running=True, stopped=True,
     state = get_state()
     stack_name = state.get(TASK_NAKED)
     resource_group = state.get(RESOURCE_GROUP)
+    full_task_stack_name = f"{APP_PREFIX}-{resource_group}-{stack_name}"
+
     region = state.get("AWS_REGION")
     try:
         response = ecs.describe_tasks(
-                resource_group + "-resources",
+                _get_resource_group_stack_name(resource_group),
                 region,
                 running=running,
                 stopped=stopped,
@@ -728,7 +747,7 @@ def list_jobs(full=False, running=True, stopped=True,
     for task in response["tasks"]:
         output = {}
         t = task["taskDefinitionArn"].split(":")[-2].split("/")[-1]
-        if not resource_group_level and t != resource_group + "-" + stack_name:
+        if not resource_group_level and t != full_task_stack_name:
             continue
         if not full:
             for item in digest:
@@ -748,7 +767,7 @@ def list_jobs(full=False, running=True, stopped=True,
                 output["duration"] = None
 
         outputs.append(output)
-    return outputs
+    return {"jobs": outputs}
 
 
 def stop_job(id=None, reason="Stopped by the user"):
@@ -758,7 +777,7 @@ def stop_job(id=None, reason="Stopped by the user"):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
-    response = ecs.stop_task(resource_group + "-resources", region, id, reason, cred_keys=_get_cred_keys())
+    response = ecs.stop_task(_get_resource_group_stack_name(), region, id, reason, cred_keys=_get_cred_keys())
     return response
 
 
@@ -771,15 +790,15 @@ def run_job(task_name=None, container_name=None, env={}, command=None, extras=No
         container_name = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
     resource_group = state.get(RESOURCE_GROUP)
-    resource_group_stack = resource_group + "-resources"
+    full_task_name = f"{APP_PREFIX}-{resource_group}-{task_name}"
 
     extra_env = []
     for key in env.keys():
         extra_env.append({"name": key, "value": env[key]})
     response = ecs.run_fargate_task(
             account_id,
-            resource_group + "-" + task_name,
-            resource_group_stack,
+            full_task_name,
+            _get_resource_group_stack_name(resource_group),
             container_name,
             region,
             extra_env,
@@ -787,8 +806,15 @@ def run_job(task_name=None, container_name=None, env={}, command=None, extras=No
             extras=extras,
             cred_keys=_get_cred_keys())
     response["instructions"] = _log_task_run_filter(
-        state[RESOURCE_GROUP] + "-resources", response)
+        _get_resource_group_stack_name(resource_group),
+        response,
+    )
     return response
+
+
+def _get_rule_name(resource_group, task_name, target_id):
+    rule = f"{APP_PREFIX}-{resource_group}-{task_name}-{target_id}"
+    return rule
 
 
 def schedule_job(
@@ -800,12 +826,12 @@ def schedule_job(
         **kwargs):
     state = get_state()
     account_id = state["AWS_ACCOUNT_ID"]
-    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
+    task_stack = _get_task_stack_name()
     container_image = state.get(CONTAINER_IMAGE)
     region = state.get("AWS_REGION")
-    resource_group_stack = state.get(RESOURCE_GROUP) + "-resources"
+    resource_group = state.get(RESOURCE_GROUP)
 
-    role_name = "handoff-CloudWatchEventECSRole"
+    role_name = f"{APP_PREFIX}-CloudWatchEventECSRole"
 
     if not role_arn:
         roles = iam.list_roles(cred_keys=_get_cred_keys())
@@ -823,7 +849,7 @@ def schedule_job(
         response = events.schedule_job(
                 account_id,
                 task_stack,
-                resource_group_stack,
+                _get_resource_group_stack_name(resource_group),
                 container_image,
                 region,
                 target_id,
@@ -838,15 +864,19 @@ def schedule_job(
         LOGGER.error("Scheduling task failed for %s target_id: %s cron: %s" %
                      (task_stack, target_id, cronexp))
         LOGGER.critical(str(e))
-        return
+        return {"status": "error", "message": str(e)}
 
     region= state.get("AWS_REGION")
-    resource_group = state.get(RESOURCE_GROUP)
+    rule_name = _get_rule_name(
+            resource_group,
+            state.get(TASK_NAKED),
+            target_id,
+    )
+
     response["instructions"] = (
         "Check the status at\n"
-        "https://console.aws.amazon.com/cloudwatch/home?"
-        f"region={region}#rules:name={resource_group}-"
-        f"{state.get(TASK_NAKED)}-{target_id}\n"
+        "https://console.aws.amazon.com/events/home?"
+        f"region={region}#/eventbus/default/rules/{rule_name}\n"
         "For state machine enabled tasks, check the statemachines at\n"
         "https://console.aws.amazon.com/states/home?region="
         f"{region}#/statemachines"
@@ -856,7 +886,7 @@ def schedule_job(
 
 def unschedule_job(target_id):
     state = get_state()
-    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
+    task_stack = _get_task_stack_name()
     try:
         response = events.unschedule_job(
                 task_stack,
@@ -868,16 +898,21 @@ def unschedule_job(target_id):
 
     region = state.get("AWS_REGION")
     resource_group = state.get(RESOURCE_GROUP)
+    rule_name = _get_rule_name(
+            resource_group,
+            state.get(TASK_NAKED),
+            target_id,
+    )
     response["instructions"] = (
         "Check the status at https://console.aws.amazon.com/cloudwatch/home?"
-        f"region={region}#rules:name={resource_group}-"
-        f"{state.get(TASK_NAKED)}-{target_id}")
+        f"region={region}#rules:name={rule_name}"
+    )
     return response
 
 
 def list_schedules(full=False, **kwargs):
     state = get_state()
-    task_stack = state.get(RESOURCE_GROUP) + "-" + state.get(TASK_NAKED)
+    task_stack = _get_task_stack_name()
     try:
         response = events.list_schedules(task_stack, cred_keys=_get_cred_keys())
     except Exception as e:
@@ -939,6 +974,12 @@ def _write_log(file_descriptor, event, format_):
         file_descriptor.write(format_.format(**event) + "\n")
 
 
+def _get_log_group_name():
+    state = get_state()
+    log_group_name = f"{APP_PREFIX}/{state.get(RESOURCE_GROUP)}/{state.get(TASK_NAKED)}"
+    return log_group_name
+
+
 def write_logs(
     file_descriptor,
     start_time=None,
@@ -950,9 +991,7 @@ def write_logs(
     last_timestamp=None,
     **extras
 ):
-    state = get_state()
-    log_group_name = state.get(RESOURCE_GROUP) + "/" + state.get(TASK_NAKED)
-
+    log_group_name = _get_log_group_name()
 
     if start_time and type(start_time) is str:
         start_time = dateutil.parser.parse(start_time)

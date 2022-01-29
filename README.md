@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.com/anelendata/handoff.svg?branch=master)](https://travis-ci.com/anelendata/handoff)
 [![Documentation Status](https://readthedocs.org/projects/handoffcloud/badge/?version=latest)](https://dev.handoff.cloud/en/latest/?badge=latest)
 
-# handoff.cloud
+# handoff core
 
 👉 For a fully managed service, checkout [handoff.cloud website](https://handoff.cloud)
 
@@ -21,7 +21,7 @@ the pipeline logic.
 Features and benefits:
 
 1. Container orchestration (AWS Elastic Continer Service)
-2. Extended serverless task execution (AWS Fargate, vs. AWS Lambda's 15min limit) 
+2. Extended serverless task execution (AWS Fargate, vs. AWS Lambda's 15min limit)
 3. CRON Scheduling (AWS EventBridge)
 4. Configuration and secret management (AWS Systems Manager Parameter Store)
 5. Simple switch between production and devlopment stages

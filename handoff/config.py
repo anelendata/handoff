@@ -9,6 +9,7 @@ LOGGER = utils.get_logger(__name__)
 APP_PREFIX = "handoff"
 HANDOFF_DIR = ".handoff"
 ARTIFACTS_DIR = "artifacts"
+BUNDLES_DIR = "bundles"
 TEMPLATES_DIR = "templates"
 FILES_DIR = "files"
 PROJECT_FILE = "project.yml"

@@ -743,11 +743,11 @@ def list_jobs(full=False, running=True, stopped=True,
     outputs = []
     digest = ["taskArn", "taskDefinitionArn", "lastStatus", "createdAt", "startedAt", "cpu", "memory"]
     if not response:
-        return []
+        return {"jobs": []}
     for task in response["tasks"]:
         output = {}
         t = task["taskDefinitionArn"].split(":")[-2].split("/")[-1]
-        if not resource_group_level and t != full_task_stack_name:
+        if not resource_group_level and t not in (full_task_stack_name, f"{APP_PREFIX}-{resource_group}-handoff-container-builder"):
             continue
         if not full:
             for item in digest:
@@ -1048,4 +1048,4 @@ def write_logs(
         time.sleep(wait)
         wait = min(wait * 2, 60)
 
-    return start_time
+    return {"status": "success", "start_time": start_time}

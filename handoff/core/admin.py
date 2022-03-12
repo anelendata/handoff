@@ -44,7 +44,7 @@ def _make_python_venv(venv_path: str) -> None:
         # https://github.com/anelenvars/handoff/issues/25#issuecomment-667945434
         builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
-        _install("pip install wheel", venv_path)
+        _install("pip3 install wheel", venv_path)
 
 
 def _parse_template_files(

@@ -3,9 +3,9 @@ description: Fetch foreign exchange rates
 
 installs:
 - venv: tap
-  command: pip install tap-exchangeratehost
+  command: pip install --no-cache-dir tap-exchangeratehost
 - venv: target
-  command: pip install target-csv
+  command: pip install --no-cache-dir target-csv
 
 vars:
 - key: base_currency

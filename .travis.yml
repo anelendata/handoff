@@ -17,7 +17,7 @@ before_install:
   - sudo apt-get -y install libgit2-dev python3-pygit2
 
 install:
-  - /opt/python/3.6/bin/python -m venv ./venv
+  - /opt/python/3.7/bin/python -m venv ./venv
   - source ./venv/bin/activate
   - which python
   - pip install --upgrade pip

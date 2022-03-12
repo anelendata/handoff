@@ -409,7 +409,7 @@ def run(
     if target_id:
         for s in config.get("schedules", []):
             if str(s["target_id"]) == str(target_id):
-                for e in s.get("envs"):
+                for e in s.get("envs", []):
                     target_envs[e["key"]] = e["value"]
                 break
     target_envs.update(envs)

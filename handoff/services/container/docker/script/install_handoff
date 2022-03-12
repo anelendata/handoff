@@ -2,7 +2,7 @@
 
 if [ -e ./handoff ]; then
     echo Found a local copy of handoff
-    pip3 install --no-cache -e ./handoff
+    pip3 install --no-cache-dir -e ./handoff
 else
     echo Installing handoff from pypi
     pip3 install handoff

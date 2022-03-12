@@ -4,7 +4,7 @@ dist: bionic
 language: python
 
 python:
-  - "3.6"
+  - "3.7"
 
 #befoer_script:
 #  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update; fi
@@ -13,11 +13,11 @@ python:
 before_install:
   - export
   - ls /opt/python/
-  - /opt/python/3.6/bin/python --version
+  - /opt/python/3.7/bin/python --version
   - sudo apt-get -y install libgit2-dev python3-pygit2
 
 install:
-  - /opt/python/3.6/bin/python -m venv ./venv
+  - /opt/python/3.7/bin/python -m venv ./venv
   - source ./venv/bin/activate
   - which python
   - pip install --upgrade pip

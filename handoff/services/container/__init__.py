@@ -5,7 +5,7 @@ from typing import Dict
 import yaml
 
 from handoff.utils import get_logger as _get_logger
-from handoff.config import get_state, CONTAINER_PROVIDER, TASK_NAKED
+from handoff.config import get_state, BUNDLES_DIR, CONTAINER_PROVIDER, TASK_NAKED
 from handoff.services import cloud
 
 
@@ -50,13 +50,15 @@ def bundle(
     if not build_dir or not tarball_dir:
         raise Exception("build_dir and tarball_dir must be given")
 
+    platform = cloud.get_platform()
+    state = get_state()
+    state.validate_env()
+
     res = _get_platform().bundle(project_dir, workspace_dir, vars, **kwargs)
     if res["status"] != "success":
         raise Exception("Bundle creation failed.")
 
-    platform = cloud.get_platform()
-    state = get_state()
-    state.validate_env()
+    platform.delete_dir(BUNDLES_DIR)
 
     current_dir = os.getcwd()
     tar_file_name = state[TASK_NAKED] + ".tar.gz"
@@ -69,7 +71,7 @@ def bundle(
             filter=_tar_filter,
         )
     os.chdir(current_dir)
-    remote_tarball_path = f"bundles/{tar_file_name}"
+    remote_tarball_path = f"{BUNDLES_DIR}/{tar_file_name}"
     res = platform.upload_file(
             os.path.join(tarball_dir, tar_file_name),
             remote_tarball_path,

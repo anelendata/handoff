@@ -585,7 +585,7 @@ def _get_task_stack_name():
 
 
 def create_task(template_file=None, update=False, memory=512,
-                cpu=256, image_version=None, **kwargs):
+                cpu=256, storage=21, image_version=None, **kwargs):
     state = get_state()
     task_name = state.get(TASK)
     task_name_naked = state.get(TASK_NAKED)
@@ -638,6 +638,10 @@ def create_task(template_file=None, update=False, memory=512,
         {
             "ParameterKey": "AllocatedMemory",
             "ParameterValue": str(memory),
+        },
+        {
+            "ParameterKey": "EphemeralStorage",
+            "ParameterValue": str(storage),
         },
     ]
 

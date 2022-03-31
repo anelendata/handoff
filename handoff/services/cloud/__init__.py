@@ -292,7 +292,8 @@ def task_create(
     """`handoff cloud task create -p <project_directory>`
     Create the task
     Optionally,
-    -v cpu=256, memory=512
+    -v cpu=256, memory=512 storage=21
+    The above example is for AWS Fargate with vCPU 256 unit, 512MB memory, and 21GB ephemeral storage
     """
     state = _get_state()
     platform = get_platform()

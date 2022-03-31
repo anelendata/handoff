@@ -62,6 +62,10 @@ Parameters:
     Type: Number
     Default: 512
     Description: Memory (in MB) allocated to the task
+  EphemeralStorage:
+    Type: Number
+    Default: 21
+    Description: Ephemeral Storage (in GB) allocated to the task
 
   LogRetentionDays:
     Type: Number
@@ -114,6 +118,8 @@ Resources:
       Family: !Sub ${ApplicationPrefix}-${ResourceGroup}-${TaskNameNaked}
       Cpu: !Sub ${AllocatedCpu}
       Memory: !Sub ${AllocatedMemory}
+      EphemeralStorage:
+        SizeInGiB: !Sub ${EphemeralStorage}
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE

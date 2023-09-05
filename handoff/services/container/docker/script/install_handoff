@@ -1,9 +1,12 @@
 #!/bin/bash
 
+pip3 install -U pip
 if [ -e ./handoff ]; then
     echo Found a local copy of handoff
     pip3 install --no-cache-dir -e ./handoff
+    echo handoff installation successful
 else
     echo Installing handoff from pypi
     pip3 install handoff
+    echo handoff installation successful
 fi

@@ -98,7 +98,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
     with tempfile.TemporaryDirectory() as build_dir:
         copy_files(project_dir, build_dir, docker_file, files_dir)
         for line in cli.build(path=build_dir,
-                              tag=image_name + ":" + new_version,
+                              tag=f"{image_name}:{new_version}",
                               nocache=nocache):
             for subline in line.decode("utf-8").split("\n"):
                 try:

@@ -1,5 +1,9 @@
 ## History
 
+### 0.4.0 (2023-09-05)
+
+- fix: fix the docker version to 5.0.0
+
 ### 0.3.4 (2021-04-06)
 
 - feature: log pattern filter and json output

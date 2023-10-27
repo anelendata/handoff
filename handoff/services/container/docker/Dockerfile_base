@@ -80,26 +80,3 @@ RUN mkdir -p /var/run/sshd
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 # Or do this?
 # RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-
-COPY . /app/
-RUN chmod 777 -R /app
-
-WORKDIR /app
-
-RUN pip3 install wheel
-
-RUN ./script/install_handoff
-
-# It is recommended to make virtual envs for each process
-RUN handoff workspace install -p project -w workspace
-
-# Make sure to delete these directories in case sensitive information was accidentally copied.
-RUN rm -fr project
-RUN rm -fr workspace/config
-RUN rm -fr workspace/files
-RUN rm -fr workspace/artifacts
-
-RUN chmod a+x /usr/local/bin/*
-
-ENTRYPOINT [ "/tini", "--" ]
-CMD handoff ${COMMAND:-run} -w workspace -a -v $(eval echo ${__VARS:-"dummy=1"}) -s ${HO_STAGE:-"dev"} -a

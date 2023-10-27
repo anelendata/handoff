@@ -1,5 +1,5 @@
 # Pull base image.
-FROM public.ecr.aws/m5u3u5p2/handoff-base:0.1
+FROM public.ecr.aws/m5u3u5p2/handoff-base:0.2
 
 MAINTAINER Daigo Tanaka <daigo.tanaka@gmail.com>
 

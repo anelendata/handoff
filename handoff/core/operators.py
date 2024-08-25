@@ -1,6 +1,17 @@
 #!/usr/bin/python
-import io, json, logging, subprocess, sys, os, re, threading
+import io
+import json
+import logging
+import os
+import re
+import subprocess
+import sys
+import threading
+
+from subprocess import TimeoutExpired
+
 from typing import Dict
+
 import jinja2
 from jinja2 import Template as _Template
 

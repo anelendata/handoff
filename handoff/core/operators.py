@@ -213,7 +213,18 @@ def _run_commands(
             proc = subprocess.Popen([command_str], stdout=stdout, stderr=stderr,
                                     env=env, shell=True)
             LOGGER.debug(f"Checking return code of {name}: {command_obj['command']}... (pid {proc.pid})")
-            exit_code = proc.wait()
+            timeout = command_obj.get("timeout", None)
+
+            try:
+                # Switch from wait to communicate to avoid deadlock?
+                # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+                proc.communicate(timeout=timeout)
+            except TimeoutExpired:
+                proc.kill()
+                LOGGER.warning(f"Process {str(proc.pid)} exited with user-set timeout.")
+            exit_code = proc.returncode
+
+            outs, errs = proc.communicate()
             LOGGER.debug("Process %d (%s) exited with code %d" %
                          (proc.pid, command_obj["command"], exit_code))
 
@@ -301,9 +312,17 @@ def _run_pipeline(
     return task
 
 
-def _proc_wait(pipeline, proc, exit_codes):
+def _proc_wait(pipeline, proc, exit_codes, timeout=None):
     LOGGER.info("Checking return code of pid %d" % proc.pid)
-    exit_codes[proc] = proc.wait()
+
+    try:
+        # Switch from wait to communicate to avoid deadlock?
+        # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+        proc.communicate(timeout=timeout)
+    except TimeoutExpired:
+        proc.kill()
+        LOGGER.warning(f"Process {str(proc.pid)} exited with user-set timeout.")
+    exit_codes[proc] = proc.returncode
 
     LOGGER.debug("Process %d exited with code %d" %
                  (proc.pid, exit_codes[proc]))
@@ -341,7 +360,8 @@ def _wait_for_pipeline(
             exit_codes[str(command_obj)] = proc["exit_code"]
             continue
         last_proc = proc
-        thread = threading.Thread(target=_proc_wait, args=(pipeline, proc, exit_codes))
+        timeout = command_obj.get("timeout", None)
+        thread = threading.Thread(target=_proc_wait, args=(pipeline, proc, exit_codes, timeout))
         threads.append(thread)
         thread.start()
 

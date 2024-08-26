@@ -31,7 +31,7 @@ setup(
         "boto3>=1.10.0",
         "botocore>=1.13.0",
         "python-dateutil>=2.7.0",
-        "docker==5.0.0",
+        "docker==7.1.0",
         "lxml>=4.2.0",
         "Jinja2>=2.10.1",
         "jsonschema>=3.2.0",

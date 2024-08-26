@@ -141,8 +141,8 @@ def login(
             LOGGER.info(f"Default AWS Region is set to {default_region}")
             if default_region:
                 state["AWS_REGION"] = default_region
-        state["AWS_ACCESS_KEY_ID"] = cred_keys.get("aws_access_key_id")
-        state["AWS_SECRET_ACCESS_KEY"] = cred_keys.get("aws_secret_access_key")
+        state["AWS_ACCESS_KEY_ID"] = cred_keys.get("aws_access_key_id", os.environ.get("AWS_ACCESS_KEY_ID"))
+        state["AWS_SECRET_ACCESS_KEY"] = cred_keys.get("aws_secret_access_key", os.environ.get("AWS_SECRET_ACCESS_KEY"))
         state["AWS_SESSION_TOKEN"] = cred_keys.get("aws_session_token")
         return account_id
     except Exception as e:

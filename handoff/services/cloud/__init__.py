@@ -49,6 +49,7 @@ def get_platform(
     cred_keys = PLATFORM_MODULE.find_cred_keys(vars)
     response = PLATFORM_MODULE.login(cloud_profile, cred_keys=cred_keys)
     if not response:
+        LOGGER.debug(str(cred_keys))
         raise Exception(
             f"Login to {provider_name} failed. Credentials may not be set correctly.")
 

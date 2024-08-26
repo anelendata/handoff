@@ -118,7 +118,7 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
         env[e] = state.get(e)
 
     env.update(extra_env)
-
+    logger.debug(env)
     image_name = state[CONTAINER_IMAGE]
     if not version:
         version = get_latest_version(image_name)

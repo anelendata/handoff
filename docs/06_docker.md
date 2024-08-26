@@ -72,6 +72,24 @@ directory.
 
 
 
+Note 1: If the container fails because of the cloud credentials, check if you
+have defined environment variables locally. For AWS, AWS_ACCESS_KEY_ID,
+AWS_SECRET_ACCESS_KEY, and AWS_REGION must be defined.
+
+
+
+Note 2: If you see this kind of message when you run build on MacOS,
+
+```
+handoff_version: 0.4.0
+message: 'Error while fetching server API version: (''Connection aborted.'', FileNotFoundError(2,
+  ''No such file or directory''))'
+```
+
+Open Docker desktop and look under advanced settings. Check the case "Allow the default Docker socket to be used (requires password)."
+
+
+
 Now that we know the Docker container runs fine, let's push it to
 AWS Elastic Container Registry. This may take a few minutes.
 
@@ -113,4 +131,3 @@ https://console.aws.amazon.com/ecr/repositories?region=us-east-1
 
 Now that the Docker image is prepared, we will finally deploy the task on
 AWS Fargate in the next tutorial.
-

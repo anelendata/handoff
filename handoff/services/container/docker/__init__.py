@@ -86,6 +86,7 @@ def run(
 
     platform = cloud.get_platform()
     env = platform.get_platform_auth_env()
+    LOGGER.debug(env)
     env.update(envs)
     kwargs.update(vars)
     try:

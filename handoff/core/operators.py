@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import signal
 import subprocess
 import sys
 import threading
@@ -188,6 +189,29 @@ def _fork(
     return {"exit_code": exit_code}
 
 
+def _set_timeout(proc, timeout=None):
+    wait = False
+    try:
+        # Switch from wait to communicate to avoid deadlock?
+        # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+        proc.communicate(timeout=timeout)
+    except TimeoutExpired:
+        LOGGER.warning(f"Process {str(proc.pid)} user-set timeout reached. Sending SIGINT...")
+        proc.send_signal(signal.SIGINT)
+        wait = True
+    except KeyboardInterrupt:
+        LOGGER.warning(f"Process {str(proc.pid)} keyboard-interrupted. Sending SIGINT...")
+        proc.send_signal(signal.SIGINT)
+        wait = True
+
+    if wait:
+        try:
+            proc.communicate(timeout=60)
+        except TimeoutExpired:
+            LOGGER.warning(f"Process {str(proc.pid)} not responding to SIGINT. Killing...")
+            proc.kill()
+
+
 def _run_commands(
     task: Dict, state: Dict,
     artifacts_dir: str = "artifacts",
@@ -226,22 +250,17 @@ def _run_commands(
             LOGGER.debug(f"Checking return code of {name}: {command_obj['command']}... (pid {proc.pid})")
             timeout = command_obj.get("timeout", None)
 
-            try:
-                # Switch from wait to communicate to avoid deadlock?
-                # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
-                proc.communicate(timeout=timeout)
-            except TimeoutExpired:
-                proc.kill()
-                LOGGER.warning(f"Process {str(proc.pid)} exited with user-set timeout.")
+            _set_timeout(proc, timeout)
+
             exit_code = proc.returncode
+            if exit_code is None:
+                exit_code = 1
 
             outs, errs = proc.communicate()
-            LOGGER.debug("Process %d (%s) exited with code %d" %
-                         (proc.pid, command_obj["command"], exit_code))
+            LOGGER.info(f"Process {proc.pid} {command_obj['command']} exited with code {str(exit_code)}")
 
             if exit_code > 0:
-                LOGGER.warning("Process %d (%s) exited with code %d" %
-                               (proc.pid, command_obj["command"], exit_code))
+                LOGGER.info(f"Process {proc.pid} {command_obj['command']} exited with code {str(exit_code)}")
                 killed = True
                 break
 
@@ -326,14 +345,11 @@ def _run_pipeline(
 def _proc_wait(pipeline, proc, exit_codes, timeout=None):
     LOGGER.info("Checking return code of pid %d" % proc.pid)
 
-    try:
-        # Switch from wait to communicate to avoid deadlock?
-        # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
-        proc.communicate(timeout=timeout)
-    except TimeoutExpired:
-        proc.kill()
-        LOGGER.warning(f"Process {str(proc.pid)} exited with user-set timeout.")
+    _set_timeout(proc, timeout)
+
     exit_codes[proc] = proc.returncode
+    if exit_codes[proc] is None:
+        exit_codes[proc] = 1
 
     LOGGER.debug("Process %d exited with code %d" %
                  (proc.pid, exit_codes[proc]))

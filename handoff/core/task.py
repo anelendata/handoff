@@ -42,10 +42,9 @@ def run(config: Dict, **kwargs) -> None:
         except Exception as e:
             LOGGER.error(str(e))
             exit_code = 1
-        LOGGER.info("Task %s exited with code %d" %
-                    (task.get("name", ""), exit_code))
+        LOGGER.info(f"Task {task.get('name', '')} exited with code {str(exit_code)}")
         if exit_code > 0:
-            if kill_downstream_on_fail:
+            if kill_ds_on_fail:
                 LOGGER.warning("Not running the rest of the tasks.")
                 break
     return exit_code

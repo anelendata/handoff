@@ -35,6 +35,7 @@ tasks:
   pipeline:
   - command: cat
     args: files/the_great_dictator_speech.txt
+    timeout: 3600
   - command: wc
     args: -w
 
@@ -46,7 +47,7 @@ Here,
 - `tasks` is a list defining each task
 - Under the `tasks`, there is a `pipeline`
 - `pipeline` lists commands and their arguments
-
+- You can add `timeout` in each command in seconds. (Optional)
 
 The example from 01_word_count runs a command line equivalent of:
 
@@ -94,9 +95,8 @@ If you see the output that looks like:
 
 ```
 
-
 Then great! You just ran handoff task locally.
-    
+
 For now, let's not worry about the warnings in the log such as:
 
 ```shell

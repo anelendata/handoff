@@ -110,7 +110,7 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
         return{"status": "success"}
 
 
-def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
+def run(version=None, extra_env=dict(), yes=False, command=None, detach=True,
         interactive=False, file_descriptor=sys.stdout, **kwargs):
     state = get_state()
     env = {}
@@ -139,11 +139,11 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=False,
     client = docker.from_env()
 
     try:
-        # TODO: Streaming log is not working :(
-        for line in client.containers.run(image_name + ":" + version,
-                                          command=command, environment=env,
-                                          stream=True, detach=detach,
-                                          stdin_open=stdin_open, tty=tty):
+        container = client.containers.run(image_name + ":" + version,
+                              command=command, environment=env,
+                              detach=detach, remove=True)
+        output = container.attach(stdout=True, stream=True, logs=True)
+        for line in output:
             file_descriptor.write(line.decode("utf-8").replace("\\n", "\n"))
     except Exception as e:
         return {

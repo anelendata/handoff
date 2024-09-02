@@ -1,5 +1,5 @@
 # Pull base image.
-FROM ubuntu:22.04
+FROM ubuntu:23.10
 
 MAINTAINER Daigo Tanaka <daigo.tanaka@gmail.com>
 
@@ -43,7 +43,7 @@ RUN set -ex \
         apt-utils \
         curl \
         rsync \
-        netcat \
+        netcat-traditional \
         locales \
         wget \
         git \

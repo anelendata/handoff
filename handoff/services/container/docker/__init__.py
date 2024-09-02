@@ -101,6 +101,7 @@ def push(
     project_dir: str,
     workspace_dir: str,
     yes=False,
+    vars: Dict = {},
     **kwargs) -> None:
     _envs(project_dir, workspace_dir, **kwargs)
     state = config.get_state()
@@ -109,6 +110,7 @@ def push(
     platform = cloud.get_platform()
     username, password, registry = platform.get_docker_registry_credentials()
     image_name = state.get(CONTAINER_IMAGE)
+    kwargs.update(vars)
     try:
         platform.get_repository_images(image_name)
     except Exception:

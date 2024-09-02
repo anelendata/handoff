@@ -111,11 +111,17 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
 
 
 def run(version=None, extra_env=dict(), yes=False, command=None, detach=True,
-        interactive=False, file_descriptor=sys.stdout, **kwargs):
+        interactive=False, file_descriptor=sys.stdout, ports=None, platform=None, **kwargs):
     state = get_state()
     env = {}
     for e in ADMIN_ENVS.keys():
         env[e] = state.get(e)
+
+    if ports:
+        logger.info(f"Port bindings (container:host): {ports}")
+        ports = json.loads(ports)
+    if platform:
+        logger.info(f"Platform specified: {platform}")
 
     env.update(extra_env)
     logger.debug(env)
@@ -141,7 +147,7 @@ def run(version=None, extra_env=dict(), yes=False, command=None, detach=True,
     try:
         container = client.containers.run(image_name + ":" + version,
                               command=command, environment=env,
-                              detach=detach, remove=True)
+                              platform=platform, ports=ports, detach=detach, remove=True)
         output = container.attach(stdout=True, stream=True, logs=True)
         for line in output:
             file_descriptor.write(line.decode("utf-8").replace("\\n", "\n"))
@@ -158,6 +164,8 @@ def push(username, password, registry, version=None, yes=False,
     image_name = state[CONTAINER_IMAGE]
     if not version:
         version = get_latest_version(image_name)
+    else:
+        version = str(version)
 
     if not version:
         raise Exception("Image %s not found" % image_name)
@@ -178,12 +186,14 @@ def push(username, password, registry, version=None, yes=False,
 
     status = defaultdict(lambda: "")
     progress = defaultdict(lambda: 1)
-    for line in client.images.push(registry + "/" + image_name,
-                                   version, stream=True):
-        try:
-            msg = json.loads(line.decode("utf-8"))
-        except json.decoder.JSONDecodeError:
-            continue
+    for msg in client.images.push(registry + "/" + image_name,
+                                   version, stream=True, decode=True):
+        if msg.get("error"):
+            error_msg = msg["error"]
+            error_msg += f"\nHint: If this is an auth error, try:\naws ecr get-login-password --region <region> | docker login --username AWS --password-stdin {registry}\nfrom the console."
+            logger.error(error_msg)
+            break
+
         total = 0
         current = 0
         block = msg.get("id")

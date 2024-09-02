@@ -781,7 +781,7 @@ def stop_job(id=None, reason="Stopped by the user"):
     state = get_state()
     resource_group = state.get(RESOURCE_GROUP)
     region = state.get("AWS_REGION")
-    response = ecs.stop_task(_get_resource_group_stack_name(), region, id, reason, cred_keys=_get_cred_keys())
+    response = ecs.stop_task(_get_resource_group_stack_name(resource_group), region, id, reason, cred_keys=_get_cred_keys())
     return response
 
 
@@ -798,7 +798,7 @@ def run_job(task_name=None, container_name=None, env={}, command=None, extras=No
 
     extra_env = []
     for key in env.keys():
-        extra_env.append({"name": key, "value": env[key]})
+        extra_env.append({"name": key, "value": str(env[key])})
     response = ecs.run_fargate_task(
             account_id,
             full_task_name,
@@ -953,6 +953,59 @@ def list_schedules(full=False, **kwargs):
                        "\\1:",
                        yaml.dump({"schedules": schedules}, default_style="'"))
     return yaml.load(yml_clean, Loader=yaml.FullLoader)
+
+
+def set_domain(hostedzone_id, subdomain):
+    state = get_state()
+    stack_name = state.get(TASK_NAKED)
+    resource_group = state.get(RESOURCE_GROUP)
+    full_task_stack_name = f"{APP_PREFIX}-{resource_group}-{stack_name}"
+
+    region = state.get("AWS_REGION")
+
+    state.validate_env()
+    ret = list_jobs(full=True, running=True, stopped=False, resource_group_level=False)
+    jobs = ret.get("jobs", [])
+
+    for job in jobs:
+        attachments = job.get("attachments", [])
+        if attachments[0]["status"] != "ATTACHED":
+            continue
+        details = attachments[0].get("details", [])
+        eni_id = None
+        for d in details:
+            if d.get("name") == "networkInterfaceId":
+                eni_id = d.get("value")
+                break
+    cred_keys = _get_cred_keys()
+    ec2 = cred.get_client("ec2", cred_keys)
+    enis = ec2.describe_network_interfaces(NetworkInterfaceIds=[eni_id])
+    ip = enis["NetworkInterfaces"][0]["Association"]["PublicIp"]
+    rt53 = cred.get_client("route53", cred_keys)
+    LOGGER.info(f"Attaching {subdomain} to {ip}...")
+    response = rt53.change_resource_record_sets(
+        HostedZoneId=hostedzone_id,
+        ChangeBatch= {
+            "Changes": [
+                {
+                    "Action": "UPSERT",
+                    "ResourceRecordSet": {
+                        "Name": subdomain,
+                        "Type": "A",
+                        "Region": cred_keys["aws_region"],
+                        "TTL": 60,
+                        "SetIdentifier": "domain",
+                        "ResourceRecords": [
+                            {
+                                "Value": ip,
+                            }
+                        ],
+                    },
+                },
+            ],
+        },
+    )
+    return response
 
 
 def _find_json(string):

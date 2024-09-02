@@ -293,7 +293,7 @@ def task_create(
     """`handoff cloud task create -p <project_directory>`
     Create the task
     Optionally,
-    -v cpu=256, memory=512 storage=21
+    -v cpu=256 memory=512 storage=21
     The above example is for AWS Fargate with vCPU 256 unit, 512MB memory, and 21GB ephemeral storage
     """
     state = _get_state()
@@ -364,6 +364,29 @@ def job_status(
     state.validate_env()
     ret = platform.list_jobs(**vars)
     return ret
+
+
+def domain_set(
+    project_dir: str,
+    workspace_dir: str,
+    vars: Dict = {},
+    **kwargs) -> None:
+    """`handoff cloud domain set -p <project_directory> -v hostedzone_id=<hostedzone_id> subdomain=<subdomain>`
+    list task status
+
+    AWS options:
+    - full: When true, print the full description (default: false)
+    - running: When true, include desired status = RUNNING (default: true)
+    - stopped: When true, include desired status = STOPPED (default: true)
+    - resource_group_level: When true, list all the tasks under the same resource groups (default: false)
+    """
+    hostedzone_id = vars.get("hostedzone_id")
+    domain = vars.get("domain")
+
+    state = _get_state()
+    platform = get_platform()
+
+    return platform.set_domain(hostedzone_id, domain)
 
 
 def job_stop(

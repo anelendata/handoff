@@ -36,6 +36,7 @@ setup(
         "Jinja2>=2.10.1",
         "jsonschema>=3.2.0",
         "packaging>=19.2",
+        "psutil>=6.0.0",
         "pygit2==1.13.0",
         "PyGithub==1.59.1",
         "python-dateutil>=2.8.0",

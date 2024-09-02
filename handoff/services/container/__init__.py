@@ -109,5 +109,11 @@ def run(
     If the environment variable __VARS is specified via -e option, it will be
     used as:
     `handoff run -d $(eval echo $__VARS)`
+
+    On Mac, you probably need to do -v 'platform=linux/x86_64' unless Dockerfile specifies the platform.
+
+    If you do container build with a custom Dockerfile containing EXPOSE commands, you can bind the ports.
+    You can bind port betwewn container's 22 and 80 to host's 2222 and 8080 by -v 'ports={"22":2222,"80":8080}'
+    See https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run
     """
     return _get_platform().run(project_dir, workspace_dir, **kwargs)

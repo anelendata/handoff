@@ -194,6 +194,7 @@ def _set_timeout(proc, timeout=None):
     try:
         # Switch from wait to communicate to avoid deadlock?
         # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+        LOGGER.info(f"Process {str(proc.pid)} timeout={str(timeout)} sec")
         proc.communicate(timeout=timeout)
     except TimeoutExpired:
         LOGGER.warning(f"Process {str(proc.pid)} user-set timeout reached. Sending SIGINT...")
@@ -227,16 +228,20 @@ def _run_commands(
     stderr = ""
     killed = False
 
-    if task.get("stdout", True):
+    if task.get("stdout_to_file", True):
         stdout_fn = os.path.join(artifacts_dir, name + "_stdout.log")
     else:
         stdout_fn = os.devnull
-    if task.get("stderr", True):
+    if task.get("stderr_to_file", True):
         stderr_fn = os.path.join(artifacts_dir, name + "_stderr.log")
     else:
-        stderr_fn = os.devnull
+        stderr_fn = os.devnull  # This is just a placeholder
 
     with open(stdout_fn, "w") as stdout, open(stderr_fn, "w") as stderr:
+        if stdout_fn == os.devnull:
+            stdout = None  # Console out to the main log
+        if stderr_fn == os.devnull:
+            stderr = None  # Console out to the main log
         for command_obj in commands:
             if not command_obj.get("active", True):
                 continue
@@ -247,6 +252,7 @@ def _run_commands(
                                               params)
             proc = subprocess.Popen([command_str], stdout=stdout, stderr=stderr,
                                     env=env, shell=True)
+            LOGGER.info(f"Running process {proc.pid}")
             LOGGER.debug(f"Checking return code of {name}: {command_obj['command']}... (pid {proc.pid})")
             timeout = command_obj.get("timeout", None)
 
@@ -332,8 +338,9 @@ def _run_pipeline(
             [command_str], stdin=stdin, stdout=subprocess.PIPE, env=env,
             shell=True)
         last_proc = command_obj["proc"]
+        LOGGER.info(f"Running process {last_proc.pid})")
 
-    if task.get("stdout", True):
+    if task.get("stdout_to_file", True):
         stdin = last_proc.stdout
         stdout_fn = os.path.join(artifacts_dir, name + "_stdout.log")
         with open(stdout_fn, "w") as stdout:
@@ -343,7 +350,7 @@ def _run_pipeline(
 
 
 def _proc_wait(pipeline, proc, exit_codes, timeout=None):
-    LOGGER.info("Checking return code of pid %d" % proc.pid)
+    LOGGER.info(f"Checking return code of pid {str(proc.pid)}")
 
     _set_timeout(proc, timeout)
 

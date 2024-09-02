@@ -127,7 +127,7 @@ class State(dict):
             raise KeyError(key + " is not whitelisted for env var usage.")
         self.unset(key)
         self[key] = value
-        os.environ[key] = value
+        os.environ[key] = str(value)
 
     def get_env(self, name):
         return os.environ.get(name)

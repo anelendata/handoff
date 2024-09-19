@@ -1,5 +1,10 @@
 ## History
 
+### 0.4.1 (2023-10-26)
+
+- fix: fix PyGithub version to 1.59.1
+- Update Dockerfile with handoff public image 0.2
+
 ### 0.4.0 (2023-09-05)
 
 - fix: fix the docker version to 5.0.0

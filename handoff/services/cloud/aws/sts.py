@@ -29,6 +29,8 @@ def assume_role(
     kwargs = {
         "RoleArn": role_arn,
         "RoleSessionName": session_name,
+        # TODO: Extend expiration
+        "DurationSeconds": 60 * 60 * 24,
     }
     if external_id:
         kwargs["ExternalId"] = external_id

@@ -352,9 +352,13 @@ def _run_pipeline(
 def _proc_wait(pipeline, proc, exit_codes, timeout=None):
     LOGGER.info(f"Checking return code of pid {str(proc.pid)}")
 
-    _set_timeout(proc, timeout)
+    if timeout:
+        # TODO: Fix the issue of stdout dropping when timeout is set
+        _set_timeout(proc, timeout)
+        exit_codes[proc] = proc.returncode
+    else:  # workaround
+        exit_codes[proc] = proc.wait() 
 
-    exit_codes[proc] = proc.returncode
     if exit_codes[proc] is None:
         exit_codes[proc] = 1
 

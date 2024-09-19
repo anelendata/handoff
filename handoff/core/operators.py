@@ -194,8 +194,11 @@ def _set_timeout(proc, timeout=None):
     try:
         # Switch from wait to communicate to avoid deadlock?
         # https://docs.python.org/3/library/subprocess.html#subprocess.Popen.wait
+        # But communicate seems to cause dropped stdout messages
+        # https://dcreager.net/2009/08/06/subprocess-communicate-drawbacks
+        # https://dcreager.net/2009/08/13/subprocess-callbacks
         LOGGER.info(f"Process {str(proc.pid)} timeout={str(timeout)} sec")
-        proc.communicate(timeout=timeout)
+        proc.wait(timeout=timeout)
     except TimeoutExpired:
         LOGGER.warning(f"Process {str(proc.pid)} user-set timeout reached. Sending SIGINT...")
         proc.send_signal(signal.SIGINT)
@@ -336,7 +339,11 @@ def _run_pipeline(
 
         command_obj["proc"] = subprocess.Popen(
             [command_str], stdin=stdin, stdout=subprocess.PIPE, env=env,
-            shell=True)
+            shell=True,
+            # bufsize=1 ensures the newline buffer when text=True
+            # https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+            # text=True, bufsize=1
+            )
         last_proc = command_obj["proc"]
         LOGGER.info(f"Running process {last_proc.pid})")
 
@@ -344,20 +351,20 @@ def _run_pipeline(
         stdin = last_proc.stdout
         stdout_fn = os.path.join(artifacts_dir, name + "_stdout.log")
         with open(stdout_fn, "w") as stdout:
-            subprocess.Popen(["cat"], stdin=stdin, stdout=stdout, shell=True)
-
+            subprocess.Popen(
+                ["cat"], stdin=stdin, stdout=stdout, shell=True,
+                # bufsize=1 ensures the newline buffer when text=True
+                # https://docs.python.org/3/library/subprocess.html#subprocess.Popen
+                # text=True, bufsize=1
+                )
     return task
 
 
 def _proc_wait(pipeline, proc, exit_codes, timeout=None):
     LOGGER.info(f"Checking return code of pid {str(proc.pid)}")
 
-    if timeout:
-        # TODO: Fix the issue of stdout dropping when timeout is set
-        _set_timeout(proc, timeout)
-        exit_codes[proc] = proc.returncode
-    else:  # workaround
-        exit_codes[proc] = proc.wait() 
+    _set_timeout(proc, timeout)
+    exit_codes[proc] = proc.returncode
 
     if exit_codes[proc] is None:
         exit_codes[proc] = 1

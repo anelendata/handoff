@@ -26,7 +26,7 @@ def _install(install: str, venv_path: str = None) -> None:
     else:
         venv_switch = ""
     command = f'/bin/bash -c "{venv_switch}{install}"'
-    LOGGER.debug("Running %s" % command)
+    LOGGER.info("Running %s" % command)
     p = subprocess.Popen([command], shell=True)
     p.wait()
 
@@ -41,11 +41,12 @@ def _make_python_venv(venv_path: str) -> None:
             path = "/".join(paths[0:i])
             if not os.path.exists(path):
                 os.mkdir(path)
-        # https://github.com/anelenvars/handoff/issues/25#issuecomment-667945434
+        # https://github.com/anelendata/handoff/issues/25#issuecomment-667945434
         builder = pyvenvx.ExtendedEnvBuilder(symlinks=True)
         builder.create(venv_path)
+        _install(f"{venv_path}/bin/python -m ensurepip --upgrade")
         _install("pip3 install wheel", venv_path)
-
+        LOGGER.info(f"Created a new venv in {venv_path}")
 
 def _parse_template_files(
         templates_dir: str,

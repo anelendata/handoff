@@ -44,7 +44,7 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
     handoff_dir = os.path.join(cwd, "../../../../")
     logger.info("Looking for handoff source at " + handoff_dir)
     if os.path.isfile(os.path.join(handoff_dir, "setup.py")):
-        logger.info("Found handoff. Copying to the build directory")
+        logger.info(f"Found handoff. Copying to the build directory {build_dir}")
         ho_build_dir = os.path.join(build_dir, "handoff")
         os.mkdir(ho_build_dir)
         shutil.copytree(os.path.join(handoff_dir, "handoff"),

@@ -41,7 +41,7 @@ setup(
         "PyGithub==1.59.1",
         "python-dateutil>=2.8.0",
         "pyyaml>=5.4",
-        "requests>=2.19.0",
+        "requests>=2.26.0",
         "s3transfer>=0.2.0",
     ],
     entry_points="""

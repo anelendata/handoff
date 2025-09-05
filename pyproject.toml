@@ -1,9 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "handoff"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.4.1"
+description = "Deploy configurable unix pipeline jobs serverlessly."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
+license = "Apache-2.0"
+authors = [
+    {"name" = "Daigo Tanaka"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
 dependencies = [
     "attrs==25.3.0",
     "boto3==1.40.22",
@@ -20,4 +36,20 @@ dependencies = [
     "pyyaml==6.0.2",
     "requests==2.32.5",
     "s3transfer==0.13.1",
+]
+
+[project.urls]
+Homepage = "https://handoff.cloud"
+Documentation = "https://dev.handoff.cloud"
+
+[project.scripts]
+handoff = "handoff:main"
+
+[tool.setuptools]
+packages = ["handoff"]
+include-package-data = true
+
+[dependency-groups]
+dev = [
+    "build>=1.3.0",
 ]

@@ -19,6 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "attrs==25.3.0",
@@ -43,7 +44,7 @@ Homepage = "https://handoff.cloud"
 Documentation = "https://dev.handoff.cloud"
 
 [project.scripts]
-handoff = "handoff:main"
+handoff = "handoff:main.main"
 
 [tool.setuptools]
 packages = ["handoff"]

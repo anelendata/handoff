@@ -5,16 +5,16 @@ from lxml import html
 import requests
 from typing import Dict, List
 
-from config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
+from .config import (VERSION, HANDOFF_DIR, ENV_PREFIX,
                             ARTIFACTS_DIR, PROJECT_FILE,
                             BUCKET, RESOURCE_GROUP, TASK,
                             CONTAINER_IMAGE, IMAGE_VERSION,
                             CLOUD_PROVIDER, CLOUD_PLATFORM,
                             CONTAINER_PROVIDER, STAGE, DEFAULT_STAGE,
                             get_state, init_state)
-from core import admin, task
-from utils import bcolors, get_logger
-import plugins, services
+from .core import admin, task
+from .utils import bcolors, get_logger
+from .import plugins, services
 
 LOGGER = get_logger("handoff")
 

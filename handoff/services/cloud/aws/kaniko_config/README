@@ -1,0 +1,18 @@
+The handoff container builder image,
+public.ecr.aws/m5u3u5p2/handoff-container-builder
+
+is just a pre-configured kaniko image as in this directory.
+
+To build this image, do:
+
+docker build -t handoff-container-builder .
+
+Push the image to a public repository:
+https://docs.aws.amazon.com/AmazonECR/latest/public/getting-started-cli.html
+
+This command prepares the tar.gz for kaniko and upload to S3, under the project subfolder "bundles":
+handoff container bundle -p <project_dir>
+
+Then this command builds the project's docker image as handoff task. Kaniko executes as a Fargate task, and upload the image to the image registry:
+handoff cloud container build -p <project_dir>
+

@@ -1,5 +1,10 @@
 ## History
 
+### 0.4.2 (2025-09-10)
+
+- Modernize the package with project.toml (#130)
+- fix: ensure pip is installed and used in project venvs
+
 ### 0.4.1 (2023-10-26)
 
 - fix: fix PyGithub version to 1.59.1

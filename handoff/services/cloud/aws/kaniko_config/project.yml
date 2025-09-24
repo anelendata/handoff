@@ -1,0 +1,31 @@
+version: 0.4.0
+description: Build handoff task container image in kaniko
+
+installs:
+- command: echo No install
+
+vars: []
+envs: []
+secrets: []
+tasks: []
+
+
+deploy:
+  provider: aws
+  platform: fargate
+  resource_group: etl
+  container_image: handoff-container-builder
+  image_domain: public.ecr.aws/m5u3u5p2
+  image_version: 0.1
+  task: ho-container-builder
+  cpu: 512
+  memory: 2048
+
+schedules:
+- cron: '0 3 27 6 ? 2021'
+  envs:
+  - key: COMMAND
+    value: "container buildpush"
+  - key: __VARS
+    value: 'start_datetime=$(date -Iseconds -d "00:00 yesterday") end_datetime=$(date -Iseconds -d "00:00 today")'
+  target_id: 'once'

@@ -70,6 +70,8 @@ def _assume_role(
         external_id=None,
         cred_keys: dict = {},
         ):
+    # TODO: STS Token expires in 6.5 hours. Try refreshable token
+    # https://gist.github.com/kapilt/ac8e222081f63ba64e93
     state = get_state()
     if not role_arn:
         account_id = sts.get_account_id(cred_keys=cred_keys)
@@ -593,7 +595,9 @@ def create_task(template_file=None, update=False, memory=512,
     resource_group_naked = state.get(RESOURCE_GROUP_NAKED)
 
     bucket = state.get(BUCKET)
-    _, _, image_domain = get_docker_registry_credentials()
+    image_domain = state.get(IMAGE_DOMAIN)
+    if not image_domain:
+        _, _, image_domain = get_docker_registry_credentials()
     container_image = state.get(CONTAINER_IMAGE)
     if not image_version:
         image_version = state.get(IMAGE_VERSION)

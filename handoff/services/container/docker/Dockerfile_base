@@ -1,5 +1,5 @@
-# Pull base image.
-FROM ubuntu:24.04
+# Pull base image. Make sure to set platform or you'd get exec format errors
+FROM --platform=linux/amd64 ubuntu:24.04
 
 MAINTAINER Daigo Tanaka <daigo.tanaka@gmail.com>
 
@@ -57,9 +57,9 @@ RUN set -ex \
 
 ##############
 # libgit2 make
-RUN wget https://github.com/libgit2/libgit2/archive/v1.1.0.tar.gz && \
-    tar xzf v1.1.0.tar.gz && \
-    cd libgit2-1.1.0/ && \
+RUN wget https://github.com/libgit2/libgit2/archive/v1.7.2.tar.gz && \
+    tar xzf v1.7.2.tar.gz && \
+    cd libgit2-1.7.2/ && \
     cmake . && \
     make && \
     make install && \

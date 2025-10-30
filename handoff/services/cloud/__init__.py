@@ -93,8 +93,10 @@ def role_create(
                          "-v external_id=yyyy")
 
     return platform.create_role(
-        grantee_account_id=str(vars.get("grantee_account_id", account_id)),
-        external_id=vars.get("external_id"),
+        grantee_account_id=str(
+            vars.get("grantee_account_id", account_id)),
+            external_id=vars.get("external_id"),
+            template_file=vars.get("template_file"),
         )
 
 
@@ -159,6 +161,7 @@ def role_status(
     """
     state = _get_state()
     platform = get_platform()
+    account_id = platform.get_account_id()
     state.validate_env()
     return platform.get_role_status(
         grantee_account_id=str(vars.get("grantee_account_id", account_id))
@@ -296,6 +299,10 @@ def task_create(
     -v cpu=256 memory=512 storage=21
     The above example is for AWS Fargate with vCPU 256 unit, 512MB memory, and 21GB ephemeral storage
     """
+    config = admin._config_get_local(project_dir, workspace_dir)
+    cpu = vars.get("cpu") or config.get("deploy", {}).get("cpu", 256)
+    memory = vars.get("memory") or config.get("deploy", {}).get("memory", 512)
+    vars.update({"cpu": cpu, "memory": memory})
     state = _get_state()
     platform = get_platform()
     state.validate_env([IMAGE_VERSION])
@@ -312,6 +319,10 @@ def task_update(
     Optionally,
     -v cpu=256, memory=512
     """
+    config = admin._config_get_local(project_dir, workspace_dir)
+    cpu = vars.get("cpu") or config.get("deploy", {}).get("cpu", 256)
+    memory = vars.get("memory") or config.get("deploy", {}).get("memory", 512)
+    vars.update({"cpu": cpu, "memory": memory})
     state = _get_state()
     platform = get_platform()
     state.validate_env([IMAGE_VERSION])

@@ -368,7 +368,9 @@ def create_role(
     # resource_group = state.get(RESOURCE_GROUP)
     stack_name = "handoff-role-" + str(grantee_account_id)
     # stack_name = resource_group + "-role-" + str(grantee_account_id)
-    if not template_file:
+    if template_file:
+        LOGGER.info(f"Using template file {template_file}")
+    else:
         aws_dir, _ = os.path.split(__file__)
         template_file = os.path.join(aws_dir, TEMPLATE_DIR, "role.yml")
     parameters = [
@@ -533,7 +535,9 @@ def create_resources(template_file=None, update=False, static_ip=False,
             "ParameterValue": bucket,
         },
     ]
-    if not template_file:
+    if template_file:
+        LOGGER.info(f"Using template_file= {template_file}")
+    else:
         aws_dir, _ = os.path.split(__file__)
         if static_ip:
             template_file = os.path.join(aws_dir, TEMPLATE_DIR, "resources_static_ip.yml")
@@ -587,7 +591,7 @@ def _get_task_stack_name():
 
 
 def create_task(template_file=None, update=False, memory=512,
-                cpu=256, storage=21, image_version=None, **kwargs):
+                cpu=256, storage=21, image_version=None, image_domain=None, **kwargs):
     state = get_state()
     task_name = state.get(TASK)
     task_name_naked = state.get(TASK_NAKED)
@@ -595,7 +599,11 @@ def create_task(template_file=None, update=False, memory=512,
     resource_group_naked = state.get(RESOURCE_GROUP_NAKED)
 
     bucket = state.get(BUCKET)
-    image_domain = state.get(IMAGE_DOMAIN)
+
+    if not image_domain:
+        image_domain = state.get(IMAGE_DOMAIN)
+    LOGGER.info(f"image domain: {image_domain}")
+
     if not image_domain:
         _, _, image_domain = get_docker_registry_credentials()
     container_image = state.get(CONTAINER_IMAGE)

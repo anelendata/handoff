@@ -349,6 +349,13 @@ Resources:
               Resource:
                 - !Sub arn:aws:ssm:*:${AWS::AccountId}:parameter/*
 
+            - Effect: Allow
+              Action:
+              - ses:SendRawEmail
+              Resource:
+                - !Sub arn:aws:ses:*:${AWS::AccountId}:identity/*
+                - !Sub arn:aws:ses:*:${AWS::AccountId}:configuration-set/*
+
   CloudWatchEventECSRole:
     Type: AWS::IAM::Role
     Properties:

@@ -1,7 +1,7 @@
 # Pull base image. Make sure to set platform or you'd get exec format errors
 FROM --platform=linux/amd64 ubuntu:24.04
 
-MAINTAINER Daigo Tanaka <daigo.tanaka@gmail.com>
+MAINTAINER Daigo Tanaka <daigo@anelen.co>
 
 # upgrade is not recommended by the best practice page
 # RUN apt-get -y upgrade

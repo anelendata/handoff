@@ -1,7 +1,7 @@
 # Pull base image. Make sure to set platform or you'd get exec format errors
 FROM --platform=linux/amd64 ubuntu:24.04
 
-MAINTAINER Daigo Tanaka <daigo.tanaka@gmail.com>
+MAINTAINER Daigo Tanaka <daigo@anelen.co>
 
 # upgrade is not recommended by the best practice page
 # RUN apt-get -y upgrade
@@ -74,10 +74,8 @@ RUN chmod +x /tini
 ########
 # SSH stuff
 
-RUN mkdir -p /var/run/sshd
-
 # SSH login fix. Otherwise user is kicked off after login
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+RUN mkdir -p /var/run/sshd && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 # Or do this?
 # RUN sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
@@ -86,16 +84,11 @@ RUN chmod 777 -R /app
 
 WORKDIR /app
 
-RUN ./script/install_handoff
-
 # It is recommended to make virtual envs for each process
-RUN handoff workspace install -p project -w workspace
+RUN ./script/install_handoff && handoff workspace install -p project -w workspace
 
 # Make sure to delete these directories in case sensitive information was accidentally copied.
-RUN rm -fr project
-RUN rm -fr workspace/config
-RUN rm -fr workspace/files
-RUN rm -fr workspace/artifacts
+RUN rm -fr project workspace/config workspace/files workspace/artifacts
 
 RUN chmod a+x /usr/local/bin/*
 

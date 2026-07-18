@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  ApplicationPrefix:
+    Type: String
+    Description: A prefix to restrict resource access from this role
+    MaxLength: 16
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Default: handoff
+
+  EnvVarPrefix:
+    Type: String
+    Description: Prefix for environment variables
+    Default: HO_
+    AllowedPattern: "[A-Z][A-Z0-9_]*"
+
+  ResourceGroup:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  ResourceGroupNaked:
+    Type: String
+    Description: A name to group the task belongs to without staging prefix
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  TaskName:
+    Type: String
+    Description: A name to group the task belongs to
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  TaskNameNaked:
+    Type: String
+    Description: A name to group the task belongs to without staging prefix
+    MaxLength: 27
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  Bucket:
+    Type: String
+    Description: The name of the bucket to store configs and artifacts
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z0-9][a-z0-9-.]*"
+
+  ImageDomain:
+    Type: String
+    Description: Domain part of the Docker image URI to use for app (e.g. in ECR or DockerHub)
+  ImageName:
+    Type: String
+    Description: Name part of the Docker image URI to use for app (e.g. in ECR or DockerHub)
+  ImageVersion:
+    Type: String
+    Description: Version(tag) of the Docker image to use for app
+
+  AllocatedCpu:
+    Type: Number
+    Default: 256
+    Description: CPU units allocated to the task
+  AllocatedMemory:
+    Type: Number
+    Default: 512
+    Description: Memory (in MB) allocated to the task
+  EphemeralStorage:
+    Type: Number
+    Default: 21
+    Description: Ephemeral Storage (in GB) allocated to the task
+
+  LogRetentionDays:
+    Type: Number
+    Default: 365
+    Description: Days before the log is deleted
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: !Sub ${ApplicationPrefix}/${ResourceGroup}/${TaskNameNaked}
+      RetentionInDays: !Ref LogRetentionDays
+
+  ErrorLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?ERROR ?Error ?error ?CRITICAL ?Exception"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-error
+
+  StartedLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?Job started at"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-started
+
+  EndedLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?Job ended at"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-ended
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ApplicationPrefix}-${ResourceGroup}-${TaskNameNaked}
+      Cpu: !Sub ${AllocatedCpu}
+      Memory: !Sub ${AllocatedMemory}
+      EphemeralStorage:
+        SizeInGiB: !Sub ${EphemeralStorage}
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !ImportValue
+        "Fn::Sub": "handoff-TaskExecutionRoleArn"
+      TaskRoleArn: !ImportValue
+        "Fn::Sub": "handoff-TaskRoleArn"
+      ContainerDefinitions:
+        - Name: !Sub ${ImageName}
+          Cpu: !Sub ${AllocatedCpu}
+          Memory: !Sub ${AllocatedMemory}
+          Image: !Sub ${ImageDomain}/${ImageName}:${ImageVersion}
+          PortMappings:
+            - ContainerPort: 22
+              HostPort: 22
+          Environment:
+            - Name: !Sub ${EnvVarPrefix}RESOURCE_GROUP
+              Value: !Sub ${ResourceGroup}
+            - Name: !Sub ${EnvVarPrefix}BUCKET
+              Value: !Sub ${Bucket}
+            - Name: !Sub ${EnvVarPrefix}CONTAINER_IMAGE
+              Value: !Sub ${ImageName}
+            - Name: !Sub ${EnvVarPrefix}TASK
+              Value: !Sub ${TaskNameNaked}
+            - Name: !Sub ${EnvVarPrefix}PROVIDER
+              Value: aws
+            - Name: !Sub ${EnvVarPrefix}PLATFORM
+              Value: fargate
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub ${ApplicationPrefix}/${ResourceGroup}/${TaskNameNaked}

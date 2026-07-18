@@ -52,7 +52,7 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
         files = [
             "MANIFEST.in",
             "README.md",
-            "requirements.txt",
+            "pyproject.toml",
             "setup.cfg",
             "setup.py",
         ]

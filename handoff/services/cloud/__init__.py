@@ -498,7 +498,8 @@ def container_build(
     target_envs[TASK] = state[TASK_NAKED]
 
     return platform.run_job(
-            task_name="handoff-container-builder",
+            task_name="ho-container-builder",
+            # task_name="handoff-container-builder",
             container_name="handoff-container-builder",
             env=target_envs,
             command=command,

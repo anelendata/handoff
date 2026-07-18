@@ -1,0 +1,28 @@
+version: 0.4.0
+description: Build handoff task container image in kaniko
+
+installs:
+- command: echo No install
+
+vars: []
+
+envs: []
+tasks: []
+
+
+deploy:
+  cloud_provider: aws
+  cloud_platform: fargate
+  resource_group: handoff-etl
+  container_image: handoff-container-builder
+  task: handoff-container-builder
+
+schedules:
+- target_id: 1
+  description: Run everyday at 00:00:00Z
+  envs:
+  - key: COMMAND
+    value: "container buildpush"
+  - key: __VARS
+    value: 'start_datetime=$(date -Iseconds -d "00:00 yesterday") end_datetime=$(date -Iseconds -d "00:00 today")'
+  cron: '0 0 * * ? *'

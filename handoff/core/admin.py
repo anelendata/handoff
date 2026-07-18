@@ -233,13 +233,14 @@ def _secrets_get_local(
 
     See secrets_push for the local file specification.
     """
+    state = get_state()
     global SECRETS
     SECRETS = {}
     if vars.get("secrets_dir"):
         secrets_dir = vars["secrets_dir"]
     else:
         secrets_dir = os.path.join(project_dir, SECRETS_DIR)
-    secrets_file = os.path.join(secrets_dir, SECRETS_FILE)
+    secrets_file = os.path.join(secrets_dir, state["_stage_"] + SECRETS_FILE)
 
     if not os.path.isfile(secrets_file):
         LOGGER.warning(secrets_file + " does not exsist")

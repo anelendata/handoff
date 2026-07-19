@@ -926,11 +926,21 @@ def unschedule_job(target_id):
     return response
 
 
-def list_schedules(full=False, **kwargs):
+def list_schedules(full=False, scope="declared", target_ids=None, **kwargs):
+    if scope not in events.SCHEDULE_LIST_SCOPES:
+        raise ValueError(
+            f"Invalid scope {scope!r}. "
+            f"Must be one of {events.SCHEDULE_LIST_SCOPES}.")
+
     state = get_state()
     task_stack = _get_task_stack_name()
     try:
-        response = events.list_schedules(task_stack, cred_keys=_get_cred_keys())
+        response = events.list_schedules(
+            task_stack,
+            cred_keys=_get_cred_keys(),
+            scope=scope,
+            target_ids=target_ids,
+        )
     except Exception as e:
         LOGGER.error(e)
         response = []

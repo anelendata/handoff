@@ -6,6 +6,7 @@ from . import credentials as cred
 from . import cloudformation as cfn, iam, sts, stepfunctions as stepfns
 
 from handoff import utils
+from handoff.config import APP_PREFIX
 
 
 LOGGER = utils.get_logger()
@@ -167,19 +168,70 @@ def unschedule_job(
     client.delete_rule(Name=rule_name)
 
 
+SCHEDULE_LIST_SCOPES = ("declared", "prefix", "all")
+
+
+def _list_rules_by_prefix(client, name_prefix):
+    rules = []
+    kwargs = {"NamePrefix": name_prefix}
+    while True:
+        page = client.list_rules(**kwargs)
+        rules.extend(page.get("Rules", []))
+        next_token = page.get("NextToken")
+        if not next_token:
+            break
+        kwargs["NextToken"] = next_token
+    return rules
+
+
 def list_schedules(
         task_stack,
         cred_keys: dict = {},
+        scope: str = "declared",
+        target_ids: list = None,
         ):
+    """List the EventBridge rules (schedules) for a task.
+
+    `scope` controls how rules are matched to this task, since rule names
+    (`f"{task_stack}-{target_id}"`) are only distinguished from a sibling
+    task's rules (e.g. `<task>` vs `<task>-rest`) by a plain string prefix,
+    which EventBridge's `NamePrefix` matches loosely:
+
+    - "declared" (default): only rules whose target_id is in `target_ids`
+      (the project's locally declared schedules). Safest; will not surface
+      schedules that exist in AWS but were never declared locally.
+    - "prefix": legacy behavior - anything matching `NamePrefix=task_stack`.
+      Can over-match sibling tasks whose name extends this one.
+    - "all": every handoff-managed rule in the account, regardless of task.
+    """
+    if scope not in SCHEDULE_LIST_SCOPES:
+        raise ValueError(
+            f"Invalid scope {scope!r}. Must be one of {SCHEDULE_LIST_SCOPES}.")
+
     client = get_client(cred_keys)
-    rule_prefix = task_stack
-    kwargs = {
-        "NamePrefix": rule_prefix,
-    }
-    rules = client.list_rules(**kwargs)
+
+    if scope == "all":
+        candidates = _list_rules_by_prefix(client, f"{APP_PREFIX}-")
+    else:
+        candidates = _list_rules_by_prefix(client, task_stack)
+
+    if scope == "declared":
+        if not target_ids:
+            candidates = []
+        else:
+            wanted_names = {f"{task_stack}-{tid}" for tid in target_ids}
+            candidates = [r for r in candidates if r["Name"] in wanted_names]
+    elif scope == "prefix":
+        LOGGER.warning(
+            "cloud schedule list scope=prefix can over-match rules "
+            "belonging to a sibling task whose name extends this task's "
+            "name (e.g. '%s' would also match '%s-rest-...'). Prefer "
+            "scope=declared or verify results with scope=all.",
+            task_stack, task_stack,
+        )
 
     response = list()
-    for rule in rules.get("Rules", []):
+    for rule in candidates:
         targets = client.list_targets_by_rule(Rule=rule["Name"])
         record = {"rule": rule, "targets": targets.get("Targets")}
         response.append(record)

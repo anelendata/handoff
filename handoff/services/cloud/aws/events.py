@@ -168,6 +168,9 @@ def unschedule_job(
     client.delete_rule(Name=rule_name)
 
 
+SCHEDULE_LIST_SCOPES = ("declared", "prefix", "all")
+
+
 def _list_rules_by_prefix(client, name_prefix):
     rules = []
     kwargs = {"NamePrefix": name_prefix}
@@ -201,6 +204,10 @@ def list_schedules(
       Can over-match sibling tasks whose name extends this one.
     - "all": every handoff-managed rule in the account, regardless of task.
     """
+    if scope not in SCHEDULE_LIST_SCOPES:
+        raise ValueError(
+            f"Invalid scope {scope!r}. Must be one of {SCHEDULE_LIST_SCOPES}.")
+
     client = get_client(cred_keys)
 
     if scope == "all":

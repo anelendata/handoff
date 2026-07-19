@@ -927,6 +927,11 @@ def unschedule_job(target_id):
 
 
 def list_schedules(full=False, scope="declared", target_ids=None, **kwargs):
+    if scope not in events.SCHEDULE_LIST_SCOPES:
+        raise ValueError(
+            f"Invalid scope {scope!r}. "
+            f"Must be one of {events.SCHEDULE_LIST_SCOPES}.")
+
     state = get_state()
     task_stack = _get_task_stack_name()
     try:

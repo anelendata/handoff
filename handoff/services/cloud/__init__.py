@@ -635,18 +635,46 @@ def schedule_list(
     **kwargs) -> None:
     """`handoff cloud schedule list`
     List the scheduled tasks
+
+    Use --vars (-v) option to:
+    - scope: Controls how deployed EventBridge rules are matched to this
+      task. Rule names only differ from a sibling task's rules (e.g.
+      "foo" vs "foo-rest") by a plain string prefix, so this choice
+      matters:
+      - declared (default): only rules whose target_id is already
+        declared in this project's local schedules config. Safest;
+        will not surface schedules that exist in AWS but were never
+        declared locally.
+      - prefix: legacy behavior, matches any rule whose name starts
+        with this task's stack name. Can over-match a sibling task
+        whose name extends this one.
+      - all: every handoff-managed schedule in the AWS account,
+        regardless of task.
+    - include_unpublished: also include locally declared schedules that
+      have not been deployed yet.
     """
     state = _get_state()
     platform = get_platform()
     state.validate_env()
-    schedules = platform.list_schedules(**vars)
+
+    scope = vars.get("scope", "declared")
+    config = None
+    if scope == "declared" or vars.get("include_unpublished"):
+        config = admin._config_get_local(project_dir, workspace_dir)
+
+    list_vars = dict(vars)
+    if scope == "declared":
+        list_vars["target_ids"] = [
+            str(s["target_id"]) for s in config.get("schedules", [])
+        ]
+
+    schedules = platform.list_schedules(**list_vars)
     target_ids = []
     for s in schedules["schedules"]:
         target_ids.append(str(s["target_id"]))
         s["status"] = "scheduled"
 
     if vars.get("include_unpublished"):
-        config = admin._config_get_local(project_dir, workspace_dir)
         local_schedules = config.get("schedules", [])
         for s in local_schedules:
             s["target_id"] = str(s["target_id"])

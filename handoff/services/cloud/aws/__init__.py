@@ -926,11 +926,16 @@ def unschedule_job(target_id):
     return response
 
 
-def list_schedules(full=False, **kwargs):
+def list_schedules(full=False, scope="declared", target_ids=None, **kwargs):
     state = get_state()
     task_stack = _get_task_stack_name()
     try:
-        response = events.list_schedules(task_stack, cred_keys=_get_cred_keys())
+        response = events.list_schedules(
+            task_stack,
+            cred_keys=_get_cred_keys(),
+            scope=scope,
+            target_ids=target_ids,
+        )
     except Exception as e:
         LOGGER.error(e)
         response = []

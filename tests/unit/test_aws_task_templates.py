@@ -50,3 +50,29 @@ def test_task_templates_do_not_contain_account_specific_arns():
         template = path.read_text()
 
         assert "arn:aws:iam::" not in template
+
+
+def test_timeout_log_metric_filter_is_present():
+    for path in TASK_TEMPLATE_PATHS:
+        template = load_template(path)
+        resources = template["Resources"]
+        metric_filter = resources["TimeoutLogMetricFilter"]
+
+        assert metric_filter["Type"] == "AWS::Logs::MetricFilter"
+        assert metric_filter["Properties"]["FilterPattern"] == "?WARNING Timeout"
+
+        transformation = metric_filter["Properties"]["MetricTransformations"][0]
+        assert transformation["MetricName"] == "${AWS::StackName}-timeout"
+
+        # Existing started/ended/error filters must be untouched by this change.
+        assert resources["ErrorLogMetricFilter"]["Properties"]["FilterPattern"] == (
+            EXPECTED_ERROR_FILTER_PATTERN
+        )
+        assert (
+            resources["StartedLogMetricFilter"]["Properties"]["FilterPattern"]
+            == "?Job started at"
+        )
+        assert (
+            resources["EndedLogMetricFilter"]["Properties"]["FilterPattern"]
+            == "?Job ended at"
+        )

@@ -11,7 +11,11 @@ version: 2
 build:
   os: ubuntu-24.04
   tools:
-    python: "3.12"
+    # Keep at 3.11: the project pins pygit2==1.13.0, which publishes linux
+    # wheels only for cp38-cp311. On 3.12 pip falls back to building pygit2
+    # from source, which needs libgit2 headers (git2.h) that are not present
+    # on the builder, and the build fails. Bump this only together with pygit2.
+    python: "3.11"
 
 sphinx:
   configuration: docs/conf.py

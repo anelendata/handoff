@@ -624,8 +624,8 @@ def schedule_delete(
     try:
         response = platform.unschedule_job(target_id)
     except Exception as e:
-        response = str(e)
-    return {"status": "success", "result": responses}
+        return {"status": "error", "message": str(e)}
+    return {"status": "success", "result": response}
 
 
 def schedule_list(

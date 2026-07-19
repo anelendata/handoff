@@ -84,7 +84,7 @@ Resources:
     Properties:
       LogGroupName:
         Ref: LogGroup
-      FilterPattern: "?ERROR ?Error ?error ?CRITICAL ?Exception"
+      FilterPattern: '?"ended with exit code 1" ?"exited with code 1" ?"CRITICAL" ?"Traceback (most recent call last)"'
       MetricTransformations:
         - MetricValue: "1"
           MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}

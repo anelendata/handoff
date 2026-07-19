@@ -1,5 +1,9 @@
 ## History
 
+### 0.4.3 (2026-07-18)
+
+- Tighten the default CloudWatch error metric filter to match task-failure signals instead of broad error substrings.
+
 ### 0.4.2 (2025-09-10)
 
 - Modernize the package with project.toml (#130)

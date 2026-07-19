@@ -112,6 +112,17 @@ Resources:
           MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}
           MetricName: !Sub ${AWS::StackName}-ended
 
+  TimeoutLogMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName:
+        Ref: LogGroup
+      FilterPattern: "?WARNING Timeout"
+      MetricTransformations:
+        - MetricValue: "1"
+          MetricNamespace: !Sub ${ApplicationPrefix}-${ResourceGroup}
+          MetricName: !Sub ${AWS::StackName}-timeout
+
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:

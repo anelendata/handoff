@@ -159,3 +159,62 @@ fields @timestamp, @log, @message
 | filter @message like /(CRITICAL|Error|error)/
 | count() as errors by bin(1h)
 ```
+
+## Alarming on task completion gaps
+
+The default task template's `ErrorLogMetricFilter` is intentionally narrow: it
+matches specific application-level failure phrases (`ended with exit code 1`,
+`CRITICAL`, a Python traceback, etc.) so that unrelated log noise doesn't trip
+false alarms. The tradeoff is that it can only catch failures the task's own
+process got far enough to *log*. It cannot see:
+
+- task-startup failures before any application log line is emitted (e.g. the
+  container image can't be pulled, or the task can't be scheduled)
+- OOM or signal-based exits that never reach a matching log line
+- a task that hangs and never exits at all
+
+For a scheduled task, ECS Fargate execution is wrapped in an AWS Step
+Functions state machine (one per scheduled `target_id`), and Step Functions
+already emits `AWS/States` `ExecutionsFailed` and `ExecutionsTimedOut`
+metrics, dimensioned by `StateMachineArn`, that reflect the outcome of the
+*whole* execution regardless of whether the task process itself ever started
+or logged anything. These cover all three gaps above, and since they only
+fire once an execution has truly finished failing or timed out, a task whose
+container pull is retried and eventually succeeds within the same execution
+will not trip the alarm — you won't get paged for something that already
+self-healed.
+
+To use them, find the state machine ARN for a scheduled task with:
+
+```
+handoff cloud schedule list -p <project_dir> -s <stage> -v full=True
+```
+
+Look for `targets[0].Arn` in the output — that's the `StateMachineArn`.
+
+The repo ships a ready-to-deploy, opt-in alarm stack at
+[`handoff/services/cloud/aws/cloudformation_templates/alarm.yml`](https://github.com/anelendata/handoff/blob/master/handoff/services/cloud/aws/cloudformation_templates/alarm.yml)
+(also included in the installed package under the same relative path). It
+creates an SNS topic with an email subscription plus the two alarms. Deploy
+it per task with the plain AWS CLI, since it's independent of handoff's own
+`cloud resources`/`cloud task` stacks:
+
+```
+aws cloudformation create-stack \
+  --stack-name <resource-group>-<task-name>-completion-alarm \
+  --template-body file://alarm.yml \
+  --parameters \
+      ParameterKey=ResourceGroup,ParameterValue=<resource-group> \
+      ParameterKey=TaskName,ParameterValue=<task-name> \
+      ParameterKey=StateMachineArn,ParameterValue=<state-machine-arn-from-above> \
+      ParameterKey=AlarmEmail,ParameterValue=<your-email>
+```
+
+If you also want to catch a task that starts but *stalls* mid-run with no
+`global_timeout` set (so `ExecutionsTimedOut` never fires), you can build a
+secondary alarm on the existing `<stack>-started` / `<stack>-ended` metric
+filters using CloudWatch metric math (`started_sum - ended_sum`, evaluated
+over a period comfortably longer than the task's expected runtime). Keep in
+mind this only complements the alarm above — since `<stack>-started` is only
+incremented once the task process is already running, it cannot see any of
+the three startup-time gaps this section opened with.

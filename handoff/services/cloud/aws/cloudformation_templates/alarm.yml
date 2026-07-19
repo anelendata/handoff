@@ -1,4 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Optional, opt-in alarm stack for a handoff task's completion gaps
+  (task-startup failures, OOM/signal exits, hangs) that the default
+  ErrorLogMetricFilter cannot see, since those failures may occur before
+  the task emits any application log line. See docs/advanced_topics.md.
 Parameters:
   ResourceGroup:
     Type: String
@@ -14,15 +19,11 @@ Parameters:
 
   StateMachineArn:
     Type: String
-    Description: Email subscribing to the alarm
-    MaxLength: 27
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: ARN of the task's Step Functions state machine (see `handoff cloud task status`)
 
   AlarmEmail:
     Type: String
-    Description: Email subscribing to the alarm
-    MaxLength: 27
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+    Description: Email address to subscribe to the alarm SNS topic
 
 Resources:
   AlarmSNSTopic:
@@ -32,9 +33,9 @@ Resources:
       - Endpoint: !Sub ${AlarmEmail}
         Protocol: email
   ExecutionsFailedAlarm:
-    Condition: HasAlertingModule
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
+      AlarmName: !Sub ${ResourceGroup}-${TaskName}-executions-failed
       AlarmDescription: 'Failure while executing scheduled task.'
       Namespace: 'AWS/States'
       MetricName: ExecutionsFailed
@@ -51,9 +52,9 @@ Resources:
       AlarmActions:
       - !Ref AlarmSNSTopic
   ExecutionsTimeoutAlarm:
-    Condition: HasAlertingModule
     Type: 'AWS::CloudWatch::Alarm'
     Properties:
+      AlarmName: !Sub ${ResourceGroup}-${TaskName}-executions-timed-out
       AlarmDescription: 'Executing scheduled task timed out.'
       Namespace: 'AWS/States'
       MetricName: ExecutionsTimedOut
@@ -69,4 +70,4 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
       - !Ref AlarmSNSTopic
-  
+

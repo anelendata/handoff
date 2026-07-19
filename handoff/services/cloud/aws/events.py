@@ -177,11 +177,9 @@ def list_schedules(
         "NamePrefix": rule_prefix,
     }
     rules = client.list_rules(**kwargs)
-    if not rules.get("Rules"):
-        raise Exception("No rules found")
 
     response = list()
-    for rule in rules.get("Rules"):
+    for rule in rules.get("Rules", []):
         targets = client.list_targets_by_rule(Rule=rule["Name"])
         record = {"rule": rule, "targets": targets.get("Targets")}
         response.append(record)

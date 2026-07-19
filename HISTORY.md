@@ -1,6 +1,6 @@
 ## History
 
-### 0.4.3 (2026-07-18)
+### 0.4.3 (2026-07-19)
 
 - fix: Fix NameError in schedule_delete and report real failures (#131, #139)
 - fix: Do not raise when a task has zero EventBridge schedules (#132, #140)

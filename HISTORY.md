@@ -2,7 +2,13 @@
 
 ### 0.4.3 (2026-07-18)
 
-- Tighten the default CloudWatch error metric filter to match task-failure signals instead of broad error substrings.
+- fix: Fix NameError in schedule_delete and report real failures (#131, #139)
+- fix: Do not raise when a task has zero EventBridge schedules (#132, #140)
+- fix: Add scope option to cloud schedule list to fix task-name-prefix over-matching (#134, #141)
+- fix: Fix docker (#135)
+- feature: Tighten the default CloudWatch error metric filter to match task-failure signals instead of broad error substrings (#133, #136)
+- feature: Add timeout metric filter to the default task CloudFormation templates (#138, #142)
+- doc: Document alarming on task completion gaps (started-vs-ended blind spots) (#137, #143)
 
 ### 0.4.2 (2025-09-10)
 

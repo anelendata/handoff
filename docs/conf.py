@@ -14,11 +14,11 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../handoff'))
-import recommonmark
-from recommonmark.transform import AutoStructify
 
-import m2r
+# Repo root on the path so ``automodule:: handoff.*`` resolves when building
+# from a source checkout (was '../handoff', which put the package's *inside*
+# on the path and could not import ``handoff`` as a package).
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -26,8 +26,34 @@ project = 'handoff'
 copyright = '2020, ANELEN'
 author = 'ANELEN'
 
+
+def _get_version():
+    """Resolve the version dynamically.
+
+    Prefer installed package metadata, fall back to reading pyproject.toml.
+    This was previously hardcoded ('0.3.0'), so the published docs kept
+    advertising 0.3.0 across every release up to 0.4.3.
+    """
+    try:
+        from importlib.metadata import version as _version
+
+        return _version("handoff")
+    except Exception:
+        pass
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python < 3.11
+        return "0.0.0"
+    pyproject = os.path.join(os.path.dirname(__file__), os.pardir, "pyproject.toml")
+    try:
+        with open(pyproject, "rb") as fh:
+            return tomllib.load(fh)["project"]["version"]
+    except Exception:
+        return "0.0.0"
+
+
 # The short X.Y version
-version = '0.3.0'
+version = _get_version()
 # The full version, including alpha/beta/rc tags
 release = version
 
@@ -42,10 +68,19 @@ release = version
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_markdown_tables',
-    'recommonmark',
+    'myst_parser',
     'sphinx.ext.autodoc',
 ]
+
+# myst-parser replaces recommonmark (archived) + m2r (unmaintained) and renders
+# tables natively, so sphinx_markdown_tables is no longer needed.
+myst_enable_extensions = [
+    'colon_fence',
+    'deflist',
+]
+# Match the old recommonmark auto_toc_tree behavior closely enough for the
+# existing docs, and keep header anchors resolvable from markdown links.
+myst_heading_anchors = 3
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +88,10 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-source_suffix = ['.rst', '.md']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # The master toctree document.
 master_doc = 'index'
@@ -63,7 +101,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -177,27 +215,12 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-def setup(app):
-    app.add_config_value('recommonmark_config',
-                         {'url_resolver': lambda url: github_doc_root + url,
-                          'auto_toc_tree_section': 'Contents',
-                          'enable_auto_toc_tree': True,
-                          }, True)
-    app.add_transform(AutoStructify)
-
-    # https://github.com/readthedocs/recommonmark/issues/191#issuecomment-622369992
-    # from m2r to make `mdinclude` work
-    app.add_config_value('no_underscore_emphasis', False, 'env')
-    app.add_config_value('m2r_parse_relative_links', False, 'env')
-    app.add_config_value('m2r_anonymous_references', False, 'env')
-    app.add_config_value('m2r_disable_inline_math', False, 'env')
-    app.add_directive('mdinclude', m2r.MdInclude)
-
-    app.connect('autodoc-process-docstring', docstring)
-
-
-def docstring(app, what, name, obj, options, lines):
-    md  = '\n'.join(lines)
-    rst = m2r.convert(md)
-    lines.clear()
-    lines += rst.splitlines()
+# NOTE: the previous setup() registered recommonmark's AutoStructify, m2r's
+# ``mdinclude`` directive, and an ``autodoc-process-docstring`` hook that ran
+# docstrings through m2r. All of that is dropped with the move to myst-parser:
+#   - markdown files are parsed natively (see source_suffix / extensions),
+#   - ``.. mdinclude:: x.md`` is replaced by
+#     ``.. include:: x.md`` + ``:parser: myst_parser.sphinx_``,
+#   - docstrings are now rendered as reStructuredText by autodoc.
+# It also referenced an undefined ``github_doc_root``, which would have raised
+# NameError as soon as a markdown link needed resolving.

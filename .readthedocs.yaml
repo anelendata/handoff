@@ -1,0 +1,29 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+#
+# Migrated from the v1 schema, which Read the Docs no longer supports (builds
+# had been failing since at least 2025-09-10). The v1 file also pinned
+# python 3.6 (no longer offered) and used `setup_py_install: true`, a v1-only
+# key -- replaced below by an explicit pip install of the project.
+
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.12"
+
+sphinx:
+  configuration: docs/conf.py
+
+# Optionally build your docs in additional formats such as PDF
+formats:
+  - pdf
+
+python:
+  install:
+    - requirements: docs/requirements.txt
+    # docs/commands.rst uses autodoc (`automodule:: handoff.*`), so the package
+    # and its runtime dependencies must be importable at build time.
+    - method: pip
+      path: .

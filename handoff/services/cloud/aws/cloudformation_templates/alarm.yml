@@ -19,7 +19,7 @@ Parameters:
 
   StateMachineArn:
     Type: String
-    Description: ARN of the task's Step Functions state machine (see `handoff cloud task status`)
+    Description: ARN of the task's Step Functions state machine (see `handoff cloud schedule list -v full=True`, field targets[0].Arn)
 
   AlarmEmail:
     Type: String

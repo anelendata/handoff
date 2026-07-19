@@ -210,11 +210,22 @@ aws cloudformation create-stack \
       ParameterKey=AlarmEmail,ParameterValue=<your-email>
 ```
 
-If you also want to catch a task that starts but *stalls* mid-run with no
-`global_timeout` set (so `ExecutionsTimedOut` never fires), you can build a
-secondary alarm on the existing `<stack>-started` / `<stack>-ended` metric
-filters using CloudWatch metric math (`started_sum - ended_sum`, evaluated
-over a period comfortably longer than the task's expected runtime). Keep in
-mind this only complements the alarm above — since `<stack>-started` is only
-incremented once the task process is already running, it cannot see any of
-the three startup-time gaps this section opened with.
+Note there are two independent timeout mechanisms at play. The Step
+Functions state machine itself always has a `TimeoutSeconds` (the
+`state_machine_timeout` schedule parameter, 4 hours by default), so
+`ExecutionsTimedOut` will eventually fire for a genuinely hung task even if
+the application never sets its own timeout. The application-level
+`global_timeout` (see the timeout metric filter above) is a separate,
+usually much shorter, internal mechanism that lets the process exit
+gracefully and log a warning well before the state machine's hard limit
+would ever be hit.
+
+If you want to detect a stall *faster* than the state machine's default
+timeout — e.g. get paged within 30 minutes instead of waiting up to 4
+hours — you can build a secondary alarm on the existing `<stack>-started` /
+`<stack>-ended` metric filters using CloudWatch metric math
+(`started_sum - ended_sum`, evaluated over a period comfortably longer than
+the task's expected runtime). This only complements the alarm above: since
+`<stack>-started` is only incremented once the task process is already
+running, it still cannot see the startup-time gaps this section opened
+with.

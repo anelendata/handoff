@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.com/anelendata/handoff.svg?branch=master)](https://travis-ci.com/anelendata/handoff)
-[![Documentation Status](https://readthedocs.org/projects/handoffcloud/badge/?version=latest)](https://dev.handoff.cloud/en/latest/?badge=latest)
-
 # handoff core
 
 👉 For a fully managed service, checkout [handoff.cloud website](https://handoff.cloud)

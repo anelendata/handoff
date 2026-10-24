@@ -1,5 +1,11 @@
 ## History
 
+### 0.4.4 (2026-10-23)
+
+- fix: Keep local workspaces, secrets, and common credential dot files (.env, .git, .aws, .ssh, ...) out of container bundles and image layers (#163, #164)
+- feature: Add GitHub Actions tests and PyPI release via Trusted Publishing; remove Travis CI (#164)
+- doc: Fix the Read the Docs build (config v2, myst-parser, Python 3.11) and show the real package version
+
 ### 0.4.3 (2026-07-19)
 
 - fix: Fix NameError in schedule_delete and report real failures (#131, #139)

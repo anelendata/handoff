@@ -1,10 +1,9 @@
-from pathlib import Path
+from test_aws_task_templates import (PACKAGE_DIR, CloudFormationLoader,
+                                     load_template)
 
-from test_aws_task_templates import CloudFormationLoader, load_template
 
-
-ALARM_TEMPLATE_PATH = Path(
-    "handoff/services/cloud/aws/cloudformation_templates/alarm.yml")
+ALARM_TEMPLATE_PATH = (
+    PACKAGE_DIR / "services/cloud/aws/cloudformation_templates/alarm.yml")
 
 
 def test_alarm_template_has_no_undefined_condition():

@@ -2,6 +2,12 @@ from pathlib import Path
 
 import yaml
 
+import handoff
+
+# Resolve from the imported package so the release smoke test checks the
+# templates that actually ship.
+PACKAGE_DIR = Path(handoff.__file__).parent
+
 
 EXPECTED_ERROR_FILTER_PATTERN = (
     '?"ended with exit code 1" ?"exited with code 1" ?"CRITICAL" '
@@ -9,9 +15,12 @@ EXPECTED_ERROR_FILTER_PATTERN = (
 )
 
 TASK_TEMPLATE_PATHS = [
-    Path("handoff/services/cloud/aws/cloudformation_templates/task.yml"),
-    Path("handoff/services/cloud/aws/kaniko_config/task.yml"),
+    PACKAGE_DIR / "services/cloud/aws/cloudformation_templates/task.yml",
 ]
+# kaniko_config is not packaged; check it only in a source checkout.
+_KANIKO_TASK_TEMPLATE_PATH = PACKAGE_DIR / "services/cloud/aws/kaniko_config/task.yml"
+if _KANIKO_TASK_TEMPLATE_PATH.is_file():
+    TASK_TEMPLATE_PATHS.append(_KANIKO_TASK_TEMPLATE_PATH)
 
 
 class CloudFormationLoader(yaml.SafeLoader):

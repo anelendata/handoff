@@ -1,11 +1,13 @@
 import os, tarfile
+from fnmatch import fnmatch
 from importlib import import_module as _import_module
 from typing import Dict
 
 import yaml
 
 from handoff.utils import get_logger as _get_logger
-from handoff.config import get_state, BUNDLES_DIR, CONTAINER_PROVIDER, TASK_NAKED
+from handoff.config import (get_state, BUNDLES_DIR, BUNDLE_IGNORE_PATTERNS,
+                            CONTAINER_PROVIDER, TASK_NAKED)
 from handoff.services import cloud
 
 
@@ -35,7 +37,9 @@ def _get_latest_image_version(
 
 
 def _tar_filter(file_):
-    if ".secret" in file_.name:
+    # Called for each member, so a matching directory drops its whole subtree.
+    name = os.path.basename(file_.name)
+    if any(fnmatch(name, p) for p in BUNDLE_IGNORE_PATTERNS):
         return None
     return file_
 

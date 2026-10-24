@@ -1,0 +1,24 @@
+name: tests
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # pygit2==1.13.0 has no wheel for 3.12+.
+        python-version: ["3.9", "3.10", "3.11"]
+    name: pytest (py${{ matrix.python-version }})
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e . pytest
+      # tests/local_run_* run real pipelines (and installs); CI runs the offline unit tests only.
+      - run: pytest -q tests/unit

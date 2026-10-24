@@ -55,19 +55,18 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.md.
 
-TODO: Set up Travis:
-3. The pull request should work for Python 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.org/anelendata/handoff/pull_requests
-   and make sure that the tests pass for all supported Python versions.
+3. The pull request should pass the `tests` GitHub Actions workflow, which runs
+   `pytest tests/unit` on Python 3.9, 3.10 and 3.11.
 
 ## Deploying
 
 A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.md).
-Then run::
+Bump the version in both `pyproject.toml` and `handoff/config.py`, add an entry
+in HISTORY.md, and commit. Then push a matching version tag:
 
-$ bump2version patch # possible: major / minor / patch
-$ git push
-$ git push --tags
+$ git tag vX.Y.Z
+$ git push origin vX.Y.Z
 
-TODO: Set up Travis so it will then deploy to PyPI if tests pass.
+The `release` GitHub Actions workflow builds and install-tests the package, then
+publishes it to PyPI via Trusted Publishing (the `pypi` environment). It fails
+before publishing if the tag does not match both versions.

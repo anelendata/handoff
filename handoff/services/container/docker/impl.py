@@ -1,5 +1,6 @@
 import json, logging, os, shutil, sys, tempfile
 from collections import defaultdict
+from fnmatch import fnmatch
 
 from packaging import version
 
@@ -7,12 +8,45 @@ import docker
 from docker import APIClient as docker_api_client
 
 from handoff import utils
-from handoff.config import ADMIN_ENVS, CONTAINER_IMAGE, get_state
+from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUNDLE_IGNORE_PATTERNS,
+                            CONTAINER_IMAGE, FILES_DIR, get_state)
 
 
 logger = utils.get_logger(__name__)
 
 DOCKERFILE = "Dockerfile"
+
+
+def _is_workspace_dir(path):
+    # workspace_init creates both; a project directory has files/ (templates)
+    # but no artifacts/.
+    return (os.path.isdir(os.path.join(path, ARTIFACTS_DIR)) and
+            os.path.isdir(os.path.join(path, FILES_DIR)))
+
+
+def _project_ignore(workspace_dir=None):
+    """Return a shutil.copytree ignore function that keeps secrets
+    (BUNDLE_IGNORE_PATTERNS) and local handoff workspaces out of the build
+    context. A workspace holds files rendered with real secret values (files/,
+    config, artifacts) and venvs.
+    """
+    workspace_dir = os.path.realpath(workspace_dir) if workspace_dir else None
+
+    def ignore(src, names):
+        ignored = set()
+        for name in names:
+            path = os.path.join(src, name)
+            if any(fnmatch(name, p) for p in BUNDLE_IGNORE_PATTERNS):
+                ignored.add(name)
+            elif (os.path.isdir(path) and not os.path.islink(path) and
+                  (os.path.realpath(path) == workspace_dir or
+                   _is_workspace_dir(path))):
+                logger.warning(f"Excluding {path} from the bundle: it is a " +
+                               "handoff workspace and may contain rendered " +
+                               "secrets.")
+                ignored.add(name)
+        return ignored
+    return ignore
 
 
 def get_latest_version(image_name, ignore=["latest"]):
@@ -34,7 +68,13 @@ def get_latest_version(image_name, ignore=["latest"]):
     return max_version
 
 
-def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
+def copy_files(project_dir, build_dir, docker_file=None, files_dir=None,
+               workspace_dir=None):
+    if _is_workspace_dir(project_dir):
+        raise Exception(f"The project directory {project_dir} is also a " +
+                        "handoff workspace, so it may contain rendered " +
+                        "secrets. Use a separate workspace directory.")
+
     docker_file_dir, _ = os.path.split(__file__)
     if not docker_file:
         docker_file = os.path.join(docker_file_dir, DOCKERFILE)
@@ -48,7 +88,8 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
         ho_build_dir = os.path.join(build_dir, "handoff")
         os.mkdir(ho_build_dir)
         shutil.copytree(os.path.join(handoff_dir, "handoff"),
-                        os.path.join(ho_build_dir, "handoff"))
+                        os.path.join(ho_build_dir, "handoff"),
+                        ignore=_project_ignore())
         files = [
             "MANIFEST.in",
             "README.md",
@@ -63,7 +104,7 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
         logger.info("...not found")
 
     shutil.copytree(project_dir, os.path.join(build_dir, "project"),
-                    symlinks=True)
+                    symlinks=True, ignore=_project_ignore(workspace_dir))
     shutil.copytree(os.path.join(docker_file_dir, "script"),
                     os.path.join(build_dir, "script"))
     shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))
@@ -76,7 +117,8 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None):
 
 
 def build(project_dir, new_version=None, docker_file=None, files_dir=None,
-          nocache=False, yes=False, file_descriptor=sys.stdout, **kwargs):
+          nocache=False, yes=False, file_descriptor=sys.stdout,
+          workspace_dir=None, **kwargs):
     state = get_state()
     cli = docker_api_client()
     image_name = state[CONTAINER_IMAGE]
@@ -96,7 +138,8 @@ def build(project_dir, new_version=None, docker_file=None, files_dir=None,
     logger.info("Building %s:%s" % (image_name, new_version))
 
     with tempfile.TemporaryDirectory() as build_dir:
-        copy_files(project_dir, build_dir, docker_file, files_dir)
+        copy_files(project_dir, build_dir, docker_file, files_dir,
+                   workspace_dir=workspace_dir)
         for line in cli.build(path=build_dir,
                               tag=f"{image_name}:{new_version}",
                               nocache=nocache):

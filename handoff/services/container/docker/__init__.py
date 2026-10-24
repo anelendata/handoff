@@ -44,6 +44,7 @@ def bundle(
             build_dir,
             docker_file=docker_file,
             files_dir=files_dir,
+            workspace_dir=workspace_dir,
     )
     return response
 
@@ -70,7 +71,8 @@ def build(
         LOGGER.info("Using Dockerfile at: " + docker_file)
     response = impl.build(project_dir, docker_file=docker_file,
                           files_dir=files_dir, new_version=new_version,
-                          file_descriptor=sys.stdout, **kwargs)
+                          file_descriptor=sys.stdout,
+                          workspace_dir=workspace_dir, **kwargs)
     return response
 
 

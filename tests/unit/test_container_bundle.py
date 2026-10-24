@@ -1,7 +1,9 @@
 import os
+import tarfile
 
 import pytest
 
+from handoff.services.container import _tar_filter
 from handoff.services.container.docker import impl
 
 
@@ -19,6 +21,13 @@ def _make_project(root):
     _write(os.path.join(project_dir, "scripts", "run.sh"), "echo run")
     # Same rule that drops .secrets/
     _write(os.path.join(project_dir, "files", "sa.secret.json"), "secret")
+    _write(os.path.join(project_dir, ".env"), "API_KEY=value")
+    _write(os.path.join(project_dir, ".git", "config"), "[remote]")
+    _write(os.path.join(project_dir, ".venv", "bin", "python"))
+    _write(os.path.join(project_dir, "files", ".aws", "credentials"), "key")
+    # Exact-name patterns must not catch these
+    _write(os.path.join(project_dir, ".gitignore"), "workspace\n")
+    _write(os.path.join(project_dir, "files", ".keep"))
     return project_dir
 
 
@@ -51,7 +60,9 @@ def test_bundle_excludes_workspace_in_project_dir(tmp_path):
 
     assert _copied(build_dir) == {
         "project.yml",
+        ".gitignore",
         os.path.join("files", "tap_config.json"),
+        os.path.join("files", ".keep"),
         os.path.join("scripts", "run.sh"),
     }
     assert os.path.isfile(os.path.join(build_dir, impl.DOCKERFILE))
@@ -79,3 +90,20 @@ def test_bundle_refuses_project_dir_used_as_workspace(tmp_path):
 
     with pytest.raises(Exception, match="also a handoff workspace"):
         impl.copy_files(project_dir, build_dir)
+
+
+def test_tar_filter_uses_bundle_ignore_patterns(tmp_path):
+    files_dir = str(tmp_path / "extra")
+    _write(os.path.join(files_dir, "keep.txt"), "ok")
+    _write(os.path.join(files_dir, ".gitignore"))
+    _write(os.path.join(files_dir, ".env.prod"), "API_KEY=value")
+    _write(os.path.join(files_dir, ".ssh", "id_rsa"), "key")
+    _write(os.path.join(files_dir, ".secrets", "secrets.yml"), "- key: k")
+    tar_path = str(tmp_path / "bundle.tar.gz")
+
+    with tarfile.open(tar_path, "w:gz") as tar:
+        tar.add(files_dir, arcname=".", recursive=True, filter=_tar_filter)
+    with tarfile.open(tar_path) as tar:
+        names = set(tar.getnames())
+
+    assert names == {".", "./keep.txt", "./.gitignore"}

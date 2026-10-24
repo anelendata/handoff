@@ -1,5 +1,6 @@
 import json, logging, os, shutil, sys, tempfile
 from collections import defaultdict
+from fnmatch import fnmatch
 
 from packaging import version
 
@@ -7,8 +8,8 @@ import docker
 from docker import APIClient as docker_api_client
 
 from handoff import utils
-from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, CONTAINER_IMAGE,
-                            FILES_DIR, get_state)
+from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUNDLE_IGNORE_PATTERNS,
+                            CONTAINER_IMAGE, FILES_DIR, get_state)
 
 
 logger = utils.get_logger(__name__)
@@ -24,9 +25,10 @@ def _is_workspace_dir(path):
 
 
 def _project_ignore(workspace_dir=None):
-    """Return a shutil.copytree ignore function that keeps secrets and local
-    handoff workspaces out of the build context. A workspace holds files
-    rendered with real secret values (files/, config, artifacts) and venvs.
+    """Return a shutil.copytree ignore function that keeps secrets
+    (BUNDLE_IGNORE_PATTERNS) and local handoff workspaces out of the build
+    context. A workspace holds files rendered with real secret values (files/,
+    config, artifacts) and venvs.
     """
     workspace_dir = os.path.realpath(workspace_dir) if workspace_dir else None
 
@@ -34,7 +36,7 @@ def _project_ignore(workspace_dir=None):
         ignored = set()
         for name in names:
             path = os.path.join(src, name)
-            if ".secret" in name:
+            if any(fnmatch(name, p) for p in BUNDLE_IGNORE_PATTERNS):
                 ignored.add(name)
             elif (os.path.isdir(path) and not os.path.islink(path) and
                   (os.path.realpath(path) == workspace_dir or

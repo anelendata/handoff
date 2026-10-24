@@ -16,6 +16,30 @@ PROJECT_FILE = "project.yml"
 SECRETS_DIR = ".secrets"
 SECRETS_FILE = "secrets.yml"
 
+# File/directory names (fnmatch patterns) never copied into a container bundle:
+# secrets, and common dot files/folders that can hold credentials or local
+# state.
+BUNDLE_IGNORE_PATTERNS = [
+    "*.secret*",  # .secrets/, *.secret.json, ...
+    ".env",
+    ".env.*",
+    ".envrc",
+    ".venv",
+    ".git",
+    ".git-credentials",
+    ".aws",
+    ".azure",
+    ".docker",
+    ".gnupg",
+    ".kube",
+    ".ssh",
+    ".terraform",
+    ".netrc",
+    ".npmrc",
+    ".pgpass",
+    ".pypirc",
+]
+
 BUCKET_CURRENT_PREFIX = "last"
 BUCKET_ARCHIVE_PREFIX = "archives"
 

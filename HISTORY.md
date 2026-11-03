@@ -1,5 +1,11 @@
 ## History
 
+### 0.4.5 (2026-11-03)
+
+- feature: Allow installs entries in project.yml to reference another YAML file, so projects can share one list (#166, #167)
+- feature: Support Python 3.12; bump pygit2 to 1.13.3, the first 1.13 release with a Python 3.12 wheel
+- breaking: Drop Python 3.9 support; handoff now requires Python 3.10 or later
+
 ### 0.4.4 (2026-10-23)
 
 - fix: Keep local workspaces, secrets, and common credential dot files (.env, .git, .aws, .ssh, ...) out of container bundles and image layers (#163, #164)

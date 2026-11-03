@@ -56,7 +56,7 @@ Before you submit a pull request, check that it meets these guidelines:
    feature to the list in README.md.
 
 3. The pull request should pass the `tests` GitHub Actions workflow, which runs
-   `pytest tests/unit` on Python 3.9, 3.10 and 3.11.
+   `pytest tests/unit` on Python 3.10 and 3.11.
 
 ## Deploying
 

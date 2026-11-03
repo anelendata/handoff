@@ -7,7 +7,7 @@ name = "handoff"
 version = "0.4.4"
 description = "Deploy configurable unix pipeline jobs serverlessly."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 authors = [
     {"name" = "Daigo Tanaka"},
@@ -16,7 +16,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

@@ -1,5 +1,6 @@
 import datetime, hashlib, json, logging, os, re, shutil, sys, subprocess
-from typing import Dict, Tuple
+from fnmatch import fnmatch
+from typing import Dict, List, Tuple
 import yaml
 from jinja2 import Template as _Template
 from jsonschema import validate
@@ -8,6 +9,7 @@ from jsonschema.exceptions import ValidationError
 from handoff.services import cloud
 from handoff.config import (APP_PREFIX, ENV_PREFIX, VERSION, ARTIFACTS_DIR,
                             BUCKET, BUCKET_ARCHIVE_PREFIX, BUCKET_CURRENT_PREFIX,
+                            BUNDLE_IGNORE_PATTERNS,
                             CONTAINER_IMAGE, FILES_DIR, TEMPLATES_DIR,
                             SECRETS_DIR, SECRETS_FILE, RESOURCE_GROUP,
                             RESOURCE_GROUP_NAKED, PROJECT_FILE, TASK, TASK_NAKED,
@@ -47,6 +49,76 @@ def _make_python_venv(venv_path: str) -> None:
         _install(f"{venv_path}/bin/python -m ensurepip --upgrade")
         _install("pip3 install wheel", venv_path)
         LOGGER.info(f"Created a new venv in {venv_path}")
+
+
+def _resolve_install_file(project_dir: str, file_ref: str) -> str:
+    """Find a file referenced from the installs section. Look in the project
+    directory, then in each of its parents, so that projects can share a file
+    kept above them.
+    """
+    parts = os.path.normpath(file_ref).split(os.sep)
+    if os.path.isabs(file_ref) or ".." in parts:
+        raise Exception(f"installs file {file_ref} must be a relative path " +
+                        "without '..'")
+    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
+        raise Exception(f"installs file {file_ref} matches a pattern that " +
+                        "is kept out of container bundles")
+
+    search_dir = os.path.abspath(project_dir)
+    while True:
+        path = os.path.join(search_dir, file_ref)
+        if os.path.isfile(path):
+            return path
+        parent = os.path.dirname(search_dir)
+        if parent == search_dir:
+            raise Exception(f"installs file {file_ref} is not found in " +
+                            f"{project_dir} or its parent directories")
+        search_dir = parent
+
+
+def _read_install_file(project_dir: str, file_ref: str) -> List:
+    path = _resolve_install_file(project_dir, file_ref)
+    with open(path, "r") as f:
+        content = yaml.load(f, Loader=yaml.FullLoader)
+    installs = content.get("installs") if isinstance(content, dict) else None
+    if not isinstance(installs, list):
+        raise Exception(f"{path} must have an installs section with a list")
+    for install in installs:
+        if (not isinstance(install, dict) or "file" in install or
+                not install.get("command")):
+            raise Exception(f"Each install in {path} must have a command " +
+                            "and cannot reference another file")
+    return installs
+
+
+def _expand_installs(project_dir: str, installs: List) -> List:
+    """Replace the file references in the installs section with the installs
+    listed in those files
+    """
+    expanded = list()
+    for install in installs:
+        if "file" not in install:
+            expanded.append(install)
+            continue
+        if not install["file"] or set(install) - {"file", "description"}:
+            raise Exception("An install with file needs a file path and " +
+                            f"cannot have other keys: {install}")
+        expanded += _read_install_file(project_dir, install["file"])
+    return expanded
+
+
+def _install_files(project_dir: str) -> Dict:
+    """Return the files referenced from the installs section of project.yml as
+    {reference: path}
+    """
+    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
+        project = yaml.load(f, Loader=yaml.FullLoader) or dict()
+    installs = project.get("installs") or list()
+    # Raise here, not in the middle of the image build
+    _expand_installs(project_dir, installs)
+    return {install["file"]: _resolve_install_file(project_dir, install["file"])
+            for install in installs if "file" in install}
+
 
 def _parse_template_files(
         templates_dir: str,
@@ -808,8 +880,10 @@ def workspace_install(
     if not project.get("installs"):
         raise Exception("installs section is not defined")
 
+    installs = _expand_installs(project_dir, project["installs"])
+
     os.chdir(workspace_dir)
-    for install in project["installs"]:
+    for install in installs:
         if install.get("venv"):
             _make_python_venv(install["venv"])
         _install(install["command"], install.get("venv"))

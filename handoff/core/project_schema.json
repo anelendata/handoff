@@ -30,6 +30,12 @@
               "string"
             ]
           },
+          "file": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "venv": {
             "type": [
               "null",

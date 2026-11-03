@@ -10,6 +10,7 @@ from docker import APIClient as docker_api_client
 from handoff import utils
 from handoff.config import (ADMIN_ENVS, ARTIFACTS_DIR, BUNDLE_IGNORE_PATTERNS,
                             CONTAINER_IMAGE, FILES_DIR, get_state)
+from handoff.core import admin
 
 
 logger = utils.get_logger(__name__)
@@ -105,6 +106,12 @@ def copy_files(project_dir, build_dir, docker_file=None, files_dir=None,
 
     shutil.copytree(project_dir, os.path.join(build_dir, "project"),
                     symlinks=True, ignore=_project_ignore(workspace_dir))
+    # A referenced file may sit above the project directory. The same relative
+    # path under the bundled project is the first place workspace install looks.
+    for file_ref, path in admin._install_files(project_dir).items():
+        dest = os.path.join(build_dir, "project", file_ref)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copyfile(path, dest)
     shutil.copytree(os.path.join(docker_file_dir, "script"),
                     os.path.join(build_dir, "script"))
     shutil.copyfile(docker_file, os.path.join(build_dir, DOCKERFILE))

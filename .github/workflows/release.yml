@@ -5,8 +5,6 @@ name: release
 #
 # Flow: build -> smoke (install-test the built artifacts; gates publish) ->
 # publish -> verify (install the published package from PyPI).
-#
-# Python 3.11: pygit2==1.13.0 has no wheel for 3.12+.
 on:
   push:
     tags: ["v*"]

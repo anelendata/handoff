@@ -30,7 +30,7 @@ dependencies = [
     "lxml==6.0.1",
     "packaging==25.0",
     "psutil==7.0.0",
-    "pygit2==1.13.0",
+    "pygit2==1.13.3",
     "pygithub==1.59.1",
     "python-dateutil==2.9.0.post0",
     "pyyaml==6.0.2",

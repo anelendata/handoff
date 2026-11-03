@@ -65,6 +65,30 @@ install the necessary program for this project.
 For each install, you can set venv key to set the name of the Python virtual
 environment. This helps avoid the dependency conflicts among Python programs.
 
+Projects that run on the same container image can share the list. An entry with
+a file key points to a YAML file with its own installs section:
+
+```shell
+installs:
+- file: images/tap-exchangeratehost-target-csv/0.1/image.yml
+```
+
+```shell
+# images/tap-exchangeratehost-target-csv/0.1/image.yml
+installs:
+- venv: tap
+  command: pip install tap-exchangeratehost
+- venv: target
+  command: pip install target-csv
+```
+
+handoff looks for the path in the project directory, then in each parent
+directory, and uses the first match. So a shared images directory can sit above
+the projects. The path must be relative and cannot contain `..`. A file entry
+can sit next to regular entries, and the referenced file cannot reference
+another file. `handoff container build` copies the referenced file into the
+image's build context.
+
 (The deploy and schedule sections in the file are irrelevant in this section.
 We will use it later.)
 

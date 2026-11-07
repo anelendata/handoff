@@ -1,4 +1,4 @@
-import os, shutil, sys, tarfile
+import os, re, shutil, sys, tarfile
 import yaml
 from importlib import import_module as _import_module
 from typing import Dict
@@ -450,7 +450,24 @@ def run(
                 break
     target_envs.update(envs)
     target_envs[STAGE] = state[STAGE]
+    target_envs = _add_selected_tasks(target_envs, vars)
     return platform.run_job(env=target_envs, extras=extras_obj)
+
+
+def _add_selected_tasks(target_envs: Dict, vars: Dict) -> Dict:
+    """Pass --tasks / -v _tasks= to the container. The image runs
+    `handoff run -v $(eval echo $__VARS)`, so the selection goes in __VARS."""
+    selected = vars.get("_tasks")
+    if selected in (None, ""):
+        return target_envs
+    if re.search(r"[^A-Za-z0-9_,.-]", str(selected)):
+        raise ValueError(f"_tasks may only hold task names separated by commas: {selected}")
+    envs = dict(target_envs)
+    existing = str(envs.get("__VARS") or "").strip()
+    if re.search(r"(^|\s)_tasks=", existing):
+        raise ValueError("__VARS already sets _tasks; give the tasks in one place")
+    envs["__VARS"] = (existing + " " if existing else "") + f"_tasks={selected}"
+    return envs
 
 
 def container_build(

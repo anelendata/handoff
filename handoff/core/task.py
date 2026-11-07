@@ -85,8 +85,9 @@ def _skip_transfers(task: Dict, push_artifacts: bool) -> bool:
 
 def _download(task: Dict, state) -> None:
     from handoff.services import cloud
+    from handoff.services.cloud import credentials
     name = task.get("name", "")
-    cloud.refresh_credentials()
+    credentials.refresh()
     platform = cloud.get_platform()
     for item in _transfers(task, "download"):
         key = _transfer_key(item.get("from"), "from", name, state)
@@ -109,8 +110,9 @@ def _download(task: Dict, state) -> None:
 
 def _upload(task: Dict, state) -> None:
     from handoff.services import cloud
+    from handoff.services.cloud import credentials
     name = task.get("name", "")
-    cloud.refresh_credentials()
+    credentials.refresh()
     platform = cloud.get_platform()
     for item in _transfers(task, "upload"):
         path = _transfer_path(item.get("path"), name, state)

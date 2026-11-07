@@ -3,6 +3,7 @@ import datetime
 import pytest
 
 from handoff.services import cloud
+from handoff.services.cloud import credentials
 from handoff.services.cloud import aws
 
 
@@ -58,13 +59,13 @@ def test_cloud_wrapper_logs_and_continues_on_failure(monkeypatch):
         def refresh_credentials(self):
             raise RuntimeError("endpoint down")
     monkeypatch.setattr(cloud, "get_platform", lambda *a, **k: P())
-    cloud.refresh_credentials()  # does not raise
+    credentials.refresh()  # does not raise
 
 
 def test_task_transfers_refresh_first(monkeypatch, tmp_path):
     from handoff.core import task as T
     order = []
-    monkeypatch.setattr(cloud, "refresh_credentials", lambda: order.append("refresh"))
+    monkeypatch.setattr(credentials, "refresh", lambda: order.append("refresh"))
 
     class P:
         def upload_file(self, local, key):
@@ -74,3 +75,10 @@ def test_task_transfers_refresh_first(monkeypatch, tmp_path):
     (tmp_path / "out.txt").write_text("x")
     T._upload({"name": "t", "upload": [{"path": "out.txt", "to": "runs/out.txt"}]}, {})
     assert order == ["refresh", "upload"]
+
+
+def test_reachable_as_services_cloud_credentials_refresh():
+    # main.py calls it this way without importing the submodule itself
+    import handoff.main  # noqa: F401
+    from handoff import services
+    assert services.cloud.credentials.refresh is credentials.refresh

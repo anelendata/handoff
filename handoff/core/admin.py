@@ -51,29 +51,39 @@ def _make_python_venv(venv_path: str) -> None:
         LOGGER.info(f"Created a new venv in {venv_path}")
 
 
-def _resolve_install_file(project_dir: str, file_ref: str) -> str:
-    """Find a file referenced from the installs section. Look in the project
-    directory, then in each of its parents, so that projects can share a file
-    kept above them.
-    """
-    parts = os.path.normpath(file_ref).split(os.sep)
-    if os.path.isabs(file_ref) or ".." in parts:
-        raise Exception(f"installs file {file_ref} must be a relative path " +
-                        "without '..'")
-    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
-        raise Exception(f"installs file {file_ref} matches a pattern that " +
-                        "is kept out of container bundles")
+def _read_project_yml(project_dir: str) -> Dict:
+    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
+        return yaml.load(f, Loader=yaml.FullLoader) or dict()
 
+
+def _resolve_shared_path(project_dir: str, ref: str, section: str,
+                         kind: str = "any") -> str:
+    """Find a file or folder referenced from project.yml. Look in the project
+    directory, then in each of its parents, so that projects can share files
+    kept above them. kind is "file", "dir" or "any".
+    """
+    parts = os.path.normpath(ref).split(os.sep)
+    if os.path.isabs(ref) or ".." in parts:
+        raise Exception(f"{section} {ref} must be a relative path without '..'")
+    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
+        raise Exception(f"{section} {ref} matches a pattern that is kept " +
+                        "out of container bundles")
+    found = {"file": os.path.isfile, "dir": os.path.isdir, "any": os.path.exists}[kind]
     search_dir = os.path.abspath(project_dir)
     while True:
-        path = os.path.join(search_dir, file_ref)
-        if os.path.isfile(path):
+        path = os.path.join(search_dir, ref)
+        if found(path):
             return path
         parent = os.path.dirname(search_dir)
         if parent == search_dir:
-            raise Exception(f"installs file {file_ref} is not found in " +
-                            f"{project_dir} or its parent directories")
+            raise Exception(f"{section} {ref} is not found in {project_dir} " +
+                            "or its parent directories")
         search_dir = parent
+
+
+def _resolve_install_file(project_dir: str, file_ref: str) -> str:
+    """Find a file referenced from the installs section."""
+    return _resolve_shared_path(project_dir, file_ref, "installs file", kind="file")
 
 
 def _read_install_file(project_dir: str, file_ref: str) -> List:
@@ -111,45 +121,18 @@ def _install_files(project_dir: str) -> Dict:
     """Return the files referenced from the installs section of project.yml as
     {reference: path}
     """
-    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
-        project = yaml.load(f, Loader=yaml.FullLoader) or dict()
-    installs = project.get("installs") or list()
+    installs = _read_project_yml(project_dir).get("installs") or list()
     # Raise here, not in the middle of the image build
     _expand_installs(project_dir, installs)
     return {install["file"]: _resolve_install_file(project_dir, install["file"])
             for install in installs if "file" in install}
 
 
-def _resolve_shared_path(project_dir: str, ref: str, section: str) -> str:
-    """Find a file or folder referenced from project.yml. Look in the project
-    directory, then in each of its parents, so that projects can share files
-    kept above them. Same rules as installs files.
-    """
-    parts = os.path.normpath(ref).split(os.sep)
-    if os.path.isabs(ref) or ".." in parts:
-        raise Exception(f"{section} {ref} must be a relative path without '..'")
-    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
-        raise Exception(f"{section} {ref} matches a pattern that is kept " +
-                        "out of container bundles")
-    search_dir = os.path.abspath(project_dir)
-    while True:
-        path = os.path.join(search_dir, ref)
-        if os.path.exists(path):
-            return path
-        parent = os.path.dirname(search_dir)
-        if parent == search_dir:
-            raise Exception(f"{section} {ref} is not found in {project_dir} " +
-                            "or its parent directories")
-        search_dir = parent
-
-
 def _external_files(project_dir: str) -> List[Tuple[str, str]]:
     """Return the files section of project.yml as [(source path, path under
     files/)]. Raise on anything that could overwrite or leak a file.
     """
-    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
-        project = yaml.load(f, Loader=yaml.FullLoader) or dict()
-    entries = project.get("files") or list()
+    entries = _read_project_yml(project_dir).get("files") or list()
     if not isinstance(entries, list):
         raise Exception("files in project.yml must be a list")
     resolved = list()

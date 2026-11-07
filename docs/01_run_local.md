@@ -423,3 +423,21 @@ In the next section, we will try pulling the currency exchange rate data.
 You will also learn how to create Python virtual enviroments for each command
 and install programs.
 
+
+## Running only some tasks
+
+To run one step of a multi-step project, name the tasks with `--tasks` (or the
+equivalent var `-v _tasks=...`):
+
+```shell
+handoff run local -p <project_dir> -w <workspace_dir> --tasks compare,fetch
+handoff cloud run -p <project_dir> --tasks load
+```
+
+- The named tasks run in `project.yml` order.
+- A named task runs even if it has `active: False`. Keep a step that writes
+  data inactive, and it only runs when someone names it.
+- An unknown name is an error before any task runs.
+- Without `--tasks`, every active task runs, as before.
+- `cloud run` passes the selection to the container in `__VARS`, so it works
+  with any image built with this version of handoff or newer.

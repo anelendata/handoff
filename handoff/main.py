@@ -534,6 +534,10 @@ def main() -> None:
     parser.add_argument("-a", "--push-artifacts", action="store_true",
                         help="Push artifacts to remote at the end of the run")
 
+    parser.add_argument("--tasks", type=str, default=None,
+                        help="Comma-separated task names to run (run, run local, cloud run). " +
+                        "Same as -v _tasks=<names>. Named tasks run even if inactive.")
+
     if len(sys.argv) == 1 or sys.argv[1] in ["-h", "--help"]:
         parser.print_help(sys.stderr)
         print_commands()
@@ -550,6 +554,10 @@ def main() -> None:
 
     args.vars = _load_param_list(args.vars)
     args.envs = _load_param_list(args.envs)
+    if args.tasks:
+        if args.vars.get("_tasks") not in (None, args.tasks):
+            raise ValueError("--tasks and -v _tasks= name different tasks")
+        args.vars["_tasks"] = args.tasks
 
     kwargs = dict(vars(args))
     kwargs["show_help"] = args.help

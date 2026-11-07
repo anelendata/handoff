@@ -15,10 +15,27 @@ from handoff.config import get_state as _get_state
 
 LOGGER = _get_logger(__name__)
 
-from handoff.services.cloud import credentials  # noqa: E402  services.cloud.credentials.refresh()
-
 
 PLATFORM_MODULE = None
+
+
+def refresh_credentials() -> None:
+    """Renew the platform's temporary credentials before a late upload or
+    download, if the platform supports it. A failure is logged, not raised: the
+    current credentials may still work, and the call that needs them reports
+    the real error."""
+    try:
+        platform = get_platform()
+    except Exception as e:
+        LOGGER.warning(f"Credential refresh skipped: {e}")
+        return
+    fn = getattr(platform, "refresh_credentials", None)
+    if fn is None:
+        return
+    try:
+        LOGGER.info("Credentials: " + fn())
+    except Exception as e:
+        LOGGER.warning(f"Credential refresh failed, using the current credentials: {e}")
 
 
 def logout():

@@ -12,7 +12,7 @@ from typing import Dict
 
 from jinja2 import Template as _Template
 from handoff import utils
-from handoff.config import get_state, ARTIFACTS_DIR
+from handoff.config import get_state, ARTIFACTS_DIR, FILES_DIR
 from handoff.core.operators import _run_task
 
 
@@ -41,6 +41,85 @@ def shutdown(signal_id, from_):
 
 
 SELECT_TASKS_VAR = "_tasks"
+
+
+def _transfer_key(value: str, field: str, task_name: str, state) -> str:
+    """Render a task's upload `to` / download `from` and check it stays out of
+    handoff's own artifacts and files prefixes."""
+    key = _Template(str(value)).render(**state).strip().strip("/")
+    parts = os.path.normpath(key).split(os.sep) if key else []
+    if not key or os.path.isabs(str(value)) or ".." in parts:
+        raise ValueError(f"Task {task_name}: {field} must be a relative key without '..': {value}")
+    if parts[0] in (ARTIFACTS_DIR, FILES_DIR):
+        raise ValueError(f"Task {task_name}: {field} can't be under {parts[0]}/, " +
+                         "which handoff manages: " + key)
+    return key
+
+
+def _transfer_path(value: str, task_name: str, state) -> str:
+    path = _Template(str(value)).render(**state).strip()
+    parts = os.path.normpath(path).split(os.sep)
+    if not path or os.path.isabs(path) or ".." in parts:
+        raise ValueError(f"Task {task_name}: path must be relative to the workspace without '..': {value}")
+    return os.path.normpath(path)
+
+
+def _transfers(task: Dict, kind: str) -> list:
+    items = task.get(kind) or []
+    if not isinstance(items, list):
+        raise ValueError(f"Task {task.get('name', '')}: {kind} must be a list")
+    return items
+
+
+def _skip_transfers(task: Dict, push_artifacts: bool) -> bool:
+    """True when the task has nothing to transfer, or it's a local run without
+    -a (transfers need the bucket)."""
+    if not (task.get("upload") or task.get("download")):
+        return True
+    if push_artifacts:
+        return False
+    LOGGER.info(f"Task {task.get('name', '')}: upload/download skipped " +
+                "(local run without -a / --push-artifacts)")
+    return True
+
+
+def _download(task: Dict, state) -> None:
+    from handoff.services import cloud
+    name = task.get("name", "")
+    platform = cloud.get_platform()
+    for item in _transfers(task, "download"):
+        key = _transfer_key(item.get("from"), "from", name, state)
+        path = _transfer_path(item.get("path"), name, state)
+        try:
+            # A single file stored at exactly this key
+            if os.path.dirname(path):
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+            platform.download_file(path, key)
+            LOGGER.info(f"Task {name}: downloaded {key} to {path}")
+            continue
+        except Exception:
+            pass
+        # A folder: everything under <key>/
+        platform.download_dir(path, key + "/")
+        if not os.path.exists(path) or (os.path.isdir(path) and not os.listdir(path)):
+            raise ValueError(f"Task {name}: nothing found to download at {key}")
+        LOGGER.info(f"Task {name}: downloaded {key}/ to {path}/")
+
+
+def _upload(task: Dict, state) -> None:
+    from handoff.services import cloud
+    name = task.get("name", "")
+    platform = cloud.get_platform()
+    for item in _transfers(task, "upload"):
+        path = _transfer_path(item.get("path"), name, state)
+        key = _transfer_key(item.get("to"), "to", name, state)
+        if os.path.isfile(path):
+            platform.upload_file(path, key)
+        elif os.path.isdir(path):
+            platform.upload_dir(path, key)
+        else:
+            raise ValueError(f"Task {name}: nothing to upload at {path}")
+        LOGGER.info(f"Task {name}: uploaded {path} to {key}")
 
 
 def _selected_tasks(config: Dict, vars: Dict):
@@ -89,7 +168,10 @@ def run(config: Dict, **kwargs) -> None:
             "kill_loop_on_fail",
             kill_loop_on_fail,
         )
+        skip_transfers = _skip_transfers(task, kwargs.get("push_artifacts", False))
         try:
+            if not skip_transfers:
+                _download(task, state)
             exit_code = _run_task(
                 task,
                 state,
@@ -97,6 +179,10 @@ def run(config: Dict, **kwargs) -> None:
                 kill_downstream_on_fail=kill_ds_on_fail,
                 kill_loop_on_fail=kill_lp_on_fail,
             )
+            # Upload only after the task succeeded, so a later step never
+            # reads a partial output.
+            if exit_code == 0 and not skip_transfers:
+                _upload(task, state)
         except Exception as e:
             LOGGER.error(str(e))
             exit_code = 1

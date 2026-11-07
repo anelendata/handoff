@@ -2,7 +2,6 @@ import datetime, json, logging, os, re, time
 import yaml
 import botocore
 import dateutil
-import dateutil.parser
 
 from handoff import utils
 from handoff.config import (APP_PREFIX, BUCKET, CONTAINER_IMAGE, IMAGE_DOMAIN,
@@ -65,50 +64,10 @@ def _log_task_run_filter(task_name, response):
            "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
-_ASSUMED_ROLE = dict()
-# Refresh when less than this is left. Fetching task-role credentials is a local
-# call, so those are always refreshed.
-REFRESH_MARGIN = datetime.timedelta(minutes=15)
-
-
-def _as_utc(value):
-    if value is None:
-        return None
-    if isinstance(value, str):
-        value = dateutil.parser.parse(value)
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=datetime.timezone.utc)
-    return value
-
-
 def refresh_credentials() -> str:
-    """Renew the temporary AWS credentials this run uses before a late S3 call.
-
-    handoff copies credentials into its state at login, and every later call
-    reuses that copy, so a long job can outlive them and fail at its final
-    upload. In a container, fetch the task role's current credentials again
-    from the ECS endpoint. If the run assumed a role, assume it again when it
-    expires within REFRESH_MARGIN. Long-lived keys and profiles need nothing.
-    Returns what was done, for the log. Never logs the credentials.
-    """
-    state = get_state()
-    rel_uri = os.environ.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-    if rel_uri and not _ASSUMED_ROLE:
-        task_cred = cred.fetch_container_credentials(rel_uri)
-        state["AWS_ACCESS_KEY_ID"] = task_cred["AccessKeyId"]
-        state["AWS_SECRET_ACCESS_KEY"] = task_cred["SecretAccessKey"]
-        state["AWS_SESSION_TOKEN"] = task_cred["Token"]
-        return f"task role credentials refreshed (expire {task_cred.get('Expiration')})"
-    if _ASSUMED_ROLE:
-        expiration = _as_utc(_ASSUMED_ROLE.get("expiration"))
-        now = datetime.datetime.now(datetime.timezone.utc)
-        if expiration and expiration - now > REFRESH_MARGIN:
-            return f"assumed role credentials still valid until {expiration.isoformat()}"
-        _assume_role(_ASSUMED_ROLE["role_arn"],
-                     external_id=_ASSUMED_ROLE["external_id"],
-                     cred_keys=dict(_ASSUMED_ROLE["source_cred_keys"]))
-        return f"assumed role again (expire {_ASSUMED_ROLE.get('expiration')})"
-    return "long-lived credentials, nothing to refresh"
+    """Platform hook for services.cloud.refresh_credentials(). See
+    credentials.refresh()."""
+    return cred.refresh(get_state())
 
 
 def _assume_role(
@@ -128,20 +87,8 @@ def _assume_role(
             target_account_id = account_id
         role_arn = (f"arn:aws:iam::{target_account_id}:role/{role_name}")
     response = sts.assume_role(role_arn, external_id=external_id, cred_keys=cred_keys)
-    # Kept in memory only (never in state, logs or files) so refresh_credentials()
-    # can assume the role again before a late upload.
-    _ASSUMED_ROLE.clear()
-    _ASSUMED_ROLE.update({
-        "role_arn": role_arn,
-        "external_id": external_id,
-        "source_cred_keys": dict(cred_keys),
-        "expiration": response["Credentials"].get("Expiration"),
-    })
-
-    state["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
-    state["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
-    state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
-
+    cred.remember_assumed_role(role_arn, external_id, cred_keys, response)
+    cred.store_role_credentials(state, response)
     return response
 
 

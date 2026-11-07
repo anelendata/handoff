@@ -10,7 +10,7 @@ from handoff.services.cloud import aws
 def state(monkeypatch):
     st = {"AWS_ACCESS_KEY_ID": "old", "AWS_SECRET_ACCESS_KEY": "old", "AWS_SESSION_TOKEN": "old"}
     monkeypatch.setattr(aws, "get_state", lambda: st)
-    monkeypatch.setattr(aws, "_ASSUMED_ROLE", {})
+    monkeypatch.setattr(aws.cred, "_ASSUMED_ROLE", {})
     monkeypatch.delenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", raising=False)
     return st
 
@@ -29,10 +29,13 @@ def test_container_credentials_are_fetched_again(state, monkeypatch):
 
 def _assumed(monkeypatch, expires_in):
     exp = datetime.datetime.now(datetime.timezone.utc) + expires_in
-    monkeypatch.setattr(aws, "_ASSUMED_ROLE", {"role_arn": "arn:aws:iam::1:role/r", "external_id": "e",
+    monkeypatch.setattr(aws.cred, "_ASSUMED_ROLE", {"role_arn": "arn:aws:iam::1:role/r", "external_id": "e",
                                                "source_cred_keys": {"aws_access_key_id": "src"}, "expiration": exp})
     calls = []
-    monkeypatch.setattr(aws, "_assume_role", lambda arn, external_id=None, cred_keys=None: calls.append((arn, external_id, cred_keys)))
+    from handoff.services.cloud.aws import sts
+    later = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)).isoformat()
+    monkeypatch.setattr(sts, "assume_role", lambda arn, external_id=None, cred_keys=None: calls.append((arn, external_id, cred_keys)) or
+                        {"Credentials": {"AccessKeyId": "new", "SecretAccessKey": "new", "SessionToken": "new", "Expiration": later}})
     return calls
 
 
@@ -40,6 +43,8 @@ def test_assumed_role_is_assumed_again_near_expiry(state, monkeypatch):
     calls = _assumed(monkeypatch, datetime.timedelta(minutes=5))
     aws.refresh_credentials()
     assert calls == [("arn:aws:iam::1:role/r", "e", {"aws_access_key_id": "src"})]
+    assert state["AWS_SESSION_TOKEN"] == "new"
+    assert "still valid" in aws.refresh_credentials()  # the new expiry was remembered
 
 
 def test_assumed_role_still_valid_is_left_alone(state, monkeypatch):

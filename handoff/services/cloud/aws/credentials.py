@@ -7,6 +7,15 @@ logger = logging.getLogger(__name__)
 CLIENTS = dict()
 
 
+def fetch_container_credentials(rel_uri: str) -> dict:
+    """The task role's current credentials from the ECS endpoint.
+    See https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-iam-roles.html
+    """
+    response = requests.get("http://169.254.170.2" + rel_uri, timeout=10)
+    response.raise_for_status()
+    return json.loads(response.content)
+
+
 def _get_credentials(cred: dict = {}):
     """
     In AWS instance, AWS credentials are either retrieved from credentials local endpoint
@@ -14,9 +23,7 @@ def _get_credentials(cred: dict = {}):
     rel_uri = os.environ.get("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
 
     if not cred and rel_uri:
-        # See https://docs.aws.amazon.com/AmazonECS/latest/userguide/task-iam-roles.html
-        response = requests.get("http://169.254.170.2" + rel_uri)
-        task_cred = json.loads(response.content)
+        task_cred = fetch_container_credentials(rel_uri)
         logger.debug("Role ARN: " + task_cred["RoleArn"])
         logger.debug("Set AWS credentials from " +
                      "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")

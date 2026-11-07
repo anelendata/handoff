@@ -214,6 +214,8 @@ def _run_task_subcommand(
         if not state.get_env(BUCKET):
             raise Exception("Cannot push artifacts. BUCKET environment" +
                             "variable is not set")
+        # A long run can outlive the credentials it started with.
+        services.cloud.refresh_credentials()
         admin.artifacts_push(project_dir, workspace_dir, **kwargs)
         admin.artifacts_archive(project_dir, workspace_dir, **kwargs)
 

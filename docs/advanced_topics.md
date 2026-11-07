@@ -269,3 +269,8 @@ handoff cloud run -p <project_dir> --tasks load -v run_id=2026-11-06a
 - `run local` transfers only with `-a` (`--push-artifacts`), because transfers
   need the bucket. Without it, the task runs and the transfers are skipped
   with a log line.
+- Long runs: before each task's transfers and before the end-of-run artifacts
+  push, handoff renews its temporary AWS credentials. On Fargate it fetches the
+  task role's current credentials; if the run assumed a role, it assumes it
+  again when less than 15 minutes are left. So a job that runs longer than its
+  first credentials last can still upload its results.

@@ -259,6 +259,48 @@
               "null",
               "boolean"
             ]
+          },
+          "upload": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "to"
+              ]
+            }
+          },
+          "download": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "from",
+                "path"
+              ]
+            }
           }
         }
       }

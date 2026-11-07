@@ -229,3 +229,43 @@ the task's expected runtime). This only complements the alarm above: since
 `<stack>-started` is only incremented once the task process is already
 running, it still cannot see the startup-time gaps this section opened
 with.
+
+## Passing outputs between steps (task upload and download)
+
+At the end of a run, handoff pushes everything under `artifacts/` to
+`artifacts/last`. That's the wrong place for a step's output that a later run
+must read: the next run overwrites `artifacts/last`. Give the task an `upload`
+list instead, and the later task a `download` list:
+
+```yaml
+tasks:
+- name: compare
+  commands:
+  - command: python files/scripts/compare.py --out output/compare
+  upload:
+  - path: output/compare            # file or folder, relative to the workspace
+    to: runs/{{ run_id }}/compare   # key under the task's prefix in the bucket
+- name: load
+  active: False
+  download:
+  - from: runs/{{ run_id }}/compare
+    path: output/compare
+  commands:
+  - command: python files/scripts/load.py --in output/compare
+```
+
+```shell
+handoff cloud run -p <project_dir> --tasks compare -v run_id=2026-11-06a
+handoff cloud run -p <project_dir> --tasks load -v run_id=2026-11-06a
+```
+
+- `download` runs before the task's commands; a missing download fails the
+  task before it runs.
+- `upload` runs only after the task's commands succeed, so a later step never
+  reads a partial output. A missing upload path fails the task.
+- Keys are under `s3://<bucket>/<task>/`. They can't be under `artifacts/` or
+  `files/`, which handoff manages, and can't contain `..`.
+- `path`, `to` and `from` are rendered with vars, like commands.
+- `run local` transfers only with `-a` (`--push-artifacts`), because transfers
+  need the bucket. Without it, the task runs and the transfers are skipped
+  with a log line.

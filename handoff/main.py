@@ -194,7 +194,7 @@ def _run_task_subcommand(
     # Run the command
     exit_code = 0
     try:
-        commands[command](config, **kwargs)
+        commands[command](config, push_artifacts=push_artifacts, **kwargs)
     except Exception as e:
         if debug_mode:
             raise

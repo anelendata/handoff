@@ -51,29 +51,39 @@ def _make_python_venv(venv_path: str) -> None:
         LOGGER.info(f"Created a new venv in {venv_path}")
 
 
-def _resolve_install_file(project_dir: str, file_ref: str) -> str:
-    """Find a file referenced from the installs section. Look in the project
-    directory, then in each of its parents, so that projects can share a file
-    kept above them.
-    """
-    parts = os.path.normpath(file_ref).split(os.sep)
-    if os.path.isabs(file_ref) or ".." in parts:
-        raise Exception(f"installs file {file_ref} must be a relative path " +
-                        "without '..'")
-    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
-        raise Exception(f"installs file {file_ref} matches a pattern that " +
-                        "is kept out of container bundles")
+def _read_project_yml(project_dir: str) -> Dict:
+    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
+        return yaml.load(f, Loader=yaml.FullLoader) or dict()
 
+
+def _resolve_shared_path(project_dir: str, ref: str, section: str,
+                         kind: str = "any") -> str:
+    """Find a file or folder referenced from project.yml. Look in the project
+    directory, then in each of its parents, so that projects can share files
+    kept above them. kind is "file", "dir" or "any".
+    """
+    parts = os.path.normpath(ref).split(os.sep)
+    if os.path.isabs(ref) or ".." in parts:
+        raise Exception(f"{section} {ref} must be a relative path without '..'")
+    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
+        raise Exception(f"{section} {ref} matches a pattern that is kept " +
+                        "out of container bundles")
+    found = {"file": os.path.isfile, "dir": os.path.isdir, "any": os.path.exists}[kind]
     search_dir = os.path.abspath(project_dir)
     while True:
-        path = os.path.join(search_dir, file_ref)
-        if os.path.isfile(path):
+        path = os.path.join(search_dir, ref)
+        if found(path):
             return path
         parent = os.path.dirname(search_dir)
         if parent == search_dir:
-            raise Exception(f"installs file {file_ref} is not found in " +
-                            f"{project_dir} or its parent directories")
+            raise Exception(f"{section} {ref} is not found in {project_dir} " +
+                            "or its parent directories")
         search_dir = parent
+
+
+def _resolve_install_file(project_dir: str, file_ref: str) -> str:
+    """Find a file referenced from the installs section."""
+    return _resolve_shared_path(project_dir, file_ref, "installs file", kind="file")
 
 
 def _read_install_file(project_dir: str, file_ref: str) -> List:
@@ -111,13 +121,68 @@ def _install_files(project_dir: str) -> Dict:
     """Return the files referenced from the installs section of project.yml as
     {reference: path}
     """
-    with open(os.path.join(project_dir, PROJECT_FILE), "r") as f:
-        project = yaml.load(f, Loader=yaml.FullLoader) or dict()
-    installs = project.get("installs") or list()
+    installs = _read_project_yml(project_dir).get("installs") or list()
     # Raise here, not in the middle of the image build
     _expand_installs(project_dir, installs)
     return {install["file"]: _resolve_install_file(project_dir, install["file"])
             for install in installs if "file" in install}
+
+
+def _external_files(project_dir: str) -> List[Tuple[str, str]]:
+    """Return the files section of project.yml as [(source path, path under
+    files/)]. Raise on anything that could overwrite or leak a file.
+    """
+    entries = _read_project_yml(project_dir).get("files") or list()
+    if not isinstance(entries, list):
+        raise Exception("files in project.yml must be a list")
+    resolved = list()
+    seen = set()
+    own_files_dir = os.path.join(project_dir, FILES_DIR)
+    for entry in entries:
+        if not isinstance(entry, dict) or not entry.get("from") or \
+                set(entry) - {"from", "to", "description"}:
+            raise Exception("Each files entry needs from, and can have to and " +
+                            f"description only: {entry}")
+        src = _resolve_shared_path(project_dir, entry["from"], "files entry")
+        dest = os.path.normpath(entry.get("to") or os.path.basename(
+            os.path.normpath(entry["from"])))
+        dest_parts = dest.split(os.sep)
+        if os.path.isabs(dest) or ".." in dest_parts or dest in ("", "."):
+            raise Exception(f"files entry to {dest} must be a relative path " +
+                            "under files/ without '..'")
+        if any(fnmatch(part, p) for part in dest_parts for p in BUNDLE_IGNORE_PATTERNS):
+            raise Exception(f"files entry to {dest} matches a pattern that is " +
+                            "kept out of container bundles")
+        if os.path.isdir(src):
+            for root, dirs, fns in os.walk(src):
+                for name in dirs + fns:
+                    if any(fnmatch(name, p) for p in BUNDLE_IGNORE_PATTERNS):
+                        raise Exception(f"files entry {entry['from']} contains " +
+                                        f"{os.path.join(root, name)}, which matches " +
+                                        "a pattern kept out of container bundles")
+        if os.path.exists(os.path.join(own_files_dir, dest)):
+            raise Exception(f"files entry to {dest} would overwrite the " +
+                            f"project's own {FILES_DIR}/{dest}")
+        for other in seen:
+            if dest == other or dest.startswith(other + os.sep) or \
+                    other.startswith(dest + os.sep):
+                raise Exception(f"files entries {other} and {dest} overlap")
+        seen.add(dest)
+        resolved.append((src, dest))
+    return resolved
+
+
+def _parse_template_file(src: str, dest: str) -> None:
+    """Render one file as a template, like _parse_template_files does for a
+    folder. Binary files are copied as is."""
+    try:
+        with open(src, "r") as f:
+            text = f.read()
+    except UnicodeDecodeError:
+        shutil.copyfile(src, dest)
+        return
+    with open(dest, "w") as f:
+        f.write(_Template(text).render(**get_state()))
 
 
 def _parse_template_files(
@@ -647,11 +712,23 @@ def files_get_local(
                  project_dir)
 
     project_files_dir = os.path.join(project_dir, FILES_DIR)
-    if os.path.exists(project_files_dir):
-        files_dir = os.path.join(workspace_dir, FILES_DIR)
+    files_dir = os.path.join(workspace_dir, FILES_DIR)
+    external = _external_files(project_dir)
+    if os.path.exists(project_files_dir) or external:
         if os.path.exists(files_dir):
             shutil.rmtree(files_dir)
+        os.makedirs(files_dir)
+    if os.path.exists(project_files_dir):
         _parse_template_files(project_files_dir, files_dir)
+    for src, dest in external:
+        target = os.path.join(files_dir, dest)
+        if os.path.isdir(src):
+            os.makedirs(target, exist_ok=True)
+            _parse_template_files(src, target)
+        else:
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            _parse_template_file(src, target)
+        LOGGER.info(f"files: {src} -> {FILES_DIR}/{dest}")
     return {"status": "success"}
 
 
@@ -667,10 +744,17 @@ def files_push(
     - bucket name: <account-id>-(dev-)<resource-name>
     - path: <task-name>/<path>
     """
+    external = _external_files(project_dir)
     platform = cloud.get_platform()
     files_dir = os.path.join(project_dir, FILES_DIR)
     prefix = FILES_DIR
     platform.upload_dir(files_dir, prefix)
+    for src, dest in external:
+        if os.path.isdir(src):
+            platform.upload_dir(src, os.path.join(prefix, dest))
+        else:
+            platform.upload_file(src, os.path.join(prefix, dest))
+        LOGGER.info(f"files: {src} -> {prefix}/{dest}")
     return {"status": "success"}
 
 

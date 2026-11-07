@@ -420,6 +420,29 @@
           }
         }
       }
+    },
+    "files": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "from"
+        ]
+      }
     }
   }
 }

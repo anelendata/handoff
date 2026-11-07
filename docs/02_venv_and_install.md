@@ -189,3 +189,23 @@ destination (CSV file).
 In the next section, we will learn a little more advanced flow logic
 such as foreach and fork.
 
+
+## Sharing files and folders between projects
+
+Projects that run on the same image often need the same scripts. Instead of
+copying them into each project's `files/`, list them in a `files` section:
+
+```yaml
+files:
+- from: images/tap-rest-api-target-bigquery/0.24/files/scripts   # file or folder
+  to: scripts       # path under files/; defaults to the last part of from
+```
+
+- `from` is found like an installs file: in the project directory, then in
+  each parent directory. It must be relative, without `..`.
+- `files push` uploads it to `files/<to>` with the project's own files, and
+  `run local` renders it into the workspace's `files/<to>`, as templates, like
+  the project's own files.
+- It's an error if the project's own `files/` already has `<to>`, if two
+  entries overlap, or if anything matches the patterns kept out of container
+  bundles (`*.secret*`, `.env`, ...). Nothing is overwritten silently.

@@ -1,5 +1,12 @@
 ## History
 
+### 0.4.6 (2026-11-07)
+
+- feature: Run only selected tasks with `--tasks a,b` or `-v _tasks=a,b` on `run local`, `run` and `cloud run`; named tasks run even if inactive, and unknown names are an error before anything runs (#168, #169)
+- feature: Task-level `upload` and `download` lists pass a step's output to a later run through the task's bucket prefix, outside `artifacts/` and `files/`; uploads happen only after the task succeeds (#168, #170)
+- feature: A top-level `files` section in project.yml shares files and folders across projects, resolved like installs files (#168, #171)
+- fix: Refresh temporary AWS credentials (ECS task role, or an assumed role near expiry) before task uploads/downloads and the end-of-run artifacts push, so long runs can still upload (#168, #172)
+
 ### 0.4.5 (2026-11-03)
 
 - feature: Allow installs entries in project.yml to reference another YAML file, so projects can share one list (#166, #167)

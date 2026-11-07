@@ -64,14 +64,19 @@ def _log_task_run_filter(task_name, response):
            "{region}#/clusters/{task}/tasks/{task_id}").format(**params))
 
 
+def refresh_credentials() -> str:
+    """Platform hook for services.cloud.refresh_credentials(). See
+    credentials.refresh()."""
+    return cred.refresh(get_state())
+
+
 def _assume_role(
         role_arn=None,
         target_account_id=None,
         external_id=None,
         cred_keys: dict = {},
         ):
-    # TODO: STS Token expires in 6.5 hours. Try refreshable token
-    # https://gist.github.com/kapilt/ac8e222081f63ba64e93
+    # The token expires; refresh_credentials() assumes the role again before late uploads.
     state = get_state()
     if not role_arn:
         account_id = sts.get_account_id(cred_keys=cred_keys)
@@ -82,11 +87,8 @@ def _assume_role(
             target_account_id = account_id
         role_arn = (f"arn:aws:iam::{target_account_id}:role/{role_name}")
     response = sts.assume_role(role_arn, external_id=external_id, cred_keys=cred_keys)
-
-    state["AWS_ACCESS_KEY_ID"] = response["Credentials"]["AccessKeyId"]
-    state["AWS_SECRET_ACCESS_KEY"] = response["Credentials"]["SecretAccessKey"]
-    state["AWS_SESSION_TOKEN"] = response["Credentials"]["SessionToken"]
-
+    cred.remember_assumed_role(role_arn, external_id, cred_keys, response)
+    cred.store_role_credentials(state, response)
     return response
 
 

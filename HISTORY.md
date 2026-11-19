@@ -1,8 +1,8 @@
 ## History
 
-### 0.4.7 (unreleased)
+### 0.4.7 (2026-11-19)
 
-- feature: A top-level `secrets_dirs` section in project.yml reads secrets from shared `.secrets` folders, found like installs files, before the project's own; an optional `secrets` list picks the keys a project takes
+- feature: A top-level `secrets_dirs` section in project.yml reads secrets from shared `.secrets` folders, found like installs files, before the project's own; an optional `secrets` list picks the keys a project takes (#173, #174)
 
 ### 0.4.6 (2026-11-07)
 

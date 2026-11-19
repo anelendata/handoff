@@ -443,6 +443,15 @@
           "from"
         ]
       }
+    },
+    "secrets_dirs": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "string"
+      }
     }
   }
 }

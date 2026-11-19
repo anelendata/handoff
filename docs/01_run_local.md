@@ -417,6 +417,47 @@ about this later.
 We recommand adding "workspace" and ".secrets"to .gitigonore file to avoid
 accidentally checking them in.
 
+### Sharing secrets between projects
+
+When several projects use the same credentials, keep one `.secrets` folder
+above them instead of a copy in each project, and list it in `secrets_dirs`:
+
+```yaml
+secrets_dirs:
+- projects/.secrets                  # shared by every project
+- projects/acme/billing/.secrets     # shared by the billing projects
+
+secrets:                             # optional: the keys this project takes
+- key: google_client_secret
+  level: resource group
+- key: api_key
+  level: task
+```
+
+```shell
+projects/
+  .secrets/secrets.yml
+  acme/billing/.secrets/secrets.yml
+  acme/billing/.secrets/dev_secrets.yml
+  acme/billing/invoices/project.yml
+  acme/billing/payments/project.yml
+```
+
+- Each entry is found like an installs file: in the project directory, then in
+  each parent directory. It must be relative, without `..`, and it is an error
+  if it isn't found.
+- Each folder is read for the stage's file (`secrets.yml`, `dev_secrets.yml`
+  with `-s dev`, ...), in the listed order, and then the project's own
+  `.secrets` (or `-v secrets_dir=`). A later file wins for the same key. A
+  folder without the stage's file is skipped.
+- A `file:` value is read from the folder that holds that secrets.yml.
+- If project.yml has a `secrets` list, only those keys are taken from the
+  shared folders, so a project doesn't push credentials it doesn't use. A
+  listed task-level key that no file has is an error. Keys in the project's
+  own `.secrets` are always taken.
+- `secrets push`, `secrets delete` and `run local` all read secrets this way.
+  Projects without `secrets_dirs` work as before.
+
 
 
 In the next section, we will try pulling the currency exchange rate data.

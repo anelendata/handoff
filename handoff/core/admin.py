@@ -57,15 +57,19 @@ def _read_project_yml(project_dir: str) -> Dict:
 
 
 def _resolve_shared_path(project_dir: str, ref: str, section: str,
-                         kind: str = "any") -> str:
+                         kind: str = "any", allow_ignored: bool = False) -> str:
     """Find a file or folder referenced from project.yml. Look in the project
     directory, then in each of its parents, so that projects can share files
-    kept above them. kind is "file", "dir" or "any".
+    kept above them. kind is "file", "dir" or "any". allow_ignored lets the
+    path match the patterns kept out of container bundles, for secrets_dirs.
     """
+    if not isinstance(ref, str) or not ref:
+        raise Exception(f"{section} must be a path: {ref}")
     parts = os.path.normpath(ref).split(os.sep)
     if os.path.isabs(ref) or ".." in parts:
         raise Exception(f"{section} {ref} must be a relative path without '..'")
-    if any(fnmatch(part, p) for part in parts for p in BUNDLE_IGNORE_PATTERNS):
+    if not allow_ignored and any(fnmatch(part, p) for part in parts
+                                 for p in BUNDLE_IGNORE_PATTERNS):
         raise Exception(f"{section} {ref} matches a pattern that is kept " +
                         "out of container bundles")
     found = {"file": os.path.isfile, "dir": os.path.isdir, "any": os.path.exists}[kind]
@@ -361,12 +365,81 @@ def _secrets_get(
         SECRETS[key] = params[key]["value"]
 
 
+def _shared_secrets_dirs(project_dir: str) -> List[str]:
+    """Return the folders in the secrets_dirs section of project.yml, found
+    like installs files: in the project directory, then in each parent.
+    """
+    if not os.path.isfile(os.path.join(project_dir, PROJECT_FILE)):
+        return list()
+    refs = _read_project_yml(project_dir).get("secrets_dirs") or list()
+    if not isinstance(refs, list):
+        raise Exception("secrets_dirs in project.yml must be a list of folders")
+    return [_resolve_shared_path(project_dir, ref, "secrets_dirs entry",
+                                 kind="dir", allow_ignored=True)
+            for ref in refs]
+
+
+def _declared_secret_keys(project_dir: str) -> Dict:
+    """Return {key: level} from the secrets section of project.yml, or None
+    when the project doesn't list its secrets."""
+    if not os.path.isfile(os.path.join(project_dir, PROJECT_FILE)):
+        return None
+    declared = _read_project_yml(project_dir).get("secrets")
+    if declared is None:
+        return None
+    if not isinstance(declared, list) or not all(
+            isinstance(s, dict) and s.get("key") for s in declared):
+        raise Exception("secrets in project.yml must be a list of " +
+                        "entries with a key")
+    return {s["key"]: s.get("level", "task") for s in declared}
+
+
+def _read_secrets_file(secrets_dir: str, secrets_file: str) -> Dict:
+    """Read one secrets.yml. Return {key: (entry, value)}; value is None for
+    an unregistered resource group level secret."""
+    with open(secrets_file, "r") as f:
+        LOGGER.debug("Reading secrets from local file: " + secrets_file)
+        secrets = yaml.load(f, Loader=yaml.FullLoader) or list()
+    if not isinstance(secrets, list):
+        raise Exception(secrets_file + " must be a list of secrets")
+    loaded = dict()
+    for secret in secrets:
+        key = secret.get("key")
+        if not key:
+            raise Exception("key must be defined for secret")
+        if secret.get("value") is not None:
+            value = secret["value"]
+        elif secret.get("file"):
+            rel_path = os.path.join(secrets_dir,
+                                    secret.get("file"))
+            if not os.path.isfile(rel_path):
+                raise Exception(rel_path + " does not exist")
+            with open(rel_path, "r") as f:
+                value = f.read()
+        elif secret.get("level", "task") == "resource group":
+            LOGGER.warning(
+                "Unregistered resource group level secret: %s" % key)
+            value = None
+        else:
+            raise Exception("Neither value or file defined for task-level " +
+                            "secret: " + key)
+        loaded[key] = (secret, value)
+    return loaded
+
+
 def _secrets_get_local(
     project_dir: str,
     workspace_dir: str,
     vars: Dict = {},
     **kwargs) -> Dict:
-    """Load secrets from local file
+    """Load secrets from local files
+
+    The folders in the secrets_dirs section of project.yml are read first, in
+    order, then the project's own .secrets (or vars secrets_dir). Each folder
+    holds <stage>secrets.yml (secrets.yml, dev_secrets.yml, ...). A later file
+    wins for the same key. When project.yml has a secrets section, only the
+    keys listed there are taken from the shared folders, and a listed
+    task-level key that no file has is an error.
 
     See secrets_push for the local file specification.
     """
@@ -374,39 +447,57 @@ def _secrets_get_local(
     global SECRETS
     SECRETS = {}
     if vars.get("secrets_dir"):
-        secrets_dir = vars["secrets_dir"]
+        own_dir = vars["secrets_dir"]
     else:
-        secrets_dir = os.path.join(project_dir, SECRETS_DIR)
-    secrets_file = os.path.join(secrets_dir, state["_stage_"] + SECRETS_FILE)
+        own_dir = os.path.join(project_dir, SECRETS_DIR)
+    file_name = state["_stage_"] + SECRETS_FILE
+    shared_dirs = _shared_secrets_dirs(project_dir)
+    declared = _declared_secret_keys(project_dir) if shared_dirs else None
 
-    if not os.path.isfile(secrets_file):
-        LOGGER.warning(secrets_file + " does not exsist")
-        return None
-    with open(secrets_file, "r") as f:
-        LOGGER.debug("Reading secrets from local file: " + secrets_file)
-        secrets = yaml.load(f, Loader=yaml.FullLoader)
+    sources = [(d, True) for d in shared_dirs] + [(own_dir, False)]
     secrets_dict = dict()
-    for secret in secrets:
-        key = secret.get("key")
-        secrets_dict[key] = secret
-        if not key:
-            raise Exception("key must be defined for secret")
-        if secret.get("value") is not None:
-            SECRETS[key] = secret["value"]
-        elif secret.get("file"):
-            rel_path = os.path.join(secrets_dir,
-                                     secret.get("file"))
-            if not os.path.isfile(rel_path):
-                raise Exception(rel_path + " does not exist")
-            with open(rel_path, "r") as f:
-                SECRETS[key] = f.read()
-        elif secret.get("level", "task") == "resource group":
+    found_any = False
+    for secrets_dir, shared in sources:
+        secrets_file = os.path.join(secrets_dir, file_name)
+        if not os.path.isfile(secrets_file):
+            if not shared:
+                level = LOGGER.debug if shared_dirs else LOGGER.warning
+                level(secrets_file + " does not exsist")
+            else:
+                LOGGER.debug(secrets_file + " does not exist; skipping")
+            continue
+        found_any = True
+        loaded = _read_secrets_file(secrets_dir, secrets_file)
+        taken = [k for k in loaded if not shared or declared is None or k in declared]
+        if shared:
+            LOGGER.info(f"Secrets from {secrets_file}: {taken}")
+        for key in taken:
+            secret, value = loaded[key]
+            secrets_dict[key] = secret
+            if value is not None:
+                SECRETS[key] = value
+            else:
+                SECRETS.pop(key, None)
+
+    if not found_any:
+        if shared_dirs:
+            LOGGER.warning(f"No {file_name} in {[d for d, _ in sources]}")
+        return None
+    if declared:
+        missing = [k for k, level in declared.items() if k not in secrets_dict]
+        task_missing = [k for k in missing
+                        if _level_is_task(declared[k])]
+        if task_missing:
+            raise Exception("project.yml lists task-level secrets that no " +
+                            f"{file_name} has: {task_missing}")
+        for key in missing:
             LOGGER.warning(
                 "Unregistered resource group level secret: %s" % key)
-        else:
-            raise Exception("Neither value or file defined for task-level " +
-                            "secret: " + key)
     return secrets_dict
+
+
+def _level_is_task(level: str) -> bool:
+    return (level or "task").lower().strip() != "resource group"
 
 
 def secrets_push(

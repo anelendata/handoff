@@ -1,5 +1,9 @@
 ## History
 
+### 0.4.7 (unreleased)
+
+- feature: A top-level `secrets_dirs` section in project.yml reads secrets from shared `.secrets` folders, found like installs files, before the project's own; an optional `secrets` list picks the keys a project takes
+
 ### 0.4.6 (2026-11-07)
 
 - feature: Run only selected tasks with `--tasks a,b` or `-v _tasks=a,b` on `run local`, `run` and `cloud run`; named tasks run even if inactive, and unknown names are an error before anything runs (#168, #169)
